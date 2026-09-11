@@ -36,6 +36,9 @@ export default function App() {
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
   const [offices, setOffices] = useState<OfficeLocation[]>([]);
 
+  // App Initialization state
+  const [isInitializing, setIsInitializing] = useState(true);
+
   // Multi-Firm State
   const [activeFirmSlug, setActiveFirmSlug] = useState<string>(() => firmService.getActiveFirmSlug());
   const [activeFirm, setActiveFirm] = useState<LawFirm | null>(() => firmService.getFirmBySlug(firmService.getActiveFirmSlug()));
@@ -80,21 +83,23 @@ export default function App() {
       
       // 3. Force fetch the LATEST data for THIS SPECIFIC office from Supabase or server
       if (urlSlug) {
-        const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug).catch(() => ({ success: false, firm: undefined }));
-        if (sbRes.success && sbRes.firm) {
-          firmService.setFirm(sbRes.firm);
-        }
-
-        try {
-          const res = await fetch(`/api/firms/${urlSlug}`);
-          if (res.ok) {
-            const json = await res.json();
-            if (json.success && json.data) {
-              const firm = firmService['ensureFirmSubscription'] ? firmService['ensureFirmSubscription'](json.data) : json.data;
-              firmService.setFirm(firm);
+        await Promise.allSettled([
+          firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
+            if (sbRes.success && sbRes.firm) {
+              firmService.setFirm(sbRes.firm);
             }
-          }
-        } catch {}
+          }).catch(() => {}),
+          
+          fetch(`/api/firms/${urlSlug}`).then(async (res) => {
+            if (res.ok) {
+              const json = await res.json();
+              if (json.success && json.data) {
+                const firm = firmService['ensureFirmSubscription'] ? firmService['ensureFirmSubscription'](json.data) : json.data;
+                firmService.setFirm(firm);
+              }
+            }
+          }).catch(() => {})
+        ]);
 
         // Load the fetched firm data into storage service so database records display correctly
         storageService.loadFirm(urlSlug, true);
@@ -108,6 +113,8 @@ export default function App() {
       if (urlParams.get('admin') === 'super' || urlParams.get('super') === '1' || urlParams.get('superadmin') === 'true') {
         setIsSuperAdminOpen(true);
       }
+
+      setIsInitializing(false);
     };
 
     loadAppData();
@@ -182,6 +189,15 @@ export default function App() {
     storageService.switchFirm(newFirm.slug);
     refreshData();
   };
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-[#181512] flex items-center justify-center flex-col gap-4">
+        <div className="w-12 h-12 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse">جاري تحميل بيانات المكتب...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fbf8f2] text-[#181512] selection:bg-[#b38a38]/30 selection:text-[#87641d] font-body-custom">
