@@ -26,23 +26,43 @@ import { firmService } from './services/firmService';
 import { applyTypographySettings } from './services/typographyService';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, Language, LawFirm } from './types';
 
+// Eagerly initialize cache synchronously before React even starts rendering for INSTANT load
+if (typeof window !== 'undefined') {
+  firmService.initLocal();
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
+  if (urlSlug && firmService.getFirmBySlug(urlSlug)) {
+    storageService.loadFirm(urlSlug, false);
+  } else {
+    storageService.init();
+  }
+}
+
 export default function App() {
   const [lang, setLang] = useState<Language>('ar');
   const [settings, setSettings] = useState<SiteSettings>(() => storageService.getSettings());
-  const [partners, setPartners] = useState<Partner[]>([]);
-  const [practiceAreas, setPracticeAreas] = useState<PracticeArea[]>([]);
-  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [offices, setOffices] = useState<OfficeLocation[]>([]);
+  const [partners, setPartners] = useState<Partner[]>(() => storageService.getPartners());
+  const [practiceAreas, setPracticeAreas] = useState<PracticeArea[]>(() => storageService.getPracticeAreas());
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>(() => storageService.getCaseStudies());
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(() => storageService.getTestimonials());
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => storageService.getBlogPosts());
+  const [offices, setOffices] = useState<OfficeLocation[]>(() => storageService.getOffices());
 
-  // App Initialization state
-  const [isInitializing, setIsInitializing] = useState(true);
+  // App Initialization state: Skip loading screen entirely if data is already locally cached
+  const [isInitializing, setIsInitializing] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
+    if (urlSlug && !firmService.getFirmBySlug(urlSlug)) {
+      return true; // We need to fetch it from network, show loading
+    }
+    return false; // We already have it, render instantly!
+  });
 
   // Multi-Firm State
   const [activeFirmSlug, setActiveFirmSlug] = useState<string>(() => firmService.getActiveFirmSlug());
   const [activeFirm, setActiveFirm] = useState<LawFirm | null>(() => firmService.getFirmBySlug(firmService.getActiveFirmSlug()));
-  const [isFirmActive, setIsFirmActive] = useState<boolean>(true);
+  const [isFirmActive, setIsFirmActive] = useState<boolean>(() => firmService.isFirmSiteActive(firmService.getActiveFirmSlug()).isActive);
 
   // Modals state
   const [isConsultationOpen, setIsConsultationOpen] = useState(false);
