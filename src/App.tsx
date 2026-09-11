@@ -80,24 +80,18 @@ export default function App() {
       
       // 3. Force fetch the LATEST data for THIS SPECIFIC office from Supabase or server
       if (urlSlug) {
-        await firmService.fetchSingleFirmFromSupabase(urlSlug).catch(() => {});
+        const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug).catch(() => ({ success: false, firm: undefined }));
+        if (sbRes.success && sbRes.firm) {
+          firmService.setFirm(sbRes.firm);
+        }
+
         try {
           const res = await fetch(`/api/firms/${urlSlug}`);
           if (res.ok) {
             const json = await res.json();
             if (json.success && json.data) {
               const firm = firmService['ensureFirmSubscription'] ? firmService['ensureFirmSubscription'](json.data) : json.data;
-              const allFirms = firmService.getAllFirms();
-              const idx = allFirms.findIndex((f: LawFirm) => f.slug === urlSlug);
-              if (idx >= 0) {
-                allFirms[idx] = firm;
-              } else {
-                allFirms.push(firm);
-              }
-              // Save to local cache
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('aladl_multi_firms_v1', JSON.stringify(allFirms));
-              }
+              firmService.setFirm(firm);
             }
           }
         } catch {}

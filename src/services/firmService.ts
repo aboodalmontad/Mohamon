@@ -1044,6 +1044,17 @@ class FirmService {
   }
 
   // Public Getters and Modifiers
+  public setFirm(firm: LawFirm): void {
+    const ensured = ensureFirmSubscription(firm);
+    const idx = this.memoryFirms.findIndex(f => f.slug.toLowerCase() === ensured.slug.toLowerCase() || f.id === ensured.id);
+    if (idx >= 0) {
+      this.memoryFirms[idx] = ensured;
+    } else {
+      this.memoryFirms.push(ensured);
+    }
+    this.saveToLocalCache();
+  }
+
   public getAllFirms(): LawFirm[] {
     if (this.memoryFirms.length === 0) {
       this.init();
