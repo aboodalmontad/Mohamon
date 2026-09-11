@@ -231,7 +231,25 @@ class FirmService {
 
   constructor() {
     if (typeof window !== 'undefined') {
+      this.initLocal();
       this.init();
+    }
+  }
+
+  public initLocal(): void {
+    if (this.memoryFirms.length > 0) return;
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem(STORAGE_KEY_FIRMS);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.memoryFirms = parsed.map((f: LawFirm) => ensureFirmSubscription(f));
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error reading local firms cache', e);
     }
   }
 

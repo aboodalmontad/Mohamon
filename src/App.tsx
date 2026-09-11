@@ -74,19 +74,40 @@ export default function App() {
 
   useEffect(() => {
     const loadAppData = async () => {
-      // 1. Initialize services (this now waits for Supabase if configured)
-      await firmService.init();
-
-      // 2. Determine which firm to load from URL or defaults
+      // 1. Instantly read local cache
+      firmService.initLocal();
+      
       const urlParams = new URLSearchParams(window.location.search);
       const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
-      
-      // 3. Force fetch the LATEST data for THIS SPECIFIC office from Supabase or server
+
+      // If we have cached data for the firm, render it instantly (optimistic UI)
       if (urlSlug) {
-        await Promise.allSettled([
+        const cachedFirm = firmService.getFirmBySlug(urlSlug);
+        if (cachedFirm) {
+          storageService.loadFirm(urlSlug, false);
+          refreshData();
+          setIsInitializing(false);
+        }
+      } else {
+        storageService.init();
+        refreshData();
+        setIsInitializing(false);
+      }
+
+      // Check for direct super admin access immediately
+      if (urlParams.get('admin') === 'super' || urlParams.get('super') === '1' || urlParams.get('superadmin') === 'true') {
+        setIsSuperAdminOpen(true);
+      }
+
+      // 2. Fetch the LATEST data for THIS SPECIFIC office in the background
+      if (urlSlug) {
+        Promise.allSettled([
           firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
             if (sbRes.success && sbRes.firm) {
               firmService.setFirm(sbRes.firm);
+              storageService.loadFirm(urlSlug, false);
+              refreshData();
+              setIsInitializing(false);
             }
           }).catch(() => {}),
           
@@ -96,25 +117,22 @@ export default function App() {
               if (json.success && json.data) {
                 const firm = firmService['ensureFirmSubscription'] ? firmService['ensureFirmSubscription'](json.data) : json.data;
                 firmService.setFirm(firm);
+                storageService.loadFirm(urlSlug, false);
+                refreshData();
+                setIsInitializing(false);
               }
             }
           }).catch(() => {})
-        ]);
-
-        // Load the fetched firm data into storage service so database records display correctly
-        storageService.loadFirm(urlSlug, true);
-      } else {
-        storageService.init();
+        ]).finally(() => {
+          // If the network completes and we were still waiting, fallback to defaults/cache
+          setIsInitializing(false);
+          storageService.loadFirm(urlSlug, true);
+          refreshData();
+        });
       }
 
-      refreshData();
-
-      // Check for direct super admin access
-      if (urlParams.get('admin') === 'super' || urlParams.get('super') === '1' || urlParams.get('superadmin') === 'true') {
-        setIsSuperAdminOpen(true);
-      }
-
-      setIsInitializing(false);
+      // 3. Initialize all background services (Supabase configs, all firms list)
+      firmService.init();
     };
 
     loadAppData();
