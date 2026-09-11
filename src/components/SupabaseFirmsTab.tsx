@@ -498,7 +498,7 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
               رابط المشروع (Supabase Project URL)
             </label>
             <input
-              type="url"
+              type="password"
               placeholder="https://your-project.supabase.co"
               value={supabaseConfig.url}
               onChange={(e) => setSupabaseConfig({ ...supabaseConfig, url: e.target.value })}
@@ -511,7 +511,7 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
               المفتاح العام (Supabase Anon Key)
             </label>
             <input
-              type="text"
+              type="password"
               placeholder="eyJhbGciOiJIUzI1NiIsIn..."
               value={supabaseConfig.anonKey}
               onChange={(e) => setSupabaseConfig({ ...supabaseConfig, anonKey: e.target.value })}

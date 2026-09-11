@@ -194,8 +194,8 @@ app.get('/api/firms/:slug', async (req, res) => {
         sbConfig = JSON.parse(fs.readFileSync(SUPABASE_CONFIG_PATH, 'utf-8'));
       } catch {}
     }
-    const sbUrl = sbConfig?.url || process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const sbKey = sbConfig?.anonKey || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const sbUrl = sbConfig?.url || process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://wtfmpgyiiwhmwmitckxr.supabase.co';
+    const sbKey = sbConfig?.anonKey || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0Zm1wZ3lpaXdobXdtaXRja3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjUxNTMsImV4cCI6MjEwNDA0MTE1M30.GyAlgdrv6N9-eN12vfKX_MYj12PILCIBXFONaRsuaqI';
 
     if (sbUrl && sbKey) {
       try {

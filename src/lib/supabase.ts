@@ -48,12 +48,15 @@ export function toValidUUID(input: string): string {
 const STORAGE_KEY_SUPABASE = 'aladl_supabase_config_v1';
 
 export function getStoredSupabaseConfig(): SupabaseConfig {
+  const defaultUrl = 'https://wtfmpgyiiwhmwmitckxr.supabase.co';
+  const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0Zm1wZ3lpaXdobXdtaXRja3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjUxNTMsImV4cCI6MjEwNDA0MTE1M30.GyAlgdrv6N9-eN12vfKX_MYj12PILCIBXFONaRsuaqI';
+
   if (typeof window === 'undefined') {
     return {
-      url: import.meta.env.VITE_SUPABASE_URL || '',
-      anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+      url: import.meta.env.VITE_SUPABASE_URL || defaultUrl,
+      anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || defaultKey,
       tableName: 'law_firms',
-      isConnected: false,
+      isConnected: true,
     };
   }
 
@@ -62,10 +65,10 @@ export function getStoredSupabaseConfig(): SupabaseConfig {
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        url: parsed.url || import.meta.env.VITE_SUPABASE_URL || '',
-        anonKey: parsed.anonKey || import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+        url: parsed.url || import.meta.env.VITE_SUPABASE_URL || defaultUrl,
+        anonKey: parsed.anonKey || import.meta.env.VITE_SUPABASE_ANON_KEY || defaultKey,
         tableName: parsed.tableName || 'law_firms',
-        isConnected: parsed.isConnected ?? false,
+        isConnected: parsed.isConnected ?? true,
         lastTestedAt: parsed.lastTestedAt,
       };
     }
@@ -74,10 +77,10 @@ export function getStoredSupabaseConfig(): SupabaseConfig {
   }
 
   return {
-    url: import.meta.env.VITE_SUPABASE_URL || '',
-    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+    url: import.meta.env.VITE_SUPABASE_URL || defaultUrl,
+    anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || defaultKey,
     tableName: 'law_firms',
-    isConnected: !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY),
+    isConnected: true,
   };
 }
 
