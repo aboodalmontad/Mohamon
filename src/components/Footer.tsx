@@ -248,8 +248,11 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Bottom copyright & Admin entrance */}
         <div className="mt-8 pt-6 border-t border-[#2c261e] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#d8ceb8]/80">
-          <div>
-            © {new Date().getFullYear()} {firmName}. {t.allRightsReserved}
+          <div className="flex items-center gap-3">
+            <span>© {new Date().getFullYear()} {firmName}. {t.allRightsReserved}</span>
+            <span className="bg-[#2c261e] text-[#c5a869] px-2 py-0.5 rounded text-[10px] font-mono border border-[#c5a869]/20" title="رقم الإصدار">
+              الإصدار: 11-9-2026
+            </span>
           </div>
 
           <div className="flex items-center gap-4">
