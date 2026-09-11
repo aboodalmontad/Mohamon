@@ -1,11 +1,54 @@
-<div align="center">
+# منصة المحاماة والاستشارات القانونية | Law Firm Platform
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+منصة متكاملة لمكاتب المحاماة والاستشارات القانونية، مصممة للعرض العام كموقع رسمي مستقل لمكتب المحاماة على استضافة **Vercel**، ومدعومة بقاعدة بيانات سحابية مركزية موحدة على **Supabase**.
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## خطوات النشر والربط السريع (GitHub &rarr; Vercel)
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+### 1. إعداد المستودع على GitHub (Git Repository)
+عند رفع الكود إلى GitHub:
+* المشروع مهيأ بالكامل ومحدث بملف `vercel.json` لإعادة التوجيه النظيف (Clean SPA Rewrites).
+* لا يتطلب المشروع أي إعدادات معقدة؛ مجرد رفع ملفات المشروع مباشرة.
 
-</div>
+### 2. الربط مع Vercel (Import into Vercel)
+1. سجل الدخول إلى حسابك في [Vercel](https://vercel.com).
+2. اضغط على **"Add New..."** ثم اختر **"Project"**.
+3. اختر مستودع المشروع من حسابك على **GitHub** واضغط **Import**.
+4. تأكد من إعدادات البناء (Vercel يكتشفها تلقائياً):
+   * **Framework Preset:** Vite
+   * **Build Command:** `npm run build`
+   * **Output Directory:** `dist`
+
+### 3. إضافة متغيرات البيئة في Vercel (Environment Variables)
+في صفحة استيراد المشروع في Vercel، افتح قسم **Environment Variables** وأضف:
+
+| اسم المتغير (Variable Name) | الوصف | مثال على القيمة |
+| :--- | :--- | :--- |
+| `VITE_SUPABASE_URL` | رابط مشروعك في Supabase | `https://xyzcompany.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | المفتاح العام لمشروعك في Supabase | `eyJhbGciOiJIUzI1NiIsInR5cCI6...` |
+| `VITE_DEFAULT_FIRM_SLUG` | (اختياري) المكتب الافتراضي المعروض للعامة | `nahwi-law` |
+
+5. اضغط **Deploy**.
+6. سيبدأ البناء وينتهي في أقل من دقيقة، وسيصبح موقعك متاحاً للعالم على رابط Vercel الرسمي مثل: `your-firm.vercel.app`.
+
+---
+
+## معمارية النظام (Architecture Overview)
+* **واجهة واحدة للعالم:** يرى الزائر العادي واجهة مكتب محاماة واحد فقط (المكتب المحدد كافتراضي).
+* **قاعدة بيانات سحابية مركزية واحدة:** جدول واحد في Supabase (`law_firms`) يحتوي على كافة المكاتب، اشتراكاتها، وبياناتها.
+* **لوحة تحكم مدير المنصة:** للتحكم باشتراكات المكاتب، وتفعيل/إيقاف المواقع، وتعيين المكتب المعروض للعالم بضغطة زر. الوصول إليها عبر:
+  * زر **"إدارة المنصة"** في أسفل الفوتر (Footer).
+  * اختصار لوحة المفاتيح: `Ctrl + Shift + S`.
+  * المعامل في الرابط: `?admin=super`.
+
+---
+
+## التشغيل المحلي (Run Locally)
+```bash
+# 1. تثبيت الاعتماديات
+npm install
+
+# 2. تشغيل خادم التطوير
+npm run dev
+```

@@ -1,0 +1,18 @@
+export const COUNTRIES_LIST = [
+  { ar: 'المملكة العربية السعودية', en: 'Saudi Arabia' },
+  { ar: 'الإمارات العربية المتحدة', en: 'United Arab Emirates' },
+  { ar: 'دولة الكويت', en: 'Kuwait' },
+  { ar: 'دولة قطر', en: 'Qatar' },
+  { ar: 'سلطنة عمان', en: 'Oman' },
+  { ar: 'مملكة البحرين', en: 'Bahrain' },
+  { ar: 'جمهورية مصر العربية', en: 'Egypt' },
+  { ar: 'المملكة الأردنية الهاشمية', en: 'Jordan' },
+  { ar: 'الجمهورية التركية', en: 'Turkey' },
+  { ar: 'المملكة المتحدة', en: 'United Kingdom' },
+  { ar: 'الولايات المتحدة الأمريكية', en: 'United States' },
+  { ar: 'الجمهورية الجزائرية', en: 'Algeria' },
+  { ar: 'الجمهورية التونسية', en: 'Tunisia' },
+  { ar: 'المملكة المغربية', en: 'Morocco' },
+  { ar: 'الجمهورية اللبنانية', en: 'Lebanon' },
+  { ar: 'جمهورية العراق', en: 'Iraq' },
+];

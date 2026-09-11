@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --gold-primary: #b38a38;
+    --gold-light: #d8be82;
+    --gold-dark: #87641d;
+    --beige-bg: #fbf8f2;
+    --beige-card: #ffffff;
+    --beige-surface: #f4eee2;
+    --beige-border: #e6ddcc;
+    --text-primary: #181512;
+    --text-secondary: #4b5563;
+    
+    /* Dynamic Font Variables controlled by Admin */
+    --font-body: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-headings: 'Amiri', 'Cormorant Garamond', serif;
+    --font-firm-name: 'Amiri', 'Cormorant Garamond', serif;
+    --font-hero-headline: 'Amiri', 'Cormorant Garamond', serif;
+    --font-navbar: 'Tajawal', sans-serif;
+    --font-cards: 'Tajawal', sans-serif;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background-color: #fbf8f2;
+    color: #181512;
+  }
+}
+
+/* Dynamic Typography Classes */
+.font-body-custom {
+  font-family: var(--font-body) !important;
+}
+
+.font-serif-title, .font-heading-custom {
+  font-family: var(--font-headings) !important;
+}
+
+.font-firm-name {
+  font-family: var(--font-firm-name) !important;
+}
+
+.font-hero-headline {
+  font-family: var(--font-hero-headline) !important;
+}
+
+.font-navbar-brand {
+  font-family: var(--font-navbar) !important;
+}
+
+.font-cards-custom {
+  font-family: var(--font-cards) !important;
+}
+
+/* Standard Font Family Classes */
+.font-tajawal { font-family: 'Tajawal', sans-serif !important; }
+.font-cairo { font-family: 'Cairo', sans-serif !important; }
+.font-amiri { font-family: 'Amiri', serif !important; }
+.font-almarai { font-family: 'Almarai', sans-serif !important; }
+.font-elmessiri { font-family: 'El Messiri', sans-serif !important; }
+.font-notokufi { font-family: 'Noto Kufi Arabic', sans-serif !important; }
+.font-notonaskh { font-family: 'Noto Naskh Arabic', serif !important; }
+.font-alexandria { font-family: 'Alexandria', sans-serif !important; }
+.font-readex { font-family: 'Readex Pro', sans-serif !important; }
+.font-cormorant { font-family: 'Cormorant Garamond', 'Amiri', serif !important; }
+.font-playfair { font-family: 'Playfair Display', serif !important; }
+.font-cinzel { font-family: 'Cinzel', serif !important; }
+.font-inter { font-family: 'Inter', sans-serif !important; }
+.font-montserrat { font-family: 'Montserrat', sans-serif !important; }
+
+/* Custom Luxury Gradients & Accents in Light Beige & Royal Gold */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #87641d 0%, #b38a38 50%, #684b12 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-bg {
+  background: linear-gradient(135deg, #b38a38 0%, #87641d 100%);
+}
+
+.gold-border-glow {
+  box-shadow: 0 4px 20px rgba(179, 138, 56, 0.12);
+  border-color: rgba(179, 138, 56, 0.35);
+}
+
+.gold-border-glow:hover {
+  box-shadow: 0 8px 30px rgba(179, 138, 56, 0.22);
+  border-color: rgba(179, 138, 56, 0.6);
+}
+
+/* Luxury Light Beige Glass Cards */
+.navy-glass, .beige-glass {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(179, 138, 56, 0.25);
+  box-shadow: 0 4px 20px -2px rgba(179, 138, 56, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
+.navy-glass-strong, .beige-glass-strong {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(179, 138, 56, 0.35);
+  box-shadow: 0 10px 25px -3px rgba(179, 138, 56, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom Scrollbar for Light Theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #fbf8f2;
+}
+::-webkit-scrollbar-thumb {
+  background: #d8ceb8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b38a38;
+}
