@@ -2,6 +2,7 @@ import React from 'react';
 import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck } from 'lucide-react';
 import { SiteSettings, PracticeArea, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
+import { storageService } from '../services/storageService';
 
 interface FooterProps {
   settings: SiteSettings;
@@ -258,24 +259,13 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="flex items-center gap-4">
             <button
               onClick={() => {
-                if (confirm(t.refreshConfirm)) {
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                      for (let registration of registrations) {
-                        registration.unregister();
-                      }
-                    });
-                  }
-                  window.location.reload();
-                }
+                storageService.clearCacheAndRefreshApp();
               }}
               className="text-[#d8ceb8] hover:text-[#c5a869] flex items-center gap-1 transition cursor-pointer"
               title={t.refreshApp}
             >
               <RefreshCw className="w-3 h-3 text-[#c5a869]" />
-              <span>{t.refreshApp}</span>
+              <span className="font-medium">{t.refreshApp}</span>
             </button>
 
             <button

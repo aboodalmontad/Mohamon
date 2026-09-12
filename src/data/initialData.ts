@@ -1,4 +1,21 @@
-import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, ContactMessage } from '../types';
+import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, PlatformSettings, SiteSettings, OfficeLocation, ContactMessage } from '../types';
+
+
+export const initialPlatformSettings: PlatformSettings = {
+  platformNameAr: 'محامون',
+  platformNameEn: 'Lawyers Platform',
+  heroBadgeAr: 'المنصة السحابية الأولى لإدارة مكاتب المحاماة',
+  heroBadgeEn: 'The Leading Cloud Platform for Law Firms',
+  heroHeadingAr: 'أنشئ <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#c5a869] to-[#ebd397]">مكتبك الرقمي</span> خلال دقائق',
+  heroHeadingEn: 'Create Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#c5a869] to-[#ebd397]">Digital Firm</span> in Minutes',
+  heroSubheadingAr: 'منصة "محامون" تتيح لك إطلاق موقع احترافي لمكتبك، استقبال الاستشارات، وإدارة العملاء بكل سهولة وسرية تامة.',
+  heroSubheadingEn: 'Lawyers Platform allows you to launch a professional website, receive consultations, and manage clients with absolute ease and confidentiality.',
+  heroBannerUrl: '',
+  ctaPrimaryAr: 'افتح مكتبك الآن',
+  ctaPrimaryEn: 'Start Your Firm',
+  ctaSecondaryAr: 'تصفح المكاتب',
+  ctaSecondaryEn: 'Browse Firms',
+};
 
 export const initialSiteSettings: SiteSettings = {
   firmNameAr: 'مكتب النخبة والعدل للمحاماة والاستشارات القانونية',

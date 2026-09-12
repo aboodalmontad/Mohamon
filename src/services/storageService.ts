@@ -1,5 +1,5 @@
-import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, OfficeLocation, AuditLog, LawFirm } from '../types';
-import { initialPartners, initialPracticeAreas, initialTestimonials, initialBlogPosts, initialCaseStudies, initialContactMessages, initialSiteSettings, initialOffices } from '../data/initialData';
+import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, PlatformSettings, OfficeLocation, AuditLog, LawFirm } from '../types';
+import { initialPlatformSettings, initialPartners, initialPracticeAreas, initialTestimonials, initialBlogPosts, initialCaseStudies, initialContactMessages, initialSiteSettings, initialOffices } from '../data/initialData';
 import { firmService } from './firmService';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID } from '../lib/supabase';
 
@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   SETTINGS: 'aladl_settings_v1',
   OFFICES: 'aladl_offices_v1',
   AUDIT_LOGS: 'aladl_audit_logs_v1',
+  PLATFORM_SETTINGS: 'aladl_platform_settings_v1',
   PERSISTENT_BACKUP: 'aladl_persistent_snapshot_v1',
 };
 
@@ -578,6 +579,24 @@ export const storageService = {
   },
 
   // Site Settings
+
+  getPlatformSettings: (): PlatformSettings => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PLATFORM_SETTINGS);
+      if (data) return JSON.parse(data);
+    } catch {}
+    return { ...initialPlatformSettings };
+  },
+
+  savePlatformSettings: (settings: PlatformSettings) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.PLATFORM_SETTINGS, JSON.stringify(settings));
+      notifyChange();
+    } catch (e) {
+      console.warn('Failed to save platform settings', e);
+    }
+  },
+
   getSettings: (): SiteSettings => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -892,6 +911,7 @@ export const initialContactMessages: ContactMessage[] = ${JSON.stringify(message
         settings: storageService.getSettings(),
         offices: storageService.getOffices(),
         auditLogs: storageService.getAuditLogs(),
+        platformSettings: storageService.getPlatformSettings(),
         savedAt: new Date().toISOString()
       };
 
@@ -906,6 +926,7 @@ export const initialContactMessages: ContactMessage[] = ${JSON.stringify(message
       localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(currentSnapshot.messages));
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(currentSnapshot.settings));
       localStorage.setItem(STORAGE_KEYS.OFFICES, JSON.stringify(currentSnapshot.offices));
+      localStorage.setItem(STORAGE_KEYS.PLATFORM_SETTINGS, JSON.stringify(currentSnapshot.platformSettings));
 
       if (onStatus) onStatus('جاري مسح ملفات الذاكرة المؤقتة (Cache Storage)...');
 

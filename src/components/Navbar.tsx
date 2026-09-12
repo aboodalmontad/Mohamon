@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check } from 'lucide-react';
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
+import { storageService } from '../services/storageService';
 
 interface NavbarProps {
   settings: SiteSettings;
@@ -148,18 +149,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Quick reload cache button */}
             <button
               onClick={() => {
-                if (confirm(t.refreshConfirm)) {
-                  localStorage.clear();
-                  sessionStorage.clear();
-                  if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                      for (let registration of registrations) {
-                        registration.unregister();
-                      }
-                    });
-                  }
-                  window.location.reload();
-                }
+                storageService.clearCacheAndRefreshApp();
               }}
               className="text-xs text-[#5c5343] hover:text-[#181512] flex items-center gap-1 transition px-2 py-1 rounded-lg bg-white/80 border border-[#d8ceb8] cursor-pointer"
               title={t.refreshApp}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Building2, Plus, ExternalLink, Key, Trash2, CheckCircle2, 
+  Layout, Building2, Plus, ExternalLink, Key, Trash2, CheckCircle2, 
   Database, RefreshCw, Copy, ShieldAlert, Sparkles, X, 
   Search, ShieldCheck, FileCode, Sliders, Users, MessageSquare,
   Globe2, ArrowUpRight, HelpCircle, Check, AlertCircle, Edit3,
@@ -10,6 +10,7 @@ import { firmService } from '../services/firmService';
 import { LawFirm } from '../types';
 import { SupabaseFirmsTab } from './SupabaseFirmsTab';
 import { FirmSubscriptionsTab } from './FirmSubscriptionsTab';
+import { PlatformSettingsTab } from './PlatformSettingsTab';
 
 interface SuperAdminDashboardProps {
   isOpen: boolean;
@@ -29,11 +30,18 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const isAr = lang === 'ar';
   const [firms, setFirms] = useState<LawFirm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'firms' | 'subscriptions' | 'supabase' | 'domains'>('subscriptions');
+  const [activeTab, setActiveTab] = useState<'firms' | 'subscriptions' | 'supabase' | 'domains' | 'platform'>('subscriptions');
   
   // Feedback
   const [toastMsg, setToastMsg] = useState('');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+
+  // Authentication State
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return sessionStorage.getItem('super_admin_auth') === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState(false);
 
   // Edit password modal state
   const [editingFirm, setEditingFirm] = useState<LawFirm | null>(null);
@@ -44,12 +52,75 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && isAuthenticated) {
       refreshFirms();
     }
-  }, [isOpen]);
+  }, [isOpen, isAuthenticated]);
 
   if (!isOpen) return null;
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === 'ghost4mohamon') {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('super_admin_auth', 'true');
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl" dir={isAr ? 'rtl' : 'ltr'}>
+        <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 rtl:left-4 rtl:right-auto text-slate-400 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 via-[#c5a869] to-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
+              <ShieldCheck className="w-8 h-8 text-slate-950" />
+            </div>
+            <h2 className="text-2xl font-serif text-white mb-2">{isAr ? 'إدارة المنصة' : 'Platform Administration'}</h2>
+            <p className="text-slate-400 text-sm">
+              {isAr ? 'يرجى إدخال كلمة مرور مدير المنصة للمتابعة' : 'Please enter the platform manager password to continue'}
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  setAuthError(false);
+                }}
+                placeholder={isAr ? 'كلمة المرور' : 'Password'}
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-center focus:border-amber-400 focus:outline-none transition-colors"
+                autoFocus
+              />
+              {authError && (
+                <p className="text-rose-400 text-xs text-center mt-2 animate-shake">
+                  {isAr ? 'كلمة المرور غير صحيحة' : 'Incorrect password'}
+                </p>
+              )}
+            </div>
+            
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] font-bold py-3 rounded-xl transition-all"
+            >
+              {isAr ? 'تسجيل الدخول' : 'Login'}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -60,9 +131,38 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     const isCurrentlyActive = firm.subscription?.isSiteActive !== false;
     const res = await firmService.toggleFirmSiteStatus(firm.id, !isCurrentlyActive);
     if (res.success) {
+      // Also ensure status reflects suspension/activation
+      const updatedFirm = firmService.getFirmById(firm.id);
+      if (updatedFirm) {
+        updatedFirm.status = !isCurrentlyActive ? 'active' : 'suspended';
+        await firmService.saveFirm(updatedFirm);
+      }
       showToast(res.message);
       refreshFirms();
     }
+  };
+
+  const handleApproveFirm = async (firm: LawFirm) => {
+    firm.status = 'active';
+    if (!firm.subscription) {
+      // Create default subscription
+      firm.subscription = {
+        planTier: 'professional',
+        planNameAr: 'الباقة الاحترافية',
+        planNameEn: 'Professional Plan',
+        status: 'active',
+        isSiteActive: true,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year
+        annualFee: 0
+      };
+    } else {
+      firm.subscription.isSiteActive = true;
+    }
+    
+    await firmService.saveFirm(firm);
+    showToast(isAr ? 'تمت الموافقة على المكتب بنجاح وتفعيله' : 'Firm approved successfully');
+    refreshFirms();
   };
 
   const filteredFirms = firms.filter((f) => {
@@ -248,6 +348,19 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             <span>{isAr ? 'قاعدة Supabase والمزامنة السحابية' : 'Supabase Cloud Sync'}</span>
           </button>
 
+          
+          <button
+            onClick={() => setActiveTab('platform')}
+            className={`pb-3 px-3 font-semibold border-b-2 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              activeTab === 'platform'
+                ? 'border-[#c5a869] text-[#c5a869]'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Layout className="w-4 h-4" />
+            <span>{isAr ? 'تصميم المنصة' : 'Platform UI'}</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('domains')}
             className={`pb-3 px-3 font-semibold border-b-2 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
@@ -279,6 +392,12 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               onFirmsUpdated={refreshFirms}
               showToast={showToast}
             />
+          )}
+
+
+          {/* TAB 4: PLATFORM UI SETTINGS */}
+          {activeTab === 'platform' && (
+            <PlatformSettingsTab lang={lang} />
           )}
 
           {/* TAB 1: LAW FIRMS LIST & LANDING PAGES */}
@@ -338,16 +457,21 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                               {firm.cityAr}
                             </span>
                           )}
-                          {/* Live / Suspended badge */}
-                          {isFirmLive ? (
-                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              <span>{isAr ? 'الموقع مفعل' : 'Live'}</span>
+                          {/* Live / Suspended / Pending badge */}
+                          {firm.status === 'pending' ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              <span>{isAr ? 'قيد المراجعة' : 'Pending'}</span>
                             </span>
-                          ) : (
+                          ) : firm.status === 'suspended' || !isFirmLive ? (
                             <span className="px-2 py-0.5 rounded text-[10px] bg-rose-500/15 text-rose-400 border border-rose-500/30 flex items-center gap-1">
                               <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
                               <span>{isAr ? 'الموقع متوقف' : 'Suspended'}</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              <span>{isAr ? 'الموقع مفعل' : 'Live'}</span>
                             </span>
                           )}
                         </div>
@@ -381,19 +505,32 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
                       {/* Firm Actions */}
                       <div className="flex flex-wrap items-center gap-2 justify-end border-t md:border-t-0 pt-2 md:pt-0 border-slate-800">
+                        {firm.status === 'pending' && (
+                          <button
+                            onClick={() => handleApproveFirm(firm)}
+                            className="px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                            title={isAr ? 'اعتماد المكتب وتفعيل الاشتراك' : 'Approve firm and activate subscription'}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{isAr ? 'اعتماد المكتب' : 'Approve'}</span>
+                          </button>
+                        )}
+                        
                         {/* Quick Toggle Site Live / Suspended */}
-                        <button
-                          onClick={() => handleToggleSiteActive(firm)}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
-                            isFirmLive
-                              ? 'bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300'
-                              : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
-                          }`}
-                          title={isFirmLive ? (isAr ? 'إيقاف موقع المكتب مؤقتاً' : 'Suspend site') : (isAr ? 'تفعيل موقع المكتب' : 'Activate site')}
-                        >
-                          <Power className="w-3.5 h-3.5" />
-                          <span>{isFirmLive ? (isAr ? 'إيقاف الموقع' : 'Suspend') : (isAr ? 'تفعيل الموقع' : 'Activate')}</span>
-                        </button>
+                        {firm.status !== 'pending' && (
+                          <button
+                            onClick={() => handleToggleSiteActive(firm)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition cursor-pointer ${
+                              isFirmLive
+                                ? 'bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300'
+                                : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                            }`}
+                            title={isFirmLive ? (isAr ? 'إيقاف موقع المكتب مؤقتاً' : 'Suspend site') : (isAr ? 'تفعيل موقع المكتب' : 'Activate site')}
+                          >
+                            <Power className="w-3.5 h-3.5" />
+                            <span>{isFirmLive ? (isAr ? 'إيقاف الموقع' : 'Suspend') : (isAr ? 'تفعيل الموقع' : 'Activate')}</span>
+                          </button>
+                        )}
 
                         {/* Open Live Pure Landing Page */}
                         <a

@@ -16,6 +16,24 @@ const STORAGE_KEY_ACTIVE_SLUG = 'aladl_active_firm_slug_v1';
 const STORAGE_KEY_DEFAULT_PUBLIC_SLUG = 'aladl_default_public_firm_slug_v1';
 
 export function ensureFirmSubscription(firm: LawFirm): LawFirm {
+  if (!firm.status) {
+    firm.status = 'active';
+  }
+  if (!firm.nameAr && firm.data?.settings?.firmNameAr) {
+    firm.nameAr = firm.data.settings.firmNameAr;
+  }
+  if (!firm.nameEn && firm.data?.settings?.firmNameEn) {
+    firm.nameEn = firm.data.settings.firmNameEn;
+  }
+  if (!firm.cityAr && (firm.data as any)?.offices?.[0]?.cityAr) {
+    firm.cityAr = (firm.data as any).offices[0].cityAr;
+  }
+  if (!firm.taglineAr && firm.data?.settings?.sloganAr) {
+    firm.taglineAr = firm.data.settings.sloganAr;
+  }
+  if (!firm.logoUrl && (firm.data?.settings as any)?.customLogoUrl) {
+    firm.logoUrl = (firm.data?.settings as any).customLogoUrl;
+  }
   const oneYearAhead = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
   if (!firm.subscription) {
     firm.subscription = {
@@ -85,6 +103,7 @@ export function createDefaultFirms(): LawFirm[] {
     email: 'contact@aladl-law.com',
     licenseNumber: 'SA-LAW-2010-884',
     adminPassword: 'AlAdlAdmin2025',
+    status: 'active',
     isVerified: true,
     featured: true,
     themeColor: '#c5a869',
@@ -142,6 +161,7 @@ export function createDefaultFirms(): LawFirm[] {
     email: 'avocat.a.nahwi@gmail.com',
     licenseNumber: 'UAE-INTL-9041',
     adminPassword: '123456',
+    status: 'active',
     isVerified: true,
     featured: true,
     isDefaultPublic: true,
@@ -197,6 +217,7 @@ export function createDefaultFirms(): LawFirm[] {
     email: 'info@alnokhba-legal.com',
     licenseNumber: 'KSA-FIN-8874',
     adminPassword: '123456',
+    status: 'active',
     isVerified: true,
     featured: false,
     themeColor: '#059669',
@@ -250,6 +271,13 @@ class FirmService {
       }
     } catch (e) {
       console.warn('Error reading local firms cache', e);
+    }
+
+    if (this.memoryFirms.length === 0) {
+      this.memoryFirms = createDefaultFirms();
+      if (typeof window !== 'undefined') {
+        this.saveToLocalCache();
+      }
     }
   }
 
@@ -376,7 +404,20 @@ class FirmService {
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          this.memoryFirms = json.data.map((f: LawFirm) => ensureFirmSubscription(f));
+          const serverFirms = json.data.map((f: LawFirm) => ensureFirmSubscription(f));
+          const defaults = createDefaultFirms();
+          const combined = [...serverFirms];
+          for (const df of defaults) {
+            if (!combined.some(f => f.slug === df.slug)) {
+              combined.push(df);
+            }
+          }
+          for (const mf of this.memoryFirms) {
+            if (!combined.some(f => f.slug === mf.slug)) {
+              combined.push(mf);
+            }
+          }
+          this.memoryFirms = combined;
           this.saveToLocalCache();
         }
       }
@@ -1075,7 +1116,7 @@ class FirmService {
 
   public getAllFirms(): LawFirm[] {
     if (this.memoryFirms.length === 0) {
-      this.init();
+      this.initLocal();
     }
     return [...this.memoryFirms];
   }
@@ -1369,6 +1410,7 @@ class FirmService {
       email: info.email || 'info@lawfirm.com',
       licenseNumber: info.licenseNumber || '',
       adminPassword: info.adminPassword || '123456',
+      status: 'active',
       isVerified: true,
       featured: false,
       themeColor: info.themeColor || '#c5a869',

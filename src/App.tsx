@@ -21,17 +21,23 @@ import { SuperAdminDashboard } from './components/SuperAdminDashboard';
 import { LawyerSiteBuilderModal } from './components/LawyerSiteBuilderModal';
 import { FirmsDirectoryModal } from './components/FirmsDirectoryModal';
 import { FirmSuspendedNotice } from './components/FirmSuspendedNotice';
+import { PlatformLanding } from './components/PlatformLanding';
 import { storageService } from './services/storageService';
 import { firmService } from './services/firmService';
 import { applyTypographySettings } from './services/typographyService';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, Language, LawFirm } from './types';
 
 // Eagerly initialize cache synchronously before React even starts rendering for INSTANT load
+let initialIsPlatformView = false;
 if (typeof window !== 'undefined') {
   firmService.initLocal();
   const urlParams = new URLSearchParams(window.location.search);
-  const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
-  if (urlSlug && firmService.getFirmBySlug(urlSlug)) {
+  const urlSlug = urlParams.get('firm');
+  
+  if (!urlSlug && window.location.pathname === '/') {
+    // Platform View by default if no firm specified
+    initialIsPlatformView = true;
+  } else if (urlSlug && firmService.getFirmBySlug(urlSlug)) {
     storageService.loadFirm(urlSlug, false);
   } else {
     storageService.init();
@@ -39,6 +45,8 @@ if (typeof window !== 'undefined') {
 }
 
 export default function App() {
+  const [isPlatformView, setIsPlatformView] = useState(initialIsPlatformView);
+  
   const [lang, setLang] = useState<Language>('ar');
   const [settings, setSettings] = useState<SiteSettings>(() => storageService.getSettings());
   const [partners, setPartners] = useState<Partner[]>(() => storageService.getPartners());
@@ -51,6 +59,8 @@ export default function App() {
   // App Initialization state: Skip loading screen entirely if data is already locally cached
   const [isInitializing, setIsInitializing] = useState(() => {
     if (typeof window === 'undefined') return true;
+    if (initialIsPlatformView) return false;
+    
     const urlParams = new URLSearchParams(window.location.search);
     const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
     if (urlSlug && !firmService.getFirmBySlug(urlSlug)) {
@@ -96,6 +106,17 @@ export default function App() {
     const loadAppData = async () => {
       // 1. Instantly read local cache
       firmService.initLocal();
+      
+      if (initialIsPlatformView) {
+        setIsInitializing(false);
+        firmService.init(); // fetch firms in background for admin panel
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('admin') === 'super' || urlParams.get('super') === '1' || urlParams.get('superadmin') === 'true') {
+          setIsSuperAdminOpen(true);
+        }
+        return;
+      }
       
       const urlParams = new URLSearchParams(window.location.search);
       const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
@@ -234,6 +255,34 @@ export default function App() {
         <div className="w-12 h-12 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin"></div>
         <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse">جاري تحميل بيانات المكتب...</p>
       </div>
+    );
+  }
+
+  if (isPlatformView) {
+    return (
+      <>
+        <PlatformLanding 
+          onAdminClick={() => setIsSuperAdminOpen(true)}
+          lang={lang}
+        />
+        {/* Render SuperAdminDashboard conditionally on top of the landing page */}
+        {isSuperAdminOpen && (
+          <SuperAdminDashboard
+            isOpen={isSuperAdminOpen}
+            onClose={() => setIsSuperAdminOpen(false)}
+            lang={lang}
+            onSelectFirmToManage={(firmSlug: string) => {
+              // If super admin switches to a firm from platform view, we need to exit platform view and load the firm
+              setIsSuperAdminOpen(false);
+              setIsPlatformView(false);
+              firmService.setActiveFirmSlug(firmSlug);
+              storageService.switchFirm(firmSlug);
+              refreshData();
+            }}
+            onOpenCreateModal={() => {}}
+          />
+        )}
+      </>
     );
   }
 

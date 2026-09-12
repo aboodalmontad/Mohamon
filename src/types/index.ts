@@ -149,6 +149,22 @@ export interface ContactMessage {
   responseNote?: string;
 }
 
+export interface PlatformSettings {
+  platformNameAr: string;
+  platformNameEn: string;
+  heroBadgeAr: string;
+  heroBadgeEn: string;
+  heroHeadingAr: string;
+  heroHeadingEn: string;
+  heroSubheadingAr: string;
+  heroSubheadingEn: string;
+  heroBannerUrl?: string;
+  ctaPrimaryAr: string;
+  ctaPrimaryEn: string;
+  ctaSecondaryAr: string;
+  ctaSecondaryEn: string;
+}
+
 export interface SiteSettings {
   firmNameAr: string;
   firmNameEn: string;
@@ -351,6 +367,7 @@ export interface LawFirm {
   isDefaultPublic?: boolean; // When deployed to Vercel, indicates this is the primary firm shown on the root domain
   customDomain?: string; // Optional custom domain mapping, e.g. www.nahwi-law.com
   themeColor?: string;
+  status?: 'pending' | 'active' | 'suspended';
   createdAt: string;
   updatedAt: string;
   data: LawFirmData;
