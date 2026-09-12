@@ -1,4 +1,5 @@
 import { LawFirm, LawFirmData, SiteSettings, FirmSubscription, SubscriptionPlanTier, SubscriptionStatus } from '../types';
+import prepackagedFirms from '../../public/firms_data.json';
 import { 
   initialPartners, 
   initialPracticeAreas, 
@@ -243,7 +244,24 @@ export function createDefaultFirms(): LawFirm[] {
     },
   };
 
-  return [primaryFirm, nahwiFirm, eliteFirm];
+  const seedDefaults = [primaryFirm, nahwiFirm, eliteFirm];
+  const combined: LawFirm[] = [];
+
+  if (Array.isArray(prepackagedFirms) && prepackagedFirms.length > 0) {
+    for (const raw of prepackagedFirms) {
+      if (raw && raw.slug) {
+        combined.push(ensureFirmSubscription(raw as LawFirm));
+      }
+    }
+  }
+
+  for (const df of seedDefaults) {
+    if (!combined.some(f => f.slug === df.slug)) {
+      combined.push(df);
+    }
+  }
+
+  return combined;
 }
 
 class FirmService {
@@ -396,33 +414,52 @@ class FirmService {
     }
   }
 
-  // Fetch all firms from the Express backend
+  // Fetch all firms from the Express backend or static asset fallback
   private async fetchFromServer(): Promise<void> {
     if (typeof fetch === 'undefined') return;
+    let fetchedFirms: LawFirm[] = [];
+
     try {
       const res = await fetch('/api/firms');
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const serverFirms = json.data.map((f: LawFirm) => ensureFirmSubscription(f));
-          const defaults = createDefaultFirms();
-          const combined = [...serverFirms];
-          for (const df of defaults) {
-            if (!combined.some(f => f.slug === df.slug)) {
-              combined.push(df);
-            }
-          }
-          for (const mf of this.memoryFirms) {
-            if (!combined.some(f => f.slug === mf.slug)) {
-              combined.push(mf);
-            }
-          }
-          this.memoryFirms = combined;
-          this.saveToLocalCache();
+          fetchedFirms = json.data;
         }
       }
     } catch (e) {
-      // Background non-fatal
+      // API non-fatal
+    }
+
+    // Static public JSON asset fallback (/firms_data.json)
+    if (fetchedFirms.length === 0) {
+      try {
+        const res = await fetch('/firms_data.json');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            fetchedFirms = data;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (fetchedFirms.length > 0) {
+      const serverFirms = fetchedFirms.map((f: LawFirm) => ensureFirmSubscription(f));
+      const defaults = createDefaultFirms();
+      const combined = [...serverFirms];
+      for (const df of defaults) {
+        if (!combined.some(f => f.slug === df.slug)) {
+          combined.push(df);
+        }
+      }
+      for (const mf of this.memoryFirms) {
+        if (!combined.some(f => f.slug === mf.slug)) {
+          combined.push(mf);
+        }
+      }
+      this.memoryFirms = combined;
+      this.saveToLocalCache();
     }
   }
 
@@ -474,10 +511,16 @@ class FirmService {
           return ensureFirmSubscription(firmObj);
         });
 
-        this.memoryFirms = loadedFirms;
+        const combined = [...loadedFirms];
+        for (const mf of this.memoryFirms) {
+          if (!combined.some(f => f.slug === mf.slug)) {
+            combined.push(mf);
+          }
+        }
+        this.memoryFirms = combined;
         this.saveToLocalCache();
-        this.pushToServer(loadedFirms).catch(() => {});
-        return { success: true, count: loadedFirms.length, message: `تم جلب ${loadedFirms.length} مكتب من Supabase بنجاح مع بيانات الاشتراكات` };
+        this.pushToServer(combined).catch(() => {});
+        return { success: true, count: combined.length, message: `تم جلب ${loadedFirms.length} مكتب من Supabase بنجاح ودمج كافة المكاتب` };
       }
 
       return { success: true, count: 0, message: 'لا توجد مكاتب بعد في Supabase' };
@@ -1616,6 +1659,24 @@ class FirmService {
     }
 
     this.memoryFirms = this.memoryFirms.filter((f) => f.id !== firmToDelete.id && f.slug !== firmToDelete.slug);
+
+    // If active firm was deleted, fallback to first available firm
+    const currentActiveSlug = this.getActiveFirmSlug();
+    if (currentActiveSlug === firmToDelete.slug) {
+      const nextFirm = this.memoryFirms[0];
+      if (nextFirm) {
+        this.setActiveFirmSlug(nextFirm.slug, false);
+      }
+    }
+
+    const currentDefaultSlug = this.getDefaultPublicFirmSlug();
+    if (currentDefaultSlug === firmToDelete.slug) {
+      const nextFirm = this.memoryFirms[0];
+      if (nextFirm) {
+        this.setDefaultPublicFirm(nextFirm.slug);
+      }
+    }
+
     this.saveToLocalCache();
     
     // 1. Delete from Backend JSON storage

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   X, Users, Scale, MessageSquare, Star, BookOpen, Settings, 
-  Plus, Trash2, Edit3, Save, Check, Shield, AlertCircle, 
+  Plus, Trash2, Edit3, Save, Check, Shield, AlertCircle, ShieldCheck,
   Download, Upload, RefreshCw, Eye, Phone, Mail, Clock, CheckCircle2,
   Trophy, Building, Search, Filter, Key, ExternalLink, Sparkles, Image as ImageIcon,
   UserCheck, Briefcase, UserPlus, GraduationCap, Building2, Gavel, Landmark, Globe, Layers, Tag,
@@ -1227,6 +1227,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 <Download className="w-4 h-4" />
                 <span>{isAr ? 'النسخ الاحتياطي والبيانات' : 'Backup & Restore'}</span>
               </button>
+
+              {/* PLATFORM OWNER MASTER LINK - PROMINENT FOR THE MANAGER */}
+              {onOpenSuperAdmin && (
+                <button
+                  onClick={onOpenSuperAdmin}
+                  className="w-full mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-950/60 flex items-center gap-2.5 transition transform hover:scale-[1.02] active:scale-95 cursor-pointer border border-amber-400/50"
+                >
+                  <ShieldCheck className="w-5 h-5 text-slate-950" />
+                  <span className="flex flex-col items-start leading-none">
+                    <span className="text-[10px] opacity-70 uppercase tracking-tighter">{isAr ? 'وصول المالك' : 'Master Access'}</span>
+                    <span>{isAr ? 'إدارة المنصة والاشتراكات' : 'Platform Management'}</span>
+                  </span>
+                </button>
+              )}
             </div>
 
             {/* Main Content View Area */}

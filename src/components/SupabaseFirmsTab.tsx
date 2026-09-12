@@ -2,30 +2,22 @@ import React, { useState, useEffect } from 'react';
 import {
   Database,
   Globe2,
-  Building2,
-  PlusCircle,
   RefreshCw,
   Copy,
   Check,
   ExternalLink,
   ShieldCheck,
   AlertTriangle,
-  KeyRound,
-  Trash2,
   CheckCircle2,
   Code2,
   Upload,
   Download,
-  Search,
   Sparkles,
-  ArrowRight,
   ShieldAlert
 } from 'lucide-react';
 import { supabaseConfigService, testSupabaseConnection, SUPABASE_SQL_SCHEMA, SUPABASE_QUICK_RLS_FIX_SQL } from '../lib/supabase';
 import { firmService } from '../services/firmService';
-import { storageService } from '../services/storageService';
 import { LawFirm, SupabaseConfig, Language } from '../types';
-import { COUNTRIES_LIST } from '../data/countries';
 
 interface SupabaseFirmsTabProps {
   lang: Language;
@@ -59,29 +51,9 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
   const [copiedColumnFix, setCopiedColumnFix] = useState(false);
   const [copiedRlsFix, setCopiedRlsFix] = useState(false);
 
-  // Law Firms Management
+  // Law Firms Management (Only for context, list is removed)
   const [firms, setFirms] = useState<LawFirm[]>([]);
   const [activeSlug, setActiveSlug] = useState<string>(firmService.getActiveFirmSlug());
-  const [searchQuery, setSearchQuery] = useState('');
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
-
-  // New Firm creation modal/form
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newNameAr, setNewNameAr] = useState('');
-  const [newNameEn, setNewNameEn] = useState('');
-  const [newSlug, setNewSlug] = useState('');
-  const [newCityAr, setNewCityAr] = useState('');
-  const [newCountryAr, setNewCountryAr] = useState('المملكة العربية السعودية');
-  const [newPhone, setNewPhone] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('123456');
-  const [newTaglineAr, setNewTaglineAr] = useState('');
-  const [isSubmittingNew, setIsSubmittingNew] = useState(false);
-
-  // Custom Delete Confirmation Modal state
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [firmToDelete, setFirmToDelete] = useState<{ slug: string; nameAr: string } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const refreshFirms = () => {
     const list = firmService.getAllFirms();
@@ -214,22 +186,8 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
     setTimeout(() => setCopiedRlsFix(false), 2500);
   };
 
-  // Switch active firm to edit
-  const handleSwitchFirm = (slug: string) => {
-    storageService.switchFirm(slug);
-    setActiveSlug(slug);
-    refreshFirms();
-    if (onFirmSwitched) {
-      onFirmSwitched(slug);
-    }
-    setSyncFeedback({
-      type: 'success',
-      msg: `تم التبديل إلى مكتب [${slug}] بنجاح! يمكنك الآن تعديل بياناته وأقسامه في التبويبات الأخرى.`,
-    });
-    setTimeout(() => setSyncFeedback(null), 4000);
-  };
-
   // Copy firm link
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const handleCopyLink = (slug: string) => {
     const url = new URL(window.location.origin + window.location.pathname);
     url.searchParams.set('firm', slug);
@@ -238,121 +196,43 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
     setTimeout(() => setCopiedSlug(null), 2500);
   };
 
-  // Delete firm - step 1: show confirm modal
-  const handleDeleteFirm = (slug: string, nameAr: string) => {
-    if (slug === 'al-adl') {
-      setSyncFeedback({ type: 'error', msg: 'لا يمكن حذف المكتب الافتراضي للمنصة.' });
-      return;
-    }
-    setFirmToDelete({ slug, nameAr });
-    setShowDeleteConfirm(true);
-  };
-
-  // Delete firm - step 2: actual execution
-  const performDeleteFirm = async () => {
-    if (!firmToDelete) return;
-    
-    setIsDeleting(true);
-    try {
-      const res = await firmService.deleteFirm(firmToDelete.slug);
-      if (res.success) {
-        setSyncFeedback({ type: 'success', msg: res.message });
-        refreshFirms();
-      } else {
-        setSyncFeedback({ type: 'error', msg: res.message });
-      }
-    } catch (err: any) {
-      setSyncFeedback({ type: 'error', msg: err.message || 'حدث خطأ أثناء الحذف' });
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-      setFirmToDelete(null);
-    }
-  };
-
-  // Create new firm
-  const handleCreateNewFirm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNameAr.trim()) return;
-
-    setIsSubmittingNew(true);
-    try {
-      const selectedCountryObj = COUNTRIES_LIST.find(c => c.ar === newCountryAr) || { ar: 'المملكة العربية السعودية', en: 'Saudi Arabia' };
-      const res = await firmService.createFirm({
-        nameAr: newNameAr.trim(),
-        nameEn: newNameEn.trim(),
-        slug: newSlug.trim() || undefined,
-        cityAr: newCityAr.trim() || 'الرياض',
-        countryAr: selectedCountryObj.ar,
-        countryEn: selectedCountryObj.en,
-        phone: newPhone.trim(),
-        email: newEmail.trim(),
-        adminPassword: newPassword.trim() || '123456',
-        taglineAr: newTaglineAr.trim(),
-      });
-
-      if (res.success && res.firm) {
-        refreshFirms();
-        setShowAddModal(false);
-        setNewNameAr('');
-        setNewNameEn('');
-        setNewSlug('');
-        setNewCityAr('');
-        setNewPhone('');
-        setNewEmail('');
-        setSyncFeedback({
-          type: 'success',
-          msg: `تم تسجيل مكتب "${res.firm.nameAr}" بنجاح وتوفير موقعه فوراً!`,
-        });
-      } else {
-        setSyncFeedback({
-          type: 'error',
-          msg: res.message || 'فشل في إنشاء المكتب',
-        });
-      }
-    } catch (err: any) {
-      setSyncFeedback({
-        type: 'error',
-        msg: err.message || 'حدث خطأ غير متوقع',
-      });
-    } finally {
-      setIsSubmittingNew(false);
-    }
-  };
-
-  const filteredFirms = firms.filter(
-    (f) =>
-      (f.nameAr || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.nameEn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.slug || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.cityAr || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
     <div className="space-y-8">
       {/* Top Banner Alert */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-[#1c1813] to-slate-900 border border-[#c5a869]/40 shadow-xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-[#d4b068] text-xs font-bold mb-1">
+      <div className="p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-[#1c1813] to-slate-900 border border-[#c5a869]/40 shadow-2xl relative overflow-hidden">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-[#d4b068] text-[11px] font-bold uppercase tracking-widest mb-1">
               <Globe2 className="w-4 h-4" />
-              <span>منصة متعددة المكاتب القانونية (Multi-Tenant Legal Platform)</span>
+              <span>{isAr ? 'منصة متعددة المكاتب (Multi-Tenant Platform)' : 'Multi-Tenant Legal Platform'}</span>
             </div>
-            <h3 className="text-xl font-bold text-white font-serif-title">
-              إدارة شبكة المكاتب وقاعدة بيانات Supabase السحابية
+            <h3 className="text-2xl sm:text-3xl font-bold text-white font-serif-title leading-tight">
+              {isAr ? 'فتح قاعدة البيانات والمزامنة السحابية' : 'Cloud Database & Global Sync Center'}
             </h3>
-            <p className="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
-              يمكّنك هذا القسم من ربط المنصة بقاعدة بيانات Supabase لخدمة مئات المكاتب القانونية، بحيث يمتلك كل مكتب موقعه المستقل وبياناته ولوحة تحكمه الخاصة، مع حفظ التعديلات سحابياً لتظهر للزوار حول العالم.
+            <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
+              {isAr 
+                ? 'تحكم مركزي وشامل في ربط المنصة بقاعدة بيانات Supabase العالمية. يمكنك مزامنة مئات المكاتب وتحديث بياناتهم سحابياً بضغطة زر واحدة لتظهر فوراً لعملائهم حول العالم.' 
+                : 'Centralized control for linking the platform to global Supabase database. Sync hundreds of firms and update their data to the cloud instantly.'}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <button
-              onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#b38a38] to-[#87641d] hover:brightness-110 text-white font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer"
+              onClick={handlePushAllToSupabase}
+              disabled={isSyncingToSupabase || isFetchingFromSupabase}
+              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-slate-950 font-black text-sm flex items-center justify-center gap-2.5 transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-xl shadow-emerald-950/40 cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>إضافة مكتب قانوني جديد</span>
+              {isSyncingToSupabase ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Upload className="w-6 h-6" />}
+              <span>{isAr ? 'مزامنة ورفع الكل للسحابة' : 'Global Sync & Upload'}</span>
+            </button>
+
+            <button
+              onClick={handleFetchFromSupabase}
+              disabled={isSyncingToSupabase || isFetchingFromSupabase}
+              className="px-6 py-3.5 rounded-2xl bg-slate-950/80 hover:bg-slate-900 text-white font-bold text-sm flex items-center justify-center gap-2.5 border border-slate-700 transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-lg cursor-pointer"
+            >
+              {isFetchingFromSupabase ? <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" /> : <Download className="w-6 h-6 text-emerald-400" />}
+              <span>{isAr ? 'جلب وتحديث البيانات' : 'Pull from Cloud'}</span>
             </button>
           </div>
         </div>
@@ -427,15 +307,15 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
         </div>
       )}
 
-      {/* Active Firm Highlight Badge */}
-      <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5">
-          <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-slate-400">أنت تدير وتعدل حالياً بيانات موقع:</span>
-          <span className="font-bold text-[#d4b068] text-sm font-serif-title">
+      {/* Active Firm Summary for Context (Platform-Level View) */}
+      <div className="px-5 py-4 rounded-2xl bg-slate-800 border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm shadow-xl mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse" />
+          <span className="text-slate-200 font-bold">{isAr ? 'نطاق الإدارة الحالي:' : 'Current Management Scope:'}</span>
+          <span className="font-extrabold text-[#c5a869] font-serif-title text-base tracking-tight bg-black/30 px-3 py-1 rounded-lg border border-white/5">
             {firms.find((f) => f.slug === activeSlug)?.nameAr || activeSlug}
           </span>
-          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono text-[11px]">
+          <span className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 font-mono text-xs">
             ?firm={activeSlug}
           </span>
         </div>
@@ -443,19 +323,19 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleCopyLink(activeSlug)}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition shadow-sm cursor-pointer"
+            title={isAr ? 'نسخ رابط المكتب' : 'Copy link'}
           >
             {copiedSlug === activeSlug ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>نسخ رابط هذا المكتب</span>
           </button>
           <a
             href={`/?firm=${activeSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1.5 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-[#c5a869] border border-slate-800 transition shadow-sm"
+            title={isAr ? 'فتح المعاينة' : 'Open Preview'}
           >
-            <ExternalLink className="w-3.5 h-3.5 text-[#d4b068]" />
-            <span>عرض موقع المكتب</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>
@@ -633,392 +513,6 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
           </div>
         )}
       </div>
-
-      {/* SECTION 2: LAW FIRMS DIRECTORY LIST */}
-      <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
-          <div>
-            <h4 className="text-base font-bold text-white font-serif-title">
-              شبكة وقائمة المكاتب القانونية المسجلة ({firms.length} مكتب)
-            </h4>
-            <p className="text-xs text-slate-400">
-              يمكنك التبديل فوراً لإدارة وتعديل أي مكتب، أو مشاركة رابطه المباشر المستقل
-            </p>
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 absolute right-3 top-3 text-slate-400 rtl:right-3 rtl:left-auto" />
-            <input
-              type="text"
-              placeholder="ابحث بالاسم أو الرابط أو المدينة..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-9 pl-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Table of Firms */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-xs">
-            <thead className="bg-slate-950/80 text-slate-400 border-b border-slate-800 font-semibold">
-              <tr>
-                <th className="p-3">المكتب القانوني</th>
-                <th className="p-3">المعرف (Slug)</th>
-                <th className="p-3">المدينة</th>
-                <th className="p-3">التواصل</th>
-                <th className="p-3">كلمة مرور المدير</th>
-                <th className="p-3">الحالة</th>
-                <th className="p-3 text-center">الإجراءات</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {filteredFirms.map((firm) => {
-                const isActive = firm.slug === activeSlug;
-                const isCopied = copiedSlug === firm.slug;
-
-                return (
-                  <tr
-                    key={firm.id}
-                    className={`transition-colors ${
-                      isActive ? 'bg-[#c5a869]/10' : 'hover:bg-slate-800/50'
-                    }`}
-                  >
-                    {/* Name & Badge */}
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 text-[#d4b068] font-bold flex items-center justify-center font-serif-title">
-                          {firm.nameAr.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="font-bold text-white flex items-center gap-1.5">
-                            <span>{firm.nameAr}</span>
-                            {isActive && (
-                              <span className="px-1.5 py-0.2 rounded bg-[#c5a869] text-slate-950 text-[10px] font-bold">
-                                النشط حالياً
-                              </span>
-                            )}
-                          </div>
-                          {firm.nameEn && <span className="text-[10px] text-slate-400">{firm.nameEn}</span>}
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Slug */}
-                    <td className="p-3 font-mono text-slate-300">
-                      <span className="bg-slate-950 px-2 py-1 rounded border border-slate-800">
-                        {firm.slug}
-                      </span>
-                    </td>
-
-                    {/* City */}
-                    <td className="p-3 text-slate-300">{firm.cityAr || 'غير محدد'}</td>
-
-                    {/* Contact */}
-                    <td className="p-3 text-slate-300">
-                      <div className="space-y-0.5">
-                        {firm.phone && <div dir="ltr">{firm.phone}</div>}
-                        {firm.email && <div className="text-[10px] text-slate-400">{firm.email}</div>}
-                      </div>
-                    </td>
-
-                    {/* Password */}
-                    <td className="p-3 font-mono text-amber-300">
-                      <span className="bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                        {firm.adminPassword || '123456'}
-                      </span>
-                    </td>
-
-                    {/* Verification */}
-                    <td className="p-3">
-                      {firm.isVerified ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">
-                          <ShieldCheck className="w-3 h-3" />
-                          <span>معتمد</span>
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-400">قيد المراجعة</span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="p-3">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {/* Switch to edit this firm */}
-                        {!isActive ? (
-                          <button
-                            type="button"
-                            onClick={() => handleSwitchFirm(firm.slug)}
-                            className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#b38a38] to-[#87641d] hover:brightness-110 text-white font-bold text-[11px] transition-all cursor-pointer"
-                            title="الانتقال لإدارة وتعديل بيانات هذا المكتب"
-                          >
-                            تعديل هذا المكتب
-                          </button>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-[11px]">
-                            يتم تعديله الآن
-                          </span>
-                        )}
-
-                        {/* Copy Link */}
-                        <button
-                          type="button"
-                          onClick={() => handleCopyLink(firm.slug)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
-                          title="نسخ رابط المكتب"
-                        >
-                          {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
-
-                        {/* Visit Site */}
-                        <a
-                          href={`/?firm=${firm.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-                          title="زيارة موقع المكتب المستقل"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-
-                        {/* Delete firm */}
-                        {firm.slug !== 'al-adl' && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFirm(firm.slug, firm.nameAr)}
-                            className="p-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-400 border border-rose-900 transition-colors cursor-pointer"
-                            title="حذف المكتب"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* CREATE NEW LAW FIRM MODAL */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="w-full max-w-xl p-6 rounded-3xl bg-slate-900 border border-[#c5a869]/60 shadow-2xl text-right space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-white font-bold font-serif-title text-base">
-                <Building2 className="w-5 h-5 text-[#d4b068]" />
-                <span>إضافة وتسجيل مكتب قانوني جديد على المنصة</span>
-              </div>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateNewFirm} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    اسم المكتب بالعربية <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="مثال: مكتب الأستاذ فهد السبيعي"
-                    value={newNameAr}
-                    onChange={(e) => {
-                      setNewNameAr(e.target.value);
-                      if (!newSlug) {
-                        setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]+/g, '-').slice(0, 30));
-                      }
-                    }}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    اسم المكتب بالإنجليزية
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Fahad Al-Subaie Law"
-                    value={newNameEn}
-                    onChange={(e) => setNewNameEn(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    معرف الرابط (Slug) <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="fahad-law"
-                    value={newSlug}
-                    onChange={(e) => setNewSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]+/g, '-'))}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white font-mono focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    المدينة
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="الرياض"
-                    value={newCityAr}
-                    onChange={(e) => setNewCityAr(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    الدولة التي يعمل فيها
-                  </label>
-                  <select
-                    value={newCountryAr}
-                    onChange={(e) => setNewCountryAr(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  >
-                    {COUNTRIES_LIST.map((c) => (
-                      <option key={c.ar} value={c.ar}>{c.ar}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    رقم الهاتف / واتساب
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="+966 50 000 0000"
-                    value={newPhone}
-                    onChange={(e) => setNewPhone(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    البريد الإلكتروني
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="info@subaielaw.com"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    كلمة مرور مدير المكتب للوحة التحكم <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="123456"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white font-mono focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    شعار / نبذة سريعة
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="مكتب محاماة واستشارات قانونية"
-                    value={newTaglineAr}
-                    onChange={(e) => setNewTaglineAr(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
-                >
-                  إلغاء
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingNew}
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#b38a38] to-[#87641d] hover:brightness-110 text-white text-xs font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmittingNew ? 'جارٍ الإنشاء...' : 'إنشاء وتفعيل المكتب فوراً'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* CUSTOM DELETE CONFIRMATION MODAL */}
-      {showDeleteConfirm && firmToDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="w-full max-w-md p-8 rounded-3xl bg-slate-900 border border-rose-500/30 shadow-2xl text-center space-y-6">
-            <div className="w-20 h-20 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-500">
-              <AlertTriangle className="w-10 h-10 animate-bounce" />
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="text-xl font-bold text-white font-serif-title">
-                هل أنت متأكد من حذف هذا المكتب؟
-              </h4>
-              <p className="text-sm text-slate-400 leading-relaxed px-4">
-                أنت على وشك حذف مكتب <span className="text-rose-400 font-bold">"{firmToDelete.nameAr}"</span> نهائياً. سيتم إزالة كافة البيانات المرتبطة به من السحاب والملفات المحلية. لا يمكن التراجع عن هذا الإجراء.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-                className="flex-1 px-4 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold transition-colors disabled:opacity-50"
-              >
-                إلغاء، العودة للخلف
-              </button>
-              <button
-                type="button"
-                onClick={performDeleteFirm}
-                disabled={isDeleting}
-                className="flex-1 px-4 py-3 rounded-2xl bg-gradient-to-r from-rose-600 to-rose-700 hover:brightness-110 text-white text-sm font-bold shadow-lg shadow-rose-900/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {isDeleting ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-                <span>تأكيد الحذف النهائي</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

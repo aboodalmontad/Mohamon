@@ -156,17 +156,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button 
-                onClick={() => setIsRegistrationOpen(true)}
-                className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-8 py-4 rounded-xl text-lg font-medium transition-all shadow-xl shadow-[#c5a869]/20 flex items-center justify-center gap-2"
-              >
-                <span>{isRtl ? settings.ctaPrimaryAr : settings.ctaPrimaryEn}</span>
-                {isRtl ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
-              </button>
-              <button 
                 onClick={() => document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-xl text-lg font-medium transition-all"
+                className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-10 py-4 rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#c5a869]/20 flex items-center justify-center gap-2"
               >
-                {isRtl ? settings.ctaSecondaryAr : settings.ctaSecondaryEn}
+                <Building className="w-5 h-5" />
+                <span>{isRtl ? settings.ctaSecondaryAr : settings.ctaSecondaryEn}</span>
               </button>
             </div>
           </div>
@@ -242,14 +236,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             <div className="text-center py-20 bg-white/5 border border-white/10 rounded-2xl">
               <Scale className="w-12 h-12 text-white/20 mx-auto mb-4" />
               <h4 className="text-xl text-white mb-2">{isRtl ? "لا توجد مكاتب مسجلة حالياً" : "No firms registered currently"}</h4>
-              <p className="text-white/50">كن أول من ينشئ مكتبه الرقمي على منصتنا.</p>
-              <button 
-                onClick={() => setIsRegistrationOpen(true)}
-                className="mt-6 bg-white/10 hover:bg-white/20 text-white px-6 py-2.5 rounded-lg transition-colors inline-flex items-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>إنشاء مكتب جديد</span>
-              </button>
+              <p className="text-white/50">{isRtl ? "يرجى مراجعة إدارة المنصة لتفعيل المكاتب." : "Please contact platform administration to activate firms."}</p>
             </div>
           )}
         </div>

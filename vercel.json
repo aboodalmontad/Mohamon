@@ -1,12 +1,14 @@
 {
   "version": 2,
+  "framework": "vite",
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/index.ts"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api|assets|site_data|firms_data|.*\\..*).*)",
       "destination": "/index.html"
     }
   ]

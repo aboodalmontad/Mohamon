@@ -30,17 +30,22 @@ import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, 
 // Eagerly initialize cache synchronously before React even starts rendering for INSTANT load
 let initialIsPlatformView = false;
 if (typeof window !== 'undefined') {
-  firmService.initLocal();
-  const urlParams = new URLSearchParams(window.location.search);
-  const urlSlug = urlParams.get('firm');
-  
-  if (!urlSlug && window.location.pathname === '/') {
-    // Platform View by default if no firm specified
+  try {
+    firmService.initLocal();
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSlug = urlParams.get('firm');
+    
+    if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
+      // Platform View by default if no firm specified
+      initialIsPlatformView = true;
+    } else if (urlSlug && firmService.getFirmBySlug(urlSlug)) {
+      storageService.loadFirm(urlSlug, false);
+    } else {
+      storageService.init();
+    }
+  } catch (err) {
+    console.warn('Eager init fallback:', err);
     initialIsPlatformView = true;
-  } else if (urlSlug && firmService.getFirmBySlug(urlSlug)) {
-    storageService.loadFirm(urlSlug, false);
-  } else {
-    storageService.init();
   }
 }
 

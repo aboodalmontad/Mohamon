@@ -54,7 +54,6 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
-  const [licenseNumber, setLicenseNumber] = useState('');
   const [themeColor, setThemeColor] = useState('#c5a869');
   const [selectedPractices, setSelectedPractices] = useState<string[]>([
     'corporate', 'arbitration', 'litigation', 'realestate'
@@ -99,7 +98,6 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
         countryEn: selectedCountryObj.en,
         phone: phone.trim() || whatsapp.trim(),
         email: email.trim(),
-        licenseNumber: licenseNumber.trim(),
         adminPassword: adminPassword.trim(),
         themeColor,
       });
@@ -286,19 +284,6 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
                     value={cityAr}
                     onChange={(e) => setCityAr(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    {isAr ? 'رقم ترخيص المحاماة' : 'Bar License Number'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. 42/1892"
-                    value={licenseNumber}
-                    onChange={(e) => setLicenseNumber(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none font-mono"
                   />
                 </div>
               </div>

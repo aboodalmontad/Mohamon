@@ -48,7 +48,6 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
     email: '',
     phone: '',
     adminPassword: '',
-    licenseNumber: '',
     useTemplateData: true
   });
 
@@ -80,7 +79,6 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
       email: formData.email,
       phone: formData.phone,
       logoUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=200',
-      licenseNumber: formData.licenseNumber,
       adminPassword: formData.adminPassword, // Note: In production this would be hashed
       status: 'active',
       isVerified: false,
@@ -258,23 +256,6 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                   <h3 className="text-lg font-medium text-white mb-6">بيانات الاتصال والتوثيق</h3>
                   
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">رقم ترخيص المحاماة *</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-white/40">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <input 
-                        type="text" 
-                        required
-                        value={formData.licenseNumber}
-                        onChange={e => setFormData({...formData, licenseNumber: e.target.value})}
-                        className="w-full bg-black/50 border border-white/10 text-white rounded-xl py-3 pr-11 pl-4 focus:outline-none focus:border-[#c5a869] transition-colors"
-                        placeholder="مثال: 412356"
-                      />
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-white/60 mb-2">البريد الإلكتروني *</label>

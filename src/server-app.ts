@@ -36,7 +36,11 @@ export function ensurePublicDataFile() {
   try {
     if (!fs.existsSync(PUBLIC_DATA_PATH)) {
       const fallback = getFallbackData();
-      fs.writeFileSync(PUBLIC_DATA_PATH, JSON.stringify(fallback, null, 2), 'utf-8');
+      try {
+        fs.writeFileSync(PUBLIC_DATA_PATH, JSON.stringify(fallback, null, 2), 'utf-8');
+      } catch (e) {
+        console.warn('Could not write PUBLIC_DATA_PATH (read-only filesystem):', e);
+      }
     }
     if (!fs.existsSync(FIRMS_DATA_PATH)) {
       const initialFirms = [
@@ -90,10 +94,14 @@ export function ensurePublicDataFile() {
           },
         }
       ];
-      fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(initialFirms, null, 2), 'utf-8');
+      try {
+        fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(initialFirms, null, 2), 'utf-8');
+      } catch (e) {
+        console.warn('Could not write FIRMS_DATA_PATH (read-only filesystem):', e);
+      }
     }
   } catch (err) {
-    console.error('Failed to initialize data files:', err);
+    console.error('Failed to initialize data files safely:', err);
   }
 }
 
