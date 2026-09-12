@@ -463,14 +463,14 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = ({
                         </div>
 
                         {/* Title and tagline */}
-                        <h4 className="font-bold text-base text-stone-900 leading-snug line-clamp-2">
+                        <h4 className="font-bold text-base text-stone-900 leading-snug break-words">
                           {firm.nameAr}
                         </h4>
                         {firm.nameEn && (
-                          <p className="text-xs text-stone-400 font-sans mt-0.5 line-clamp-1">{firm.nameEn}</p>
+                          <p className="text-xs text-stone-400 font-sans mt-0.5 break-words">{firm.nameEn}</p>
                         )}
 
-                        <p className="text-xs text-stone-600 mt-2 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-stone-600 mt-2 break-words leading-relaxed">
                           {firm.taglineAr || firm.data?.settings?.sloganAr || 'مكتب محاماة واستشارات قانونية متكامل.'}
                         </p>
 

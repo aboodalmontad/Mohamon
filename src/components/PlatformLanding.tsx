@@ -118,13 +118,6 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 <Server className="w-4 h-4" />
                 <span>إدارة المنصة</span>
               </button>
-              <button 
-                onClick={() => setIsRegistrationOpen(true)}
-                className="bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 sm:px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>انضم كشريك</span>
-              </button>
             </div>
           </div>
         </div>
@@ -206,37 +199,37 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                   <a 
                     key={firm.id}
                     href={`/?firm=${firm.slug}`}
-                    className="group block bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 hover:border-[#c5a869]/50 transition-all shadow-lg hover:shadow-2xl hover:shadow-[#c5a869]/10"
+                    className="group block bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6 hover:bg-white/10 hover:border-[#c5a869]/50 transition-all shadow-lg hover:shadow-2xl hover:shadow-[#c5a869]/10"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-black/60 shrink-0 border border-white/10 group-hover:border-[#c5a869]/50 transition-colors flex items-center justify-center">
+                    <div className="flex items-start gap-3.5 sm:gap-4">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-black/60 shrink-0 border border-white/10 group-hover:border-[#c5a869]/50 transition-colors flex items-center justify-center">
                         {logo ? (
                           <img src={logo} alt={name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-slate-800/80 text-[#c5a869]">
-                            <Building className="w-8 h-8" />
+                            <Building className="w-7 h-7 sm:w-8 sm:h-8" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-lg font-bold text-white group-hover:text-[#c5a869] transition-colors truncate">
-                            {name}
-                          </h4>
-                        </div>
+                        <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-[#c5a869] transition-colors leading-snug break-words mb-1.5">
+                          {name}
+                        </h4>
+                        
                         {tagline && (
-                          <p className="text-xs text-white/60 line-clamp-1 mb-2 font-normal">
+                          <p className="text-xs text-white/70 mb-3 font-normal leading-relaxed break-words">
                             {tagline}
                           </p>
                         )}
-                        <div className="flex flex-col gap-1.5 mt-2">
-                          <div className="flex items-center gap-1.5 text-xs text-white/50">
-                            <MapPin className="w-3.5 h-3.5 text-[#c5a869]" />
-                            <span>{city}</span>
+
+                        <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center gap-1.5 text-xs text-white/70">
+                            <MapPin className="w-3.5 h-3.5 text-[#c5a869] shrink-0" />
+                            <span className="break-words">{city}</span>
                           </div>
                           <div className="flex items-center gap-1.5 text-xs text-[#c5a869] font-mono">
-                            <Globe className="w-3.5 h-3.5" />
-                            <span className="truncate dir-ltr">mohamoon.com/?firm={firm.slug}</span>
+                            <Globe className="w-3.5 h-3.5 shrink-0" />
+                            <span className="break-all dir-ltr">mohamoon.com/?firm={firm.slug}</span>
                           </div>
                         </div>
                       </div>
