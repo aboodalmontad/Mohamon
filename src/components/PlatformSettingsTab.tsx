@@ -7,6 +7,45 @@ interface PlatformSettingsTabProps {
   lang: Language;
 }
 
+const PRESET_BANNERS = [
+  {
+    id: 'modern_tower',
+    titleAr: 'البرج المعماري الحديث (افتراضي)',
+    titleEn: 'Modern Glass Tower (Default)',
+    url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80'
+  },
+  {
+    id: 'legal_gavel',
+    titleAr: 'مطرقة العدالة والمحاماة',
+    titleEn: 'Justice Gavel & Law Books',
+    url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=2000&q=80'
+  },
+  {
+    id: 'classic_pillars',
+    titleAr: 'أعمدة ومباني العدالة الكلاسيكية',
+    titleEn: 'Classic Law Court Pillars',
+    url: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=2000&q=80'
+  },
+  {
+    id: 'corporate_facade',
+    titleAr: 'واجهة الشركات والأعمال التجارية',
+    titleEn: 'Corporate Business Facade',
+    url: 'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=2000&q=80'
+  },
+  {
+    id: 'boardroom_office',
+    titleAr: 'قاعة الاجتماعات والاستشارات الفاخرة',
+    titleEn: 'Luxury Boardroom Office Interior',
+    url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=2000&q=80'
+  },
+  {
+    id: 'financial_district',
+    titleAr: 'المركز المالي والأبراج الحديثة',
+    titleEn: 'Financial District Skyline',
+    url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=2000&q=80'
+  }
+];
+
 export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }) => {
   const isAr = lang === 'ar';
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
@@ -161,15 +200,57 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
       </div>
 
       {/* Visual Settings */}
-      <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+      <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
         <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
           <ImageIcon className="w-5 h-5 text-purple-400" />
           <h3 className="font-bold text-white text-sm">{isAr ? 'صورة البانر الخلفية' : 'Hero Banner Image'}</h3>
         </div>
 
-        <div>
+        {/* Preset Gallery Options */}
+        <div className="space-y-3">
+          <label className="block text-xs font-semibold text-slate-300">
+            {isAr ? 'اختيار بنر جاهز من مكتبة الصور المتاحة بالمنصة:' : 'Select a preset banner from the platform gallery:'}
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {PRESET_BANNERS.map((preset) => {
+              const isSelected = settings.heroBannerUrl === preset.url || (!settings.heroBannerUrl && preset.id === 'modern_tower');
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => setSettings(prev => ({ ...prev, heroBannerUrl: preset.url }))}
+                  className={`relative group rounded-xl overflow-hidden border-2 text-right transition-all cursor-pointer h-28 ${
+                    isSelected 
+                      ? 'border-[#c5a869] ring-2 ring-[#c5a869]/30 shadow-lg shadow-[#c5a869]/20 scale-[1.02]' 
+                      : 'border-slate-800 hover:border-slate-600 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <img 
+                    src={preset.url} 
+                    alt={preset.titleAr} 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2.5 flex flex-col justify-between">
+                    <div className="flex justify-end">
+                      {isSelected && (
+                        <span className="bg-[#c5a869] text-slate-950 p-1 rounded-full shadow-md">
+                          <CheckCircle2 className="w-4 h-4" />
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-bold text-white line-clamp-1 drop-shadow-md">
+                      {isAr ? preset.titleAr : preset.titleEn}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="pt-3 border-t border-slate-800/80">
           <label className="block text-xs text-slate-400 mb-2">
-            {isAr ? 'رفع صورة البانر من الجهاز أو إدخال رابط مباشر' : 'Upload banner image from device or enter direct URL'}
+            {isAr ? 'أو رفع صورة بانر مخصصة من جهازك / رابط مباشر:' : 'Or upload a custom banner image / direct URL:'}
           </label>
           
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -185,10 +266,10 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
             >
               <Upload className="w-4 h-4" />
-              <span>{isAr ? 'اختيار صورة من الجهاز' : 'Upload from Device'}</span>
+              <span>{isAr ? 'رفع صورة خاصة' : 'Upload Custom Image'}</span>
             </button>
 
             <span className="text-xs text-slate-500 text-center sm:text-start">{isAr ? 'أو' : 'or'}</span>
@@ -215,9 +296,6 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
               </button>
             )}
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">
-            {isAr ? 'يدعم الصور حتى 5 ميجابايت (JPG, PNG, WebP). اترك الحقل فارغاً لاستخدام التأثيرات الضوئية الافتراضية.' : 'Supports images up to 5MB (JPG, PNG, WebP). Leave empty for default glow background.'}
-          </p>
         </div>
         
         {settings.heroBannerUrl && (
@@ -225,7 +303,7 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
             <img src={settings.heroBannerUrl} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-between p-3">
               <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
-                {isAr ? 'معاينة البانر في واجهة المنصة' : 'Banner Preview'}
+                {isAr ? 'معاينة البانر المحدد حالياً' : 'Currently Selected Banner Preview'}
               </span>
               <button
                 type="button"
