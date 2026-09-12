@@ -134,17 +134,21 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
       <main className="pt-32 pb-20 relative overflow-hidden">
         {/* Glow Effects */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#c5a869]/20 blur-[120px] rounded-full pointer-events-none" />
-        {settings.heroBannerUrl && (
-          <div className="absolute inset-0 z-0 transition-opacity duration-500 overflow-hidden">
-            <img 
-              src={settings.heroBannerUrl} 
-              alt="Hero Banner" 
-              className="w-full h-full object-cover contrast-[1.35] brightness-[1.12] saturate-[1.25] filter drop-shadow-xl" 
-            />
-            {/* Subtle bottom gradient overlay for smooth transition into content without darkening the banner */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#181512]" />
-          </div>
-        )}
+        {/* Hero Banner Background Image */}
+        {(() => {
+          const bannerSrc = settings.heroBannerUrl || 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80';
+          return (
+            <div className="absolute inset-0 z-0 transition-opacity duration-500 overflow-hidden">
+              <img 
+                src={bannerSrc} 
+                alt="Hero Banner" 
+                className="w-full h-full object-cover contrast-[1.35] brightness-[1.12] saturate-[1.25] filter drop-shadow-xl" 
+              />
+              {/* Subtle bottom gradient overlay for smooth transition into content without darkening the banner */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#181512]" />
+            </div>
+          );
+        })()}
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto mt-16 drop-shadow-[0_4px_16px_rgba(0,0,0,0.85)]">

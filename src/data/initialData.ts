@@ -10,7 +10,7 @@ export const initialPlatformSettings: PlatformSettings = {
   heroHeadingEn: 'Create Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#c5a869] to-[#ebd397]">Digital Firm</span> in Minutes',
   heroSubheadingAr: 'منصة "محامون" تتيح لك إطلاق موقع احترافي لمكتبك، استقبال الاستشارات، وإدارة العملاء بكل سهولة وسرية تامة.',
   heroSubheadingEn: 'Lawyers Platform allows you to launch a professional website, receive consultations, and manage clients with absolute ease and confidentiality.',
-  heroBannerUrl: '',
+  heroBannerUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80',
   ctaPrimaryAr: 'افتح مكتبك الآن',
   ctaPrimaryEn: 'Start Your Firm',
   ctaSecondaryAr: 'تصفح المكاتب',
