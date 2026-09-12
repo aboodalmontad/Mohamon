@@ -1,6 +1,6 @@
 {
-  "name": "العدل والريادة للمحاماة والاستشارات القانونية | Al-Adl Law Firm & Multi-Tenant SaaS",
-  "description": "منصة مكاتب المحاماة والاستشارات القانونية متعددة المكاتب (Multi-Tenant SaaS) مع اشتراكات سنوية، مزامنة سحابية مع Supabase، استقلالية تامة لكل مكتب، ومنشئ مواقع المحامين الفوري.",
+  "name": "منصة محامون",
+  "description": "منصة محامون - المنصة الرقمية المتقدمة لإطلاق وإدارة مكاتب المحاماة والاستشارات القانونية.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

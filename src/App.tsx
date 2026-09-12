@@ -218,16 +218,20 @@ export default function App() {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
     
-    if (lang === 'ar') {
-      document.title = `${settings.firmNameAr} | محاماة واستشارات قانونية`;
-    } else if (lang === 'tr') {
-      document.title = `${settings.firmNameTr || settings.firmNameEn} | Uluslararası Hukuk Bürosu`;
+    if (isPlatformView) {
+      document.title = lang === 'en' ? 'Lawyers Platform | منصة محامون' : 'منصة محامون';
     } else {
-      document.title = `${settings.firmNameEn} | Premier International Law Firm`;
+      if (lang === 'ar') {
+        document.title = settings.firmNameAr || activeFirm?.nameAr || 'مكتب المحاماة';
+      } else if (lang === 'tr') {
+        document.title = settings.firmNameTr || settings.firmNameEn || activeFirm?.nameEn || 'Hukuk Bürosu';
+      } else {
+        document.title = settings.firmNameEn || activeFirm?.nameEn || 'Law Firm';
+      }
     }
 
     applyTypographySettings(settings);
-  }, [lang, settings]);
+  }, [lang, settings, isPlatformView, activeFirm]);
 
   const handleChangeLang = (newLang: Language) => {
     setLang(newLang);
