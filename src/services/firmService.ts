@@ -1,14 +1,14 @@
 import { LawFirm, LawFirmData, SiteSettings, FirmSubscription, SubscriptionPlanTier, SubscriptionStatus } from '../types';
-import prepackagedFirms from '../../public/firms_data.json';
+// import prepackagedFirms from '../../public/firms_data.json';
 import { 
-  initialPartners, 
-  initialPracticeAreas, 
-  initialTestimonials, 
-  initialBlogPosts, 
-  initialCaseStudies, 
-  initialContactMessages, 
+  // initialPartners, 
+  // initialPracticeAreas, 
+  // initialTestimonials, 
+  // initialBlogPosts, 
+  // initialCaseStudies, 
+  // initialContactMessages, 
   initialSiteSettings, 
-  initialOffices 
+  // initialOffices 
 } from '../data/initialData';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID, formatSupabaseError } from '../lib/supabase';
 
@@ -72,196 +72,9 @@ export function ensureFirmSubscription(firm: LawFirm): LawFirm {
   return firm;
 }
 
-// Initial default seed firms for the multi-tenant SaaS platform (with empty datasets so users enter their own real data)
+// Initial default seed firms for the multi-tenant SaaS platform - Now returns empty to respect user request for no mock data
 export function createDefaultFirms(): LawFirm[] {
-  const emptyData: LawFirmData = {
-    settings: { ...initialSiteSettings },
-    partners: [],
-    practiceAreas: [],
-    caseStudies: [],
-    testimonials: [],
-    blogPosts: [],
-    offices: [],
-    messages: [],
-    savedAt: new Date().toISOString(),
-  };
-
-  const oneYearAhead = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-
-  const primaryFirm: LawFirm = {
-    id: toValidUUID('firm-al-adl'),
-    slug: 'al-adl',
-    nameAr: 'شركة العدل والريادة للمحاماة والاستشارات القانونية',
-    nameEn: 'Al-Adl & Leadership Law Firm',
-    nameTr: 'Al-Adl Hukuk Bürosu',
-    taglineAr: 'ريادة قانونية وحلول استراتيجية رصينة',
-    taglineEn: 'Legal Excellence & Strategic Counsel',
-    cityAr: 'الرياض',
-    cityEn: 'Riyadh',
-    countryAr: 'المملكة العربية السعودية',
-    countryEn: 'Saudi Arabia',
-    phone: '+966 11 456 7890',
-    email: 'contact@aladl-law.com',
-    licenseNumber: 'SA-LAW-2010-884',
-    adminPassword: 'AlAdlAdmin2025',
-    status: 'active',
-    isVerified: true,
-    featured: true,
-    themeColor: '#c5a869',
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: new Date().toISOString(),
-    data: emptyData,
-    subscription: {
-      planTier: 'enterprise',
-      planNameAr: 'الباقة السنوية الماسية الشاملة',
-      planNameEn: 'Diamond Enterprise Annual Plan',
-      status: 'active',
-      isSiteActive: true,
-      startDate: '2024-01-10T10:00:00Z',
-      endDate: oneYearAhead,
-      annualFee: 6000,
-      currency: 'SAR',
-      autoRenew: true,
-      paymentStatus: 'paid',
-      notes: 'المقر الرئيسي للمنصة - ترخيص دائم ومفعل',
-    },
-  };
-
-
-  // Firm 2: Nahwi Law & International Arbitration (customized for user's domain/email avocat.a.nahwi@gmail.com)
-  const nahwiSettings: SiteSettings = {
-    ...initialSiteSettings,
-    firmNameAr: 'مكتب المستشار أحمد النحوي للمحاماة والاستشارات القانونية الدولية',
-    firmNameEn: 'Avocat A. Nahwi International Law Firm & Legal Consultants',
-    firmNameTr: 'Avukat A. Nahwi Uluslararası Hukuk Bürosu',
-    sloganAr: 'دقة قانونية، تحكيم دولي، وتمثيل قضائي رفيع المستوى',
-    sloganEn: 'Legal Precision, International Arbitration & Elite Representation',
-    contactEmail: 'avocat.a.nahwi@gmail.com',
-    contactPhone: '+971 4 888 9922',
-    contactWhatsapp: '+971 50 123 4567',
-    licenseNumber: 'UAE-INTL-9041',
-    heroHeadlineAr: 'الريادة في حماية مصالحك التجارية والتحكيم الدولي',
-    heroHeadlineEn: 'Excellence in Corporate Protection & International Arbitration',
-    heroSubheadlineAr: 'نقدم حلولاً قانونية رفيعة المستوى لرجال الأعمال والشركات الاستثمارية عبر الشرق الأوسط وأوروبا.',
-    adminPassword: '123456',
-  };
-
-  const nahwiFirm: LawFirm = {
-    id: toValidUUID('firm-nahwi'),
-    slug: 'nahwi-law',
-    nameAr: 'مكتب المستشار أحمد النحوي للمحاماة والاستشارات الدولية',
-    nameEn: 'Avocat A. Nahwi International Law Firm',
-    nameTr: 'Avukat A. Nahwi Hukuk Bürosu',
-    taglineAr: 'دقة قانونية، تحكيم دولي، وتمثيل قضائي رفيع المستوى',
-    taglineEn: 'Elite Legal Representation & Global Arbitration',
-    cityAr: 'دبي والرياض',
-    cityEn: 'Dubai & Riyadh',
-    countryAr: 'الإمارات العربية المتحدة',
-    countryEn: 'United Arab Emirates',
-    phone: '+971 4 888 9922',
-    email: 'avocat.a.nahwi@gmail.com',
-    licenseNumber: 'UAE-INTL-9041',
-    adminPassword: '123456',
-    status: 'active',
-    isVerified: true,
-    featured: true,
-    isDefaultPublic: true,
-    themeColor: '#2563eb',
-    createdAt: '2024-02-15T12:00:00Z',
-    updatedAt: new Date().toISOString(),
-    data: {
-      ...emptyData,
-      settings: nahwiSettings,
-      savedAt: new Date().toISOString(),
-    },
-    subscription: {
-      planTier: 'enterprise',
-      planNameAr: 'الباقة السنوية الاحترافية الدولية',
-      planNameEn: 'International Pro Annual Plan',
-      status: 'active',
-      isSiteActive: true,
-      startDate: '2024-02-15T12:00:00Z',
-      endDate: oneYearAhead,
-      annualFee: 4500,
-      currency: 'USD',
-      autoRenew: true,
-      paymentStatus: 'paid',
-      notes: 'الموقع مفعل بالكامل ومخصص لدولي',
-    },
-  };
-
-  // Firm 3: Elite Commercial & Corporate Law
-  const eliteSettings: SiteSettings = {
-    ...initialSiteSettings,
-    firmNameAr: 'مجموعة النخبة للمحاماة والنزاعات المصرفية',
-    firmNameEn: 'Al-Nokhba Banking & Commercial Law Group',
-    sloganAr: 'حماية الاستثمارات وحوكمة الكيانات المالية الكبرى',
-    sloganEn: 'Safeguarding Capital & Financial Institutions Governance',
-    contactEmail: 'info@alnokhba-legal.com',
-    contactPhone: '+966 12 654 3210',
-    licenseNumber: 'KSA-FIN-8874',
-    adminPassword: '123456',
-  };
-
-  const eliteFirm: LawFirm = {
-    id: toValidUUID('firm-nokhba'),
-    slug: 'al-nokhba',
-    nameAr: 'مجموعة النخبة للمحاماة والنزاعات المصرفية',
-    nameEn: 'Al-Nokhba Banking & Commercial Law Group',
-    taglineAr: 'حماية الاستثمارات وحوكمة الكيانات المالية الكبرى',
-    taglineEn: 'Safeguarding Capital & Financial Institutions Governance',
-    cityAr: 'جدة',
-    cityEn: 'Jeddah',
-    countryAr: 'المملكة العربية السعودية',
-    countryEn: 'Saudi Arabia',
-    phone: '+966 12 654 3210',
-    email: 'info@alnokhba-legal.com',
-    licenseNumber: 'KSA-FIN-8874',
-    adminPassword: '123456',
-    status: 'active',
-    isVerified: true,
-    featured: false,
-    themeColor: '#059669',
-    createdAt: '2024-03-01T09:00:00Z',
-    updatedAt: new Date().toISOString(),
-    data: {
-      ...emptyData,
-      settings: eliteSettings,
-      savedAt: new Date().toISOString(),
-    },
-    subscription: {
-      planTier: 'professional',
-      planNameAr: 'الباقة السنوية الاحترافية',
-      planNameEn: 'Professional Annual Plan',
-      status: 'active',
-      isSiteActive: true,
-      startDate: '2024-03-01T09:00:00Z',
-      endDate: oneYearAhead,
-      annualFee: 3500,
-      currency: 'SAR',
-      autoRenew: true,
-      paymentStatus: 'paid',
-    },
-  };
-
-  const seedDefaults = [primaryFirm, nahwiFirm, eliteFirm];
-  const combined: LawFirm[] = [];
-
-  if (Array.isArray(prepackagedFirms) && prepackagedFirms.length > 0) {
-    for (const raw of prepackagedFirms) {
-      if (raw && raw.slug) {
-        combined.push(ensureFirmSubscription(raw as LawFirm));
-      }
-    }
-  }
-
-  for (const df of seedDefaults) {
-    if (!combined.some(f => f.slug === df.slug)) {
-      combined.push(df);
-    }
-  }
-
-  return combined;
+  return [];
 }
 
 class FirmService {
@@ -380,7 +193,7 @@ class FirmService {
           adminPassword: row.admin_password || '123456',
           isVerified: row.is_verified ?? true,
           featured: row.featured ?? false,
-          isDefaultPublic: row.is_default_public ?? (row.slug === 'nahwi-law'),
+          isDefaultPublic: row.is_default_public ?? false,
           themeColor: row.theme_color || '#c5a869',
           createdAt: row.created_at || new Date().toISOString(),
           updatedAt: row.updated_at || new Date().toISOString(),
@@ -446,13 +259,15 @@ class FirmService {
 
     if (fetchedFirms.length > 0) {
       const serverFirms = fetchedFirms.map((f: LawFirm) => ensureFirmSubscription(f));
-      const defaults = createDefaultFirms();
+      // const defaults = createDefaultFirms();
       const combined = [...serverFirms];
+      /*
       for (const df of defaults) {
         if (!combined.some(f => f.slug === df.slug)) {
           combined.push(df);
         }
       }
+      */
       for (const mf of this.memoryFirms) {
         if (!combined.some(f => f.slug === mf.slug)) {
           combined.push(mf);
@@ -501,7 +316,7 @@ class FirmService {
             adminPassword: row.admin_password || '123456',
             isVerified: row.is_verified ?? true,
             featured: row.featured ?? false,
-            isDefaultPublic: row.is_default_public ?? (row.slug === 'nahwi-law'),
+            isDefaultPublic: row.is_default_public ?? false,
             themeColor: row.theme_color || '#c5a869',
             createdAt: row.created_at || new Date().toISOString(),
             updatedAt: row.updated_at || new Date().toISOString(),
@@ -1272,7 +1087,7 @@ class FirmService {
     if (defaultFirm) return defaultFirm.slug;
 
     const first = this.memoryFirms[0];
-    return first ? first.slug : 'nahwi-law';
+    return first ? first.slug : '';
   }
 
   // Set which law firm is shown to the world on the Vercel root domain

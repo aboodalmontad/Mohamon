@@ -509,7 +509,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       <span className="text-[10px] text-slate-500 font-sans">{isAr ? 'مفتاح anon key' : 'Anon key'}</span>
                     </div>
                     <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-cyan-300 flex items-center justify-between">
-                      <span>VITE_DEFAULT_FIRM_SLUG = nahwi-law</span>
+                      <span>VITE_DEFAULT_FIRM_SLUG = my-law-firm</span>
                       <span className="text-[10px] text-slate-500 font-sans">{isAr ? 'المكتب المعروض للعالم على الدومين الرئيسي' : 'Public firm slug'}</span>
                     </div>
                   </div>
