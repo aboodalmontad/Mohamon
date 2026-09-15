@@ -69,6 +69,7 @@ export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, 
                       src={post.image}
                       alt={title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#181512]/60 to-transparent opacity-60" />
                     <span className="absolute top-3 right-3 rtl:right-auto rtl:left-3 px-2.5 py-1 rounded-lg bg-white/95 text-[#87641d] text-xs font-bold backdrop-blur-md border border-[#b38a38]/30 shadow-sm">
@@ -181,6 +182,7 @@ export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, 
                 src={selectedPost.image}
                 alt={getLocalized(selectedPost, 'title', lang, selectedPost.title)}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
 

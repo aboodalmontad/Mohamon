@@ -165,6 +165,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
                     src={practice.image}
                     alt={title}
                     className="w-full h-full object-cover filter grayscale"
+                    loading="lazy"
                   />
                 </div>
 
@@ -296,6 +297,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
                 src={selectedPractice.image}
                 alt={getLocalized(selectedPractice, 'title', lang, selectedPractice.title)}
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#181512]/50 via-transparent to-transparent" />
             </div>

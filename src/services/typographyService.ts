@@ -148,6 +148,41 @@ export const getFontFamilyValue = (fontId?: string, fallback: string = "'Tajawal
   return found ? found.family : fallback;
 };
 
+const LOADED_FONTS = new Set(['tajawal', 'amiri']);
+
+export const ensureFontLoaded = (fontId?: string) => {
+  if (!fontId || typeof document === 'undefined') return;
+  const id = fontId.toLowerCase();
+  if (LOADED_FONTS.has(id)) return;
+
+  const font = AVAILABLE_FONTS.find(f => f.id === id);
+  if (!font) return;
+
+  // Map IDs to Google Fonts family names for URL
+  const familyMap: Record<string, string> = {
+    cairo: 'Cairo:wght@400;700',
+    almarai: 'Almarai:wght@400;700',
+    elmessiri: 'El+Messiri:wght@400;700',
+    notokufi: 'Noto+Kufi+Arabic:wght@400;700',
+    notonaskh: 'Noto+Naskh+Arabic:wght@400;700',
+    alexandria: 'Alexandria:wght@400;700',
+    readex: 'Readex+Pro:wght@400;700',
+    cormorant: 'Cormorant+Garamond:wght@400;700',
+    playfair: 'Playfair+Display:wght@400;700',
+    cinzel: 'Cinzel:wght@400;700',
+    inter: 'Inter:wght@400;700',
+  };
+
+  const familyName = familyMap[id];
+  if (familyName) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${familyName}&display=swap`;
+    document.head.appendChild(link);
+    LOADED_FONTS.add(id);
+  }
+};
+
 export const applyTypographySettings = (settings: {
   fontFamilyBody?: string;
   fontFamilyHeadings?: string;
@@ -157,6 +192,14 @@ export const applyTypographySettings = (settings: {
   fontFamilyCards?: string;
 }) => {
   if (typeof document === 'undefined') return;
+
+  // Ensure all required fonts are loaded
+  ensureFontLoaded(settings.fontFamilyBody);
+  ensureFontLoaded(settings.fontFamilyHeadings);
+  ensureFontLoaded(settings.fontFamilyFirmName);
+  ensureFontLoaded(settings.fontFamilyHeroHeadline);
+  ensureFontLoaded(settings.fontFamilyNavbar);
+  ensureFontLoaded(settings.fontFamilyCards);
 
   const root = document.documentElement;
   const bodyFont = getFontFamilyValue(settings.fontFamilyBody, "'Tajawal', sans-serif");

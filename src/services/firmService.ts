@@ -85,9 +85,24 @@ class FirmService {
   constructor() {
     if (typeof window !== 'undefined') {
       this.initLocal();
-      // Start background init but don't block
-      this.init().catch(() => {});
+      // Only trigger configuration fetch, don't fetch ALL firms yet
+      this.initMinimal().catch(() => {});
     }
+  }
+
+  public async initMinimal(): Promise<void> {
+    if (typeof fetch === 'undefined') return;
+    try {
+      const res = await fetch('/api/supabase/config');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.config && json.config.url && json.config.anonKey) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('aladl_supabase_config_v1', JSON.stringify(json.config));
+          }
+        }
+      }
+    } catch {}
   }
 
   public initLocal(): void {
@@ -122,38 +137,15 @@ class FirmService {
       // 1. Read local cache FIRST for instant UI
       this.initLocal();
 
-      // 2. Fetch config and data in parallel to save time
+      // 2. Fetch full lists only if explicitly requested via init()
+      // This is usually called by Admin or Directory components
       try {
-        const fetchConfig = async () => {
-          if (typeof fetch !== 'undefined') {
-            try {
-              const res = await fetch('/api/supabase/config');
-              if (res.ok) {
-                const json = await res.json();
-                if (json.success && json.config && json.config.url && json.config.anonKey) {
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('aladl_supabase_config_v1', JSON.stringify(json.config));
-                  }
-                }
-              }
-            } catch {}
-          }
-        };
-
-        // Parallel execution of all fetch tasks
         await Promise.allSettled([
-          fetchConfig(),
           this.fetchFromServer(),
           this.fetchFromSupabase()
         ]);
       } catch (err) {
-        console.warn('Network sync in init() partially failed', err);
-      }
-
-      // 3. Finalize
-      if (this.memoryFirms.length === 0) {
-        this.memoryFirms = createDefaultFirms();
-        this.saveToLocalCache();
+        console.warn('Full sync in init() partially failed', err);
       }
 
       this.isInitialized = true;

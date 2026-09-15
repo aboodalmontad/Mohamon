@@ -25,6 +25,7 @@ import { PlatformLanding } from './components/PlatformLanding';
 import { storageService } from './services/storageService';
 import { firmService } from './services/firmService';
 import { applyTypographySettings } from './services/typographyService';
+import { ChevronDown } from 'lucide-react';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, Language, LawFirm } from './types';
 
 // Eagerly initialize cache synchronously before React even starts rendering for INSTANT load
@@ -181,8 +182,10 @@ export default function App() {
         });
       }
 
-      // 3. Initialize all background services (Supabase configs, all firms list)
-      firmService.init();
+      // 3. Initialize background services only if potentially needed
+      if (initialIsPlatformView || urlParams.get('admin') || urlParams.get('super')) {
+        firmService.init();
+      }
     };
 
     loadAppData();
@@ -214,7 +217,32 @@ export default function App() {
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
 
+    const handleScroll = () => {
+      const scrollProgress = document.getElementById('scroll-progress');
+      const backToTop = document.getElementById('back-to-top');
+      
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      
+      if (scrollProgress) {
+        scrollProgress.style.width = scrolled + '%';
+      }
+      
+      if (backToTop) {
+        if (winScroll > 400) {
+          backToTop.classList.add('scale-100', 'opacity-100');
+          backToTop.classList.remove('scale-0', 'opacity-0');
+        } else {
+          backToTop.classList.add('scale-0', 'opacity-0');
+          backToTop.classList.remove('scale-100', 'opacity-100');
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
     return () => {
+      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('aladl_storage_sync', handleStorageChange);
       window.removeEventListener('aladl_firms_updated', handleStorageChange);
       window.removeEventListener('popstate', handlePopState);
@@ -313,6 +341,10 @@ export default function App() {
       ) : (
         <>
           {/* 1. Header / Navbar */}
+          <div className="fixed top-0 left-0 w-full z-50 h-1 bg-[#e6ddcc]/30 pointer-events-none">
+            <div id="scroll-progress" className="h-full bg-gradient-to-r from-[#b38a38] to-[#c5a869] w-0 transition-all duration-150 shadow-[0_0_10px_rgba(197,168,105,0.5)]"></div>
+          </div>
+          
           <Navbar
             settings={firmData.settings}
             lang={lang}
@@ -320,6 +352,31 @@ export default function App() {
             onOpenConsultation={handleOpenConsultation}
             onOpenAdmin={() => setIsAdminOpen(true)}
           />
+
+          {/* Floating UI Elements */}
+          <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+            {/* Scroll to Top */}
+            <button
+              id="back-to-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="p-3 rounded-full bg-white shadow-lg border border-[#e6ddcc] text-[#87641d] hover:bg-[#b38a38] hover:text-white transition-all duration-300 scale-0 opacity-0 cursor-pointer"
+            >
+              <ChevronDown className="w-6 h-6 rotate-180" />
+            </button>
+            
+            {/* Quick Contact / WhatsApp (if enabled) */}
+            <a
+              href={`https://wa.me/${firmData.settings.phone?.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-3 rounded-full bg-[#25D366] shadow-lg text-white hover:scale-110 transition-transform duration-300 cursor-pointer flex items-center justify-center"
+              title={lang === 'ar' ? 'تواصل عبر واتساب' : 'Contact via WhatsApp'}
+            >
+              <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                <path d="M12.031 6.062c-3.414 0-6.191 2.777-6.191 6.191 0 1.094.285 2.122.783 3.016L5.95 18.05l2.871-.753a6.16 6.16 0 0 0 3.21.896c3.414 0 6.191-2.777 6.191-6.191 0-3.414-2.777-6.191-6.191-6.191zM12.031 17.1c-1.008 0-1.954-.265-2.772-.733l-.198-.112-1.688.442.45-1.644-.124-.197c-.504-.805-.771-1.74-.771-2.703 0-2.825 2.302-5.127 5.127-5.127 2.825 0 5.127 2.302 5.127 5.127 0 2.825-2.302 5.127-5.127 5.127z"/>
+              </svg>
+            </a>
+          </div>
 
           {/* 2. Hero Section */}
           <HeroSection

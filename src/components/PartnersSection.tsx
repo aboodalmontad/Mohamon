@@ -164,6 +164,7 @@ export const PartnersSection: React.FC<PartnersSectionProps> = React.memo(({
                     src={partner.image}
                     alt={name}
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#181512]/60 via-transparent to-transparent" />
 
@@ -285,6 +286,7 @@ export const PartnersSection: React.FC<PartnersSectionProps> = React.memo(({
                   src={selectedPartner.image}
                   alt={getLocalized(selectedPartner, 'name', lang, selectedPartner.name)}
                   className="w-full h-full object-cover object-top"
+                  loading="lazy"
                 />
               </div>
 
