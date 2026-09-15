@@ -9,7 +9,7 @@ interface AchievementsSectionProps {
   onOpenConsultation: () => void;
 }
 
-export const AchievementsSection: React.FC<AchievementsSectionProps> = ({ caseStudies, lang, onOpenConsultation }) => {
+export const AchievementsSection: React.FC<AchievementsSectionProps> = React.memo(({ caseStudies, lang, onOpenConsultation }) => {
   const t = useTranslation(lang);
 
   return (
@@ -104,4 +104,4 @@ export const AchievementsSection: React.FC<AchievementsSectionProps> = ({ caseSt
       </div>
     </section>
   );
-};
+});

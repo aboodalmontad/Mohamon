@@ -15,11 +15,11 @@ import { TestimonialsSection } from './components/TestimonialsSection';
 import { BlogSection } from './components/BlogSection';
 import { ContactAndOfficesSection } from './components/ContactAndOfficesSection';
 import { Footer } from './components/Footer';
-import { ConsultationModal } from './components/ConsultationModal';
-import { AdminDashboard } from './components/AdminDashboard';
-import { SuperAdminDashboard } from './components/SuperAdminDashboard';
-import { LawyerSiteBuilderModal } from './components/LawyerSiteBuilderModal';
-import { FirmsDirectoryModal } from './components/FirmsDirectoryModal';
+const AdminDashboard = React.lazy(() => import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
+const SuperAdminDashboard = React.lazy(() => import('./components/SuperAdminDashboard').then(module => ({ default: module.SuperAdminDashboard })));
+const LawyerSiteBuilderModal = React.lazy(() => import('./components/LawyerSiteBuilderModal').then(module => ({ default: module.LawyerSiteBuilderModal })));
+const FirmsDirectoryModal = React.lazy(() => import('./components/FirmsDirectoryModal').then(module => ({ default: module.FirmsDirectoryModal })));
+const ConsultationModal = React.lazy(() => import('./components/ConsultationModal').then(module => ({ default: module.ConsultationModal })));
 import { FirmSuspendedNotice } from './components/FirmSuspendedNotice';
 import { PlatformLanding } from './components/PlatformLanding';
 import { storageService } from './services/storageService';
@@ -53,13 +53,15 @@ export default function App() {
   const [isPlatformView, setIsPlatformView] = useState(initialIsPlatformView);
   
   const [lang, setLang] = useState<Language>('ar');
-  const [settings, setSettings] = useState<SiteSettings>(() => storageService.getSettings());
-  const [partners, setPartners] = useState<Partner[]>(() => storageService.getPartners());
-  const [practiceAreas, setPracticeAreas] = useState<PracticeArea[]>(() => storageService.getPracticeAreas());
-  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>(() => storageService.getCaseStudies());
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(() => storageService.getTestimonials());
-  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(() => storageService.getBlogPosts());
-  const [offices, setOffices] = useState<OfficeLocation[]>(() => storageService.getOffices());
+  const [firmData, setFirmData] = useState(() => ({
+    settings: storageService.getSettings(),
+    partners: storageService.getPartners(),
+    practiceAreas: storageService.getPracticeAreas(),
+    caseStudies: storageService.getCaseStudies(),
+    testimonials: storageService.getTestimonials(),
+    blogPosts: storageService.getBlogPosts(),
+    offices: storageService.getOffices()
+  }));
 
   // App Initialization state: Skip loading screen entirely if data is already locally cached
   const [isInitializing, setIsInitializing] = useState(() => {
@@ -98,13 +100,15 @@ export default function App() {
     const siteStatus = firmService.isFirmSiteActive(slug);
     setIsFirmActive(siteStatus.isActive);
 
-    setSettings(storageService.getSettings());
-    setPartners(storageService.getPartners());
-    setPracticeAreas(storageService.getPracticeAreas());
-    setCaseStudies(storageService.getCaseStudies());
-    setTestimonials(storageService.getTestimonials());
-    setBlogPosts(storageService.getBlogPosts());
-    setOffices(storageService.getOffices());
+    setFirmData({
+      settings: storageService.getSettings(),
+      partners: storageService.getPartners(),
+      practiceAreas: storageService.getPracticeAreas(),
+      caseStudies: storageService.getCaseStudies(),
+      testimonials: storageService.getTestimonials(),
+      blogPosts: storageService.getBlogPosts(),
+      offices: storageService.getOffices()
+    });
   };
 
   useEffect(() => {
@@ -227,16 +231,16 @@ export default function App() {
       document.title = lang === 'en' ? 'Lawyers Platform | منصة محامون' : 'منصة محامون';
     } else {
       if (lang === 'ar') {
-        document.title = settings.firmNameAr || activeFirm?.nameAr || 'مكتب المحاماة';
+        document.title = firmData.settings.firmNameAr || activeFirm?.nameAr || 'مكتب المحاماة';
       } else if (lang === 'tr') {
-        document.title = settings.firmNameTr || settings.firmNameEn || activeFirm?.nameEn || 'Hukuk Bürosu';
+        document.title = firmData.settings.firmNameTr || firmData.settings.firmNameEn || activeFirm?.nameEn || 'Hukuk Bürosu';
       } else {
-        document.title = settings.firmNameEn || activeFirm?.nameEn || 'Law Firm';
+        document.title = firmData.settings.firmNameEn || activeFirm?.nameEn || 'Law Firm';
       }
     }
 
-    applyTypographySettings(settings);
-  }, [lang, settings, isPlatformView, activeFirm]);
+    applyTypographySettings(firmData.settings);
+  }, [lang, firmData.settings, isPlatformView, activeFirm]);
 
   const handleChangeLang = (newLang: Language) => {
     setLang(newLang);
@@ -310,7 +314,7 @@ export default function App() {
         <>
           {/* 1. Header / Navbar */}
           <Navbar
-            settings={settings}
+            settings={firmData.settings}
             lang={lang}
             onChangeLang={handleChangeLang}
             onOpenConsultation={handleOpenConsultation}
@@ -319,29 +323,29 @@ export default function App() {
 
           {/* 2. Hero Section */}
           <HeroSection
-            settings={settings}
+            settings={firmData.settings}
             lang={lang}
             onOpenConsultation={() => handleOpenConsultation()}
           />
 
           {/* 3. About Us Section */}
           <AboutSection
-            settings={settings}
+            settings={firmData.settings}
             lang={lang}
             onOpenConsultation={() => handleOpenConsultation()}
           />
 
           {/* 4. Practice Areas Section */}
           <PracticeAreasSection
-            practiceAreas={practiceAreas}
-            partners={partners}
+            practiceAreas={firmData.practiceAreas}
+            partners={firmData.partners}
             lang={lang}
             onOpenConsultation={handleOpenConsultation}
           />
 
           {/* 5. Our Partners & Attorneys */}
           <PartnersSection
-            partners={partners}
+            partners={firmData.partners}
             lang={lang}
             onOpenConsultation={handleOpenConsultation}
           />
@@ -353,35 +357,35 @@ export default function App() {
 
           {/* 7. Landmark Achievements & Transactions */}
           <AchievementsSection
-            caseStudies={caseStudies}
+            caseStudies={firmData.caseStudies}
             lang={lang}
             onOpenConsultation={() => handleOpenConsultation()}
           />
 
           {/* 8. Client Testimonials */}
           <TestimonialsSection
-            testimonials={testimonials}
+            testimonials={firmData.testimonials}
             lang={lang}
           />
 
           {/* 9. Legal Blog & Thought Leadership */}
           <BlogSection
-            blogPosts={blogPosts}
+            blogPosts={firmData.blogPosts}
             lang={lang}
           />
 
           {/* 10. Contact & Interactive Office Locations */}
           <ContactAndOfficesSection
-            settings={settings}
-            practiceAreas={practiceAreas}
-            offices={offices}
+            settings={firmData.settings}
+            practiceAreas={firmData.practiceAreas}
+            offices={firmData.offices}
             lang={lang}
           />
 
           {/* 11. Footer */}
           <Footer
-            settings={settings}
-            practiceAreas={practiceAreas}
+            settings={firmData.settings}
+            practiceAreas={firmData.practiceAreas}
             lang={lang}
             onOpenConsultation={handleOpenConsultation}
             onOpenAdmin={() => setIsAdminOpen(true)}
@@ -391,63 +395,73 @@ export default function App() {
       )}
 
       {/* Modals */}
-      <ConsultationModal
-        isOpen={isConsultationOpen}
-        onClose={() => setIsConsultationOpen(false)}
-        partners={partners}
-        practiceAreas={practiceAreas}
-        defaultPracticeId={selectedPracticeId}
-        defaultPartnerId={selectedPartnerId}
-        lang={lang}
-      />
+      <React.Suspense fallback={null}>
+        <ConsultationModal
+          isOpen={isConsultationOpen}
+          onClose={() => setIsConsultationOpen(false)}
+          partners={firmData.partners}
+          practiceAreas={firmData.practiceAreas}
+          defaultPracticeId={selectedPracticeId}
+          defaultPartnerId={selectedPartnerId}
+          lang={lang}
+        />
+      </React.Suspense>
 
       {/* Protected Admin Control Center - Single Firm Level */}
-      <AdminDashboard
-        isOpen={isAdminOpen}
-        onClose={() => setIsAdminOpen(false)}
-        lang={lang}
-        onOpenSuperAdmin={() => {
-          setIsAdminOpen(false);
-          setIsSuperAdminOpen(true);
-        }}
-      />
+      <React.Suspense fallback={null}>
+        <AdminDashboard
+          isOpen={isAdminOpen}
+          onClose={() => setIsAdminOpen(false)}
+          lang={lang}
+          onOpenSuperAdmin={() => {
+            setIsAdminOpen(false);
+            setIsSuperAdminOpen(true);
+          }}
+        />
+      </React.Suspense>
 
       {/* Platform Owner Super Admin Dashboard - All Firms & Subscriptions & Supabase Cloud Sync */}
-      <SuperAdminDashboard
-        isOpen={isSuperAdminOpen}
-        onClose={() => setIsSuperAdminOpen(false)}
-        lang={lang}
-        onSelectFirmToManage={(slug) => {
-          handleSelectFirm(slug);
-          setIsSuperAdminOpen(false);
-          setIsAdminOpen(true);
-        }}
-        onOpenCreateModal={() => {
-          setIsSuperAdminOpen(false);
-          setIsSiteBuilderOpen(true);
-        }}
-      />
+      <React.Suspense fallback={null}>
+        <SuperAdminDashboard
+          isOpen={isSuperAdminOpen}
+          onClose={() => setIsSuperAdminOpen(false)}
+          lang={lang}
+          onSelectFirmToManage={(slug) => {
+            handleSelectFirm(slug);
+            setIsSuperAdminOpen(false);
+            setIsAdminOpen(true);
+          }}
+          onOpenCreateModal={() => {
+            setIsSuperAdminOpen(false);
+            setIsSiteBuilderOpen(true);
+          }}
+        />
+      </React.Suspense>
 
       {/* Lawyer 1-Click Site Builder Modal */}
-      <LawyerSiteBuilderModal
-        isOpen={isSiteBuilderOpen}
-        onClose={() => setIsSiteBuilderOpen(false)}
-        onFirmCreated={handleFirmCreated}
-        lang={lang}
-      />
+      <React.Suspense fallback={null}>
+        <LawyerSiteBuilderModal
+          isOpen={isSiteBuilderOpen}
+          onClose={() => setIsSiteBuilderOpen(false)}
+          onFirmCreated={handleFirmCreated}
+          lang={lang}
+        />
+      </React.Suspense>
 
       {/* Law Firms Directory Modal */}
-      <FirmsDirectoryModal
-        isOpen={isDirectoryOpen}
-        onClose={() => setIsDirectoryOpen(false)}
-        onSelectFirm={handleSelectFirm}
-        onOpenAdmin={(slug) => {
-          if (slug) handleSelectFirm(slug);
-          setIsDirectoryOpen(false);
-          setIsAdminOpen(true);
-        }}
-        lang={lang}
-      />
+      <React.Suspense fallback={null}>
+        <FirmsDirectoryModal
+          isOpen={isDirectoryOpen}
+          onClose={() => setIsDirectoryOpen(false)}
+          onSelectFirm={handleSelectFirm}
+          onOpenAdmin={(slug) => {
+            if (slug) handleSelectFirm(slug);
+            setIsDirectoryOpen(false);
+            setIsAdminOpen(true);
+          }}
+          lang={lang}
+        />
+      </React.Suspense>
 
     </div>
   );

@@ -8,7 +8,7 @@ interface TestimonialsSectionProps {
   lang: Language;
 }
 
-export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testimonials, lang }) => {
+export const TestimonialsSection: React.FC<TestimonialsSectionProps> = React.memo(({ testimonials, lang }) => {
   const t = useTranslation(lang);
 
   if (!testimonials || testimonials.length === 0) return null;
@@ -132,4 +132,4 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ testim
       </div>
     </section>
   );
-};
+});

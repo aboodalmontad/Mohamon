@@ -87,48 +87,54 @@ const notifyChange = () => {
   }
 };
 
-// Auto-sync current state to secondary persistence and firmService
+// Debounced version of mirrorAllDataToPersistence to avoid rapid-fire heavy snapshots
+let mirrorTimeout: any = null;
 const mirrorAllDataToPersistence = () => {
   if (typeof window === 'undefined') return;
-  try {
-    const snapshot = {
-      partners: storageService.getPartners(),
-      practiceAreas: storageService.getPracticeAreas(),
-      caseStudies: storageService.getCaseStudies(),
-      testimonials: storageService.getTestimonials(),
-      blogPosts: storageService.getBlogPosts(),
-      messages: storageService.getMessages(),
-      settings: storageService.getSettings(),
-      offices: storageService.getOffices(),
-      savedAt: new Date().toISOString(),
-    };
-    saveSnapshotToIDB(snapshot);
-
-    // Also mirror to active firm inside firmService
-    const activeSlug = firmService.getActiveFirmSlug();
-    const firm = firmService.getFirmBySlug(activeSlug);
-    if (firm) {
-      firm.data = {
-        settings: snapshot.settings,
-        partners: snapshot.partners,
-        practiceAreas: snapshot.practiceAreas,
-        caseStudies: snapshot.caseStudies,
-        testimonials: snapshot.testimonials,
-        blogPosts: snapshot.blogPosts,
-        offices: snapshot.offices,
-        messages: snapshot.messages,
-        savedAt: snapshot.savedAt,
+  
+  if (mirrorTimeout) clearTimeout(mirrorTimeout);
+  
+  mirrorTimeout = setTimeout(() => {
+    try {
+      const snapshot = {
+        partners: storageService.getPartners(),
+        practiceAreas: storageService.getPracticeAreas(),
+        caseStudies: storageService.getCaseStudies(),
+        testimonials: storageService.getTestimonials(),
+        blogPosts: storageService.getBlogPosts(),
+        messages: storageService.getMessages(),
+        settings: storageService.getSettings(),
+        offices: storageService.getOffices(),
+        savedAt: new Date().toISOString(),
       };
-      firm.nameAr = snapshot.settings.firmNameAr || firm.nameAr;
-      firm.nameEn = snapshot.settings.firmNameEn || firm.nameEn;
-      firm.phone = snapshot.settings.phone || firm.phone;
-      firm.email = snapshot.settings.email || firm.email;
-      firm.themeColor = snapshot.settings.primaryColor || firm.themeColor || '#c5a869';
-      firmService.saveFirm(firm).catch(() => {});
+      saveSnapshotToIDB(snapshot);
+
+      // Also mirror to active firm inside firmService
+      const activeSlug = firmService.getActiveFirmSlug();
+      const firm = firmService.getFirmBySlug(activeSlug);
+      if (firm) {
+        firm.data = {
+          settings: snapshot.settings,
+          partners: snapshot.partners,
+          practiceAreas: snapshot.practiceAreas,
+          caseStudies: snapshot.caseStudies,
+          testimonials: snapshot.testimonials,
+          blogPosts: snapshot.blogPosts,
+          offices: snapshot.offices,
+          messages: snapshot.messages,
+          savedAt: snapshot.savedAt,
+        };
+        firm.nameAr = snapshot.settings.firmNameAr || firm.nameAr;
+        firm.nameEn = snapshot.settings.firmNameEn || firm.nameEn;
+        firm.phone = snapshot.settings.phone || firm.phone;
+        firm.email = snapshot.settings.email || firm.email;
+        firm.themeColor = snapshot.settings.primaryColor || firm.themeColor || '#c5a869';
+        firmService.saveFirm(firm).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Failed to mirror data snapshot', e);
     }
-  } catch (e) {
-    console.warn('Failed to mirror data snapshot', e);
-  }
+  }, 1000); // Wait 1 second of inactivity before saving snapshot
 };
 
 // Memory cache for active data to ensure synchronous UI access while using async persistence

@@ -9,7 +9,7 @@ interface HeroSectionProps {
   onOpenConsultation: () => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({
+export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
   settings,
   lang,
   onOpenConsultation,
@@ -27,9 +27,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       {/* Background Image with Warm Soft Champagne Tint */}
       <div className="absolute inset-0 z-0 opacity-15">
         <img
-          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2000"
+          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=60&w=1600"
           alt="Courthouse & Legal Scale Background"
           className="w-full h-full object-cover object-center filter contrast-[1.1] scale-105 transition-transform duration-1000"
+          loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f2] via-[#fbf8f2]/80 to-transparent" />
       </div>
@@ -236,4 +237,4 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
     </section>
   );
-};
+});

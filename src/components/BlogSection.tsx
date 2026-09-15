@@ -8,7 +8,7 @@ interface BlogSectionProps {
   lang: Language;
 }
 
-export const BlogSection: React.FC<BlogSectionProps> = ({ blogPosts, lang }) => {
+export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, lang }) => {
   const isRtl = lang === 'ar';
   const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
   const t = useTranslation(lang);
@@ -220,4 +220,4 @@ export const BlogSection: React.FC<BlogSectionProps> = ({ blogPosts, lang }) => 
       )}
     </section>
   );
-};
+});

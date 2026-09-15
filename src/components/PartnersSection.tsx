@@ -35,7 +35,7 @@ const formatLanguages = (langs: string[] | undefined, l: Language) => {
     .join(' • ');
 };
 
-export const PartnersSection: React.FC<PartnersSectionProps> = ({
+export const PartnersSection: React.FC<PartnersSectionProps> = React.memo(({
   partners,
   lang,
   onOpenConsultation
@@ -46,11 +46,11 @@ export const PartnersSection: React.FC<PartnersSectionProps> = ({
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'partner' | 'associates'>('all');
 
-  const filteredPartners = partners.filter(p => {
+  const filteredPartners = React.useMemo(() => partners.filter(p => {
     if (activeFilter === 'partner') return p.isPartner !== false;
     if (activeFilter === 'associates') return p.isPartner === false;
     return true;
-  });
+  }), [partners, activeFilter]);
 
   const getRoleBadgeLabel = (partner: Partner) => {
     const isPartner = partner.isPartner !== false;
@@ -395,4 +395,4 @@ export const PartnersSection: React.FC<PartnersSectionProps> = ({
       )}
     </section>
   );
-};
+});

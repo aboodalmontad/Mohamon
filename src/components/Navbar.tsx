@@ -13,7 +13,7 @@ interface NavbarProps {
   onOpenAdmin: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
+export const Navbar: React.FC<NavbarProps> = React.memo(({
   settings,
   lang,
   onChangeLang,
@@ -383,4 +383,4 @@ export const Navbar: React.FC<NavbarProps> = ({
       </header>
     </>
   );
-};
+});

@@ -7,7 +7,7 @@ interface WhyChooseUsProps {
   lang: Language;
 }
 
-export const WhyChooseUsSection: React.FC<WhyChooseUsProps> = ({ lang }) => {
+export const WhyChooseUsSection: React.FC<WhyChooseUsProps> = React.memo(({ lang }) => {
   const t = useTranslation(lang);
 
   const pillars = [
@@ -133,4 +133,4 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsProps> = ({ lang }) => {
       </div>
     </section>
   );
-};
+});

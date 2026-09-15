@@ -13,7 +13,7 @@ interface FooterProps {
   onOpenSuperAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({
+export const Footer: React.FC<FooterProps> = React.memo(({
   settings,
   practiceAreas,
   lang,
@@ -299,4 +299,4 @@ export const Footer: React.FC<FooterProps> = ({
       </div>
     </footer>
   );
-};
+});

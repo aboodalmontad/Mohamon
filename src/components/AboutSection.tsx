@@ -9,7 +9,7 @@ interface AboutSectionProps {
   onOpenConsultation: () => void;
 }
 
-export const AboutSection: React.FC<AboutSectionProps> = ({ settings, lang, onOpenConsultation }) => {
+export const AboutSection: React.FC<AboutSectionProps> = React.memo(({ settings, lang, onOpenConsultation }) => {
   const [activeTab, setActiveTab] = useState<'vision' | 'methodology' | 'standards'>('vision');
   const t = useTranslation(lang);
 
@@ -206,4 +206,4 @@ export const AboutSection: React.FC<AboutSectionProps> = ({ settings, lang, onOp
       </div>
     </section>
   );
-};
+});

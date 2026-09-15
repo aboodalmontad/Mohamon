@@ -14,7 +14,7 @@ interface ContactSectionProps {
   lang: Language;
 }
 
-export const ContactAndOfficesSection: React.FC<ContactSectionProps> = ({
+export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.memo(({
   settings,
   practiceAreas,
   offices,
@@ -658,4 +658,4 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = ({
       </div>
     </section>
   );
-};
+});

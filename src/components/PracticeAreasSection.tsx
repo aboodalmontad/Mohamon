@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Building2, Scale, Gavel, ShieldCheck, Briefcase, Landmark, 
   ArrowLeft, ArrowRight, CheckCircle2, X 
@@ -13,7 +13,7 @@ interface PracticeAreasSectionProps {
   onOpenConsultation: (practiceId?: string, partnerId?: string) => void;
 }
 
-export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
+export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.memo(({
   practiceAreas,
   partners,
   lang,
@@ -26,7 +26,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [selectedPractice, setSelectedPractice] = useState<PracticeArea | null>(null);
 
-  const knownCategoryLabels: Record<string, { ar: string; en: string; tr: string }> = {
+  const knownCategoryLabels: Record<string, { ar: string; en: string; tr: string }> = useMemo(() => ({
     corporate: { ar: 'الشركات والاستحواذ', en: 'Corporate & M&A', tr: 'Şirketler & M&A' },
     disputes: { ar: 'التحكيم والتقاضي', en: 'Disputes & Arbitration', tr: 'Tahkim & Dava' },
     technology: { ar: 'التقنية والملكية الفكرية', en: 'Tech & IP', tr: 'Teknoloji & Fikri Mülkiyet' },
@@ -37,7 +37,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
     criminal: { ar: 'الجرائم الاقتصادية', en: 'Corporate Crimes', tr: 'Ekonomik Suçlar' },
     international: { ar: 'القانون الدولي', en: 'International Law', tr: 'Uluslararası Hukuk' },
     general: { ar: 'استشارات قانونية عامة', en: 'General Advisory', tr: 'Genel Hukuki Danışmanlık' },
-  };
+  }), []);
 
   const getCategoryName = (catKey: string, match?: PracticeArea) => {
     if (catKey === 'all') return t.allAreas;
@@ -54,9 +54,9 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
   };
 
   // Derive categories dynamically from available practice areas
-  const uniqueCategoryKeys: string[] = Array.from(new Set(practiceAreas.map(p => p.category).filter(Boolean)));
+  const uniqueCategoryKeys: string[] = useMemo(() => Array.from(new Set(practiceAreas.map(p => p.category).filter(Boolean))), [practiceAreas]);
   
-  const categories = [
+  const categories = useMemo(() => [
     { id: 'all', label: t.allAreas },
     ...uniqueCategoryKeys.map((catKey: string) => {
       const match = practiceAreas.find(p => p.category === catKey);
@@ -65,11 +65,11 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
         label: getCategoryName(catKey, match)
       };
     })
-  ];
+  ], [uniqueCategoryKeys, practiceAreas, t.allAreas, lang]);
 
-  const filteredPractices = activeCategory === 'all'
+  const filteredPractices = useMemo(() => activeCategory === 'all'
     ? practiceAreas
-    : practiceAreas.filter(p => p.category === activeCategory);
+    : practiceAreas.filter(p => p.category === activeCategory), [activeCategory, practiceAreas]);
 
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -352,4 +352,4 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = ({
       )}
     </section>
   );
-};
+});

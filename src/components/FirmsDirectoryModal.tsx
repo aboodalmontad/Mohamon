@@ -29,7 +29,7 @@ interface FirmsDirectoryModalProps {
   onOpenAdmin: (firmSlug?: string) => void;
 }
 
-export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = ({
+export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.memo(({
   isOpen,
   onClose,
   lang,
@@ -72,9 +72,12 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = ({
   if (!isOpen) return null;
 
   // Filter firms
-  const cities = Array.from(new Set(firms.map((f) => f.cityAr).filter(Boolean)));
+  const cities = React.useMemo(() => 
+    Array.from(new Set(firms.map((f) => f.cityAr).filter(Boolean))),
+    [firms]
+  );
 
-  const filteredFirms = firms.filter((firm) => {
+  const filteredFirms = React.useMemo(() => firms.filter((firm) => {
     const matchesSearch = 
       (firm.nameAr || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (firm.nameEn || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -85,7 +88,7 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = ({
     const matchesCity = selectedCity === 'all' || firm.cityAr === selectedCity;
 
     return matchesSearch && matchesCity;
-  });
+  }), [firms, searchQuery, selectedCity]);
 
   const handleCopyLink = (slug: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -559,4 +562,4 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = ({
       </div>
     </div>
   );
-};
+});
