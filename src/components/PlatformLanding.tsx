@@ -14,25 +14,27 @@ interface PlatformLandingProps {
 export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, lang }) => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [activeFirms, setActiveFirms] = useState<LawFirm[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
   const isRtl = lang === 'ar';
 
   const loadFirms = async () => {
+    setIsLoading(true);
     // 1. Instant synchronous load from local memory/storage
     firmService.initLocal();
     let syncFirms = firmService.getAllFirms();
-    if (!syncFirms || syncFirms.length === 0) {
-      syncFirms = createDefaultFirms();
-    }
     if (syncFirms && syncFirms.length > 0) {
       setActiveFirms(syncFirms.filter(f => f.status !== 'suspended'));
+      setIsLoading(false); // We have some data, show it immediately
     }
+    
     // 2. Full async fetch to pull latest server/supabase data
     await firmService.init();
     const firms = firmService.getAllFirms();
     if (firms && firms.length > 0) {
       setActiveFirms(firms.filter(f => f.status !== 'suspended'));
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -168,7 +170,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             </div>
           </div>
 
-          {activeFirms.length > 0 ? (
+          {isLoading && activeFirms.length === 0 ? (
+            <div className="text-center py-20 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center justify-center">
+              <div className="w-10 h-10 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin mb-4"></div>
+              <h4 className="text-xl text-white mb-2">{isRtl ? "جاري تحميل المكاتب..." : "Loading Firms..."}</h4>
+              <p className="text-white/50">{isRtl ? "يرجى الانتظار بينما نقوم بجلب قائمة المكاتب المعتمدة." : "Please wait while we fetch the registered law firms."}</p>
+            </div>
+          ) : activeFirms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {activeFirms.map((firm) => {
                 const logo = firm.logoUrl || (firm.data?.settings as any)?.customLogoUrl || (firm.data?.settings as any)?.logoUrl;
