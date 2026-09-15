@@ -109,13 +109,12 @@ export default function App() {
           setIsPlatformView(true);
           
           const cachedFirms = firmService.getAllFirms();
-          const isOnlySeedData = cachedFirms.length === 1 && cachedFirms[0].id === 'seed-firm-001';
 
-          if (cachedFirms.length > 0 && !isOnlySeedData) {
+          if (cachedFirms.length > 0) {
             refreshData();
             setIsInitializing(false);
           } else {
-            setIsInitializing(true); // Must show loading if nothing in cache or just seed
+            setIsInitializing(true); // Must show loading if nothing in cache
           }
 
           // Fetch fresh list
@@ -274,8 +273,8 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#181512] flex items-center justify-center flex-col gap-4">
         <div className="w-12 h-12 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse">
-          {isPlatformView ? "جاري تحميل المكاتب..." : "جاري تحميل بيانات المكتب..."}
+        <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse text-center px-4">
+          {isPlatformView ? "جاري تحميل المكاتب المسجلة في المنصة..." : "جاري تحميل بيانات المكتب..."}
         </p>
       </div>
     );

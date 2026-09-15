@@ -74,53 +74,7 @@ export function ensureFirmSubscription(firm: LawFirm): LawFirm {
 
 // Initial default seed firms for the multi-tenant SaaS platform
 export function createDefaultFirms(): LawFirm[] {
-  const oneYearAhead = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-  
-  const seed: LawFirm = {
-    id: 'seed-firm-001',
-    slug: 'aladl',
-    nameAr: 'مكتب العدل والإنصاف للمحاماة',
-    nameEn: 'Aladl & Equity Law Firm',
-    taglineAr: 'نحمي حقوقكم، نصون مستقبلكم',
-    taglineEn: 'Protecting your rights, securing your future',
-    cityAr: 'الرياض',
-    cityEn: 'Riyadh',
-    phone: '+966 50 000 0000',
-    email: 'info@aladl-law.com',
-    licenseNumber: 'L-2024-001',
-    adminPassword: 'admin',
-    isVerified: true,
-    featured: true,
-    isDefaultPublic: true,
-    themeColor: '#c5a869',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    data: {
-      settings: initialSiteSettings,
-      partners: [],
-      practiceAreas: [],
-      caseStudies: [],
-      testimonials: [],
-      blogPosts: [],
-      offices: [],
-      messages: []
-    },
-    subscription: {
-      planTier: 'professional',
-      planNameAr: 'الباقة السنوية الاحترافية',
-      planNameEn: 'Professional Annual Plan',
-      status: 'active',
-      isSiteActive: true,
-      startDate: new Date().toISOString(),
-      endDate: oneYearAhead,
-      annualFee: 3500,
-      currency: 'SAR',
-      autoRenew: true,
-      paymentStatus: 'paid',
-    }
-  };
-
-  return [seed];
+  return [];
 }
 
 class FirmService {
