@@ -97,41 +97,47 @@ export default function App() {
 
   useEffect(() => {
     const loadAppData = async () => {
-      // 1. Initialize services inside effect
-      firmService.initLocal();
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
+      try {
+        // 1. Initialize services inside effect
+        firmService.initLocal();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
 
-      if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
-        setIsPlatformView(true);
+        // Platform View check
+        if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
+          setIsPlatformView(true);
+          firmService.init(); 
+          return;
+        }
+        
+        // Load specific firm from local storage first (instant)
+        if (urlSlug) {
+          storageService.loadFirm(urlSlug, false);
+          refreshData();
+        } else {
+          storageService.init();
+          refreshData();
+        }
+
+        // Fetch background updates from Supabase/API
+        if (urlSlug) {
+          firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
+            if (sbRes.success && sbRes.firm) {
+              firmService.setFirm(sbRes.firm);
+              storageService.loadFirm(urlSlug, false);
+              refreshData();
+            }
+          }).catch(() => {});
+        }
+        
+        // Full background initialization
+        firmService.init().catch(() => {});
+      } catch (err) {
+        console.error('Critical initialization error:', err);
+      } finally {
         setIsInitializing(false);
-        firmService.init(); 
-        return;
       }
-      
-      // Load specific firm
-      if (urlSlug) {
-        storageService.loadFirm(urlSlug, false);
-      } else {
-        storageService.init();
-      }
-      
-      refreshData();
-      setIsInitializing(false);
-
-      // Fetch background updates
-      if (urlSlug) {
-        firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
-          if (sbRes.success && sbRes.firm) {
-            firmService.setFirm(sbRes.firm);
-            storageService.loadFirm(urlSlug, false);
-            refreshData();
-          }
-        }).catch(() => {});
-      }
-      
-      firmService.init();
     };
 
     loadAppData();
