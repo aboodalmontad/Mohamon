@@ -109,11 +109,13 @@ export default function App() {
           setIsPlatformView(true);
           
           const cachedFirms = firmService.getAllFirms();
-          if (cachedFirms.length > 0) {
+          const isOnlySeedData = cachedFirms.length === 1 && cachedFirms[0].id === 'seed-firm-001';
+
+          if (cachedFirms.length > 0 && !isOnlySeedData) {
             refreshData();
             setIsInitializing(false);
           } else {
-            setIsInitializing(true); // Must show loading if nothing in cache
+            setIsInitializing(true); // Must show loading if nothing in cache or just seed
           }
 
           // Fetch fresh list
