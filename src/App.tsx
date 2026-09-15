@@ -108,22 +108,16 @@ export default function App() {
         if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
           setIsPlatformView(true);
           
-          const cachedFirms = firmService.getAllFirms();
+          // Never block the UI for the platform view. 
+          // Show the platform UI instantly, and let the directory section show its own loading spinner.
+          refreshData();
+          setIsInitializing(false);
 
-          if (cachedFirms.length > 0) {
-            refreshData();
-            setIsInitializing(false);
-          } else {
-            setIsInitializing(true); // Must show loading if nothing in cache
-          }
-
-          // Fetch fresh list
+          // Fetch fresh list of firms in the background
           firmService.init().then(() => {
             refreshData();
-            setIsInitializing(false);
           }).catch(e => {
             console.warn('Background platform fetch warning:', e);
-            setIsInitializing(false);
           });
           
           return;
