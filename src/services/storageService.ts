@@ -224,33 +224,70 @@ export const storageService = {
     if (typeof window === 'undefined') return;
     const firm = firmService.getFirmBySlug(slug);
     
+    if (!firm) return;
+    
+    // Construct a baseline settings object from firm root data 
+    // to prevent ever showing a dummy firm while loading
+    const fallbackSettings = {
+      ...initialSiteSettings,
+      firmNameAr: firm.nameAr,
+      firmNameEn: firm.nameEn || '',
+      firmNameTr: firm.nameTr || '',
+      sloganAr: firm.taglineAr || '',
+      sloganEn: firm.taglineEn || '',
+      phone: firm.phone || '',
+      email: firm.email || '',
+      primaryColor: firm.themeColor || '#c5a869',
+      logoUrl: firm.logoUrl || ''
+    };
+
     // If we have firm data, update cache. 
-    // Even if firm.data is missing (stripped), we don't exit early if we're just setting active firm
     if (firm && firm.data) {
       const data = firm.data;
       
-      // Update Memory Cache
-      MEMORY_CACHE.settings = data.settings || MEMORY_CACHE.settings;
-      MEMORY_CACHE.partners = data.partners || MEMORY_CACHE.partners;
-      MEMORY_CACHE.practiceAreas = data.practiceAreas || MEMORY_CACHE.practiceAreas;
-      MEMORY_CACHE.caseStudies = data.caseStudies || MEMORY_CACHE.caseStudies;
-      MEMORY_CACHE.testimonials = data.testimonials || MEMORY_CACHE.testimonials;
-      MEMORY_CACHE.blogPosts = data.blogPosts || MEMORY_CACHE.blogPosts;
-      MEMORY_CACHE.offices = data.offices || MEMORY_CACHE.offices;
-      MEMORY_CACHE.messages = data.messages || MEMORY_CACHE.messages;
+      // Update Memory Cache - force override to prevent bleeding from previous firm
+      MEMORY_CACHE.settings = data.settings || fallbackSettings;
+      MEMORY_CACHE.partners = data.partners || [];
+      MEMORY_CACHE.practiceAreas = data.practiceAreas || [];
+      MEMORY_CACHE.caseStudies = data.caseStudies || [];
+      MEMORY_CACHE.testimonials = data.testimonials || [];
+      MEMORY_CACHE.blogPosts = data.blogPosts || [];
+      MEMORY_CACHE.offices = data.offices || [];
+      MEMORY_CACHE.messages = data.messages || [];
   
       try {
-        if (data.settings) safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(data.settings));
-        if (data.partners) safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(data.partners));
-        if (data.practiceAreas) safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(data.practiceAreas));
-        if (data.caseStudies) safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(data.caseStudies));
-        if (data.testimonials) safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(data.testimonials));
-        if (data.blogPosts) safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(data.blogPosts));
-        if (data.offices) safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(data.offices));
-        if (data.messages) safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(data.messages));
+        safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(MEMORY_CACHE.settings));
+        safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(MEMORY_CACHE.partners));
+        safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(MEMORY_CACHE.practiceAreas));
+        safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(MEMORY_CACHE.caseStudies));
+        safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(MEMORY_CACHE.testimonials));
+        safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(MEMORY_CACHE.blogPosts));
+        safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(MEMORY_CACHE.offices));
+        safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(MEMORY_CACHE.messages));
       } catch (e) {
         console.error('Failed to load firm data to localStorage due to quota', e);
       }
+    } else {
+      // Firm has no data yet, populate with safe fallbacks instead of dummy seed
+      MEMORY_CACHE.settings = fallbackSettings;
+      MEMORY_CACHE.partners = [];
+      MEMORY_CACHE.practiceAreas = [];
+      MEMORY_CACHE.caseStudies = [];
+      MEMORY_CACHE.testimonials = [];
+      MEMORY_CACHE.blogPosts = [];
+      MEMORY_CACHE.offices = [];
+      MEMORY_CACHE.messages = [];
+      
+      try {
+        safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(MEMORY_CACHE.settings));
+        safeLocalStorageSet(STORAGE_KEYS.PARTNERS, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.OFFICES, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.MESSAGES, "[]");
+      } catch (e) {}
     }
 
     firmService.setActiveFirmSlug(firm.slug, false);
