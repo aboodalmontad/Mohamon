@@ -190,15 +190,12 @@ class FirmService {
       // 1. Read local cache FIRST for instant UI
       this.initLocal();
 
-      // 2. Fetch full lists only if explicitly requested via init()
-      // This is usually called by Admin or Directory components
+      // 2. Fetch full lists from cloud immediately for platform visitors
       try {
-        await Promise.allSettled([
-          this.fetchFromServer(),
-          this.fetchFromSupabase()
-        ]);
+        await this.fetchFromSupabase();
+        await this.fetchFromServer();
       } catch (err) {
-        console.warn('Full sync in init() partially failed', err);
+        console.warn('Initial cloud sync failed', err);
       }
 
       this.isInitialized = true;

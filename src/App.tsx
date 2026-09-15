@@ -107,11 +107,13 @@ export default function App() {
         // Platform View check
         if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
           setIsPlatformView(true);
-          // Start background fetch immediately
-          firmService.init().then(() => {
+          // Wait for essential cloud fetch
+          try {
+            await firmService.init();
             refreshData();
-          }).catch(e => console.warn('Platform firms fetch failed:', e));
-          
+          } catch (e) {
+            console.warn('Initial platform fetch warning:', e);
+          }
           setIsInitializing(false);
           return;
         }

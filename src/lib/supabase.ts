@@ -48,8 +48,8 @@ export function toValidUUID(input: string): string {
 const STORAGE_KEY_SUPABASE = 'aladl_supabase_config_v1';
 
 export function getStoredSupabaseConfig(): SupabaseConfig {
-  const defaultUrl = '';
-  const defaultKey = '';
+  const defaultUrl = 'https://wtfmpgyiiwhmwmitckxr.supabase.co';
+  const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0Zm1wZ3lpaXdobXdtaXRja3hyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NjUxNTMsImV4cCI6MjEwNDA0MTE1M30.GyAlgdrv6N9-eN12vfKX_MYj12PILCIBXFONaRsuaqI';
 
   if (typeof window === 'undefined') {
     return {
@@ -80,7 +80,7 @@ export function getStoredSupabaseConfig(): SupabaseConfig {
     url: import.meta.env.VITE_SUPABASE_URL || defaultUrl,
     anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || defaultKey,
     tableName: 'law_firms',
-    isConnected: !!(import.meta.env.VITE_SUPABASE_URL),
+    isConnected: true,
   };
 }
 
