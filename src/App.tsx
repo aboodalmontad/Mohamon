@@ -108,36 +108,53 @@ export default function App() {
         if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
           setIsPlatformView(true);
           
-          // 1. Instantly show what we have (local or seed)
-          refreshData();
-          setIsInitializing(false);
+          const cachedFirms = firmService.getAllFirms();
+          if (cachedFirms.length > 0) {
+            refreshData();
+            setIsInitializing(false);
+          } else {
+            setIsInitializing(true); // Must show loading if nothing in cache
+          }
 
-          // 2. Start background fetch immediately without blocking UI
+          // Fetch fresh list
           firmService.init().then(() => {
             refreshData();
-          }).catch(e => console.warn('Background platform fetch warning:', e));
+            setIsInitializing(false);
+          }).catch(e => {
+            console.warn('Background platform fetch warning:', e);
+            setIsInitializing(false);
+          });
           
           return;
         }
         
-        // Load specific firm from local storage first (instant)
+        // Load specific firm
         if (urlSlug) {
-          storageService.loadFirm(urlSlug, false);
-          refreshData();
-        } else {
-          storageService.init();
-          refreshData();
-        }
+          // Check if we already have this specific firm in memory/cache
+          const cachedFirm = firmService.getFirmBySlug(urlSlug);
+          if (cachedFirm && cachedFirm.hasFullData) {
+            storageService.loadFirm(urlSlug, false);
+            refreshData();
+            setIsInitializing(false);
+          } else {
+            // Need to fetch specific firm data
+            setIsInitializing(true);
+          }
 
-        // Fetch background updates from Supabase/API
-        if (urlSlug) {
           firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
             if (sbRes.success && sbRes.firm) {
               firmService.setFirm(sbRes.firm);
               storageService.loadFirm(urlSlug, false);
               refreshData();
             }
-          }).catch(() => {});
+            setIsInitializing(false);
+          }).catch(() => {
+            setIsInitializing(false);
+          });
+        } else {
+          storageService.init();
+          refreshData();
+          setIsInitializing(false);
         }
         
         // Full background initialization
@@ -255,7 +272,9 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#181512] flex items-center justify-center flex-col gap-4">
         <div className="w-12 h-12 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse">جاري تحميل بيانات المكتب...</p>
+        <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse">
+          {isPlatformView ? "جاري تحميل المكاتب..." : "جاري تحميل بيانات المكتب..."}
+        </p>
       </div>
     );
   }
