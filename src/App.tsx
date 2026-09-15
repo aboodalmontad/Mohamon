@@ -135,21 +135,20 @@ export default function App() {
             refreshData();
             setIsInitializing(false);
             
-            // Now fetch the full, fresh data in the background
-            if (!cachedFirm.hasFullData) {
-              setIsFetchingFirm(true);
-              firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
-                if (sbRes.success && sbRes.firm) {
-                  firmService.setFirm(sbRes.firm);
-                  storageService.loadFirm(urlSlug, false);
-                  refreshData();
-                }
-              }).catch(err => {
-                console.warn('Background fetch for firm failed', err);
-              }).finally(() => {
-                setIsFetchingFirm(false);
-              });
-            }
+            // Now fetch the full, fresh data in the background.
+            // We MUST always do this because localStorage strips the .data payload to save space.
+            setIsFetchingFirm(true);
+            firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
+              if (sbRes.success && sbRes.firm) {
+                firmService.setFirm(sbRes.firm);
+                storageService.loadFirm(urlSlug, false);
+                refreshData();
+              }
+            }).catch(err => {
+              console.warn('Background fetch for firm failed', err);
+            }).finally(() => {
+              setIsFetchingFirm(false);
+            });
           } else {
             // We have absolutely no data for this firm yet. We MUST show the loading screen.
             setIsInitializing(true);
