@@ -4,9 +4,11 @@ import {
   Database, RefreshCw, Copy, ShieldAlert, Sparkles, X, 
   Search, ShieldCheck, FileCode, Sliders, Users, MessageSquare,
   Globe2, ArrowUpRight, HelpCircle, Check, AlertCircle, Edit3,
-  Calendar, Power
+  Calendar, Power, Download, FileJson, Archive
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 import { firmService } from '../services/firmService';
 import { LawFirm } from '../types';
 import { SupabaseFirmsTab } from './SupabaseFirmsTab';
@@ -31,7 +33,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const isAr = lang === 'ar';
   const [firms, setFirms] = useState<LawFirm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'firms' | 'supabase' | 'domains' | 'platform'>('firms');
+  const [activeTab, setActiveTab] = useState<'firms' | 'supabase' | 'domains' | 'platform' | 'backup'>('firms');
   
   // Feedback
   const [toastMsg, setToastMsg] = useState('');
@@ -237,6 +239,37 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     refreshFirms();
   };
 
+  const handleDownloadAllFirmsBackup = async () => {
+    try {
+      const allFirms = firmService.getAllFirms();
+      if (allFirms.length === 0) {
+        showToast(isAr ? 'لا توجد مكاتب لتصديرها' : 'No firms to export');
+        return;
+      }
+
+      const zip = new JSZip();
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').split('T')[0];
+      const folderName = `platform_backup_${timestamp}`;
+      const folder = zip.folder(folderName);
+
+      if (!folder) throw new Error('Could not create folder in ZIP');
+
+      allFirms.forEach((firm) => {
+        // Ensure we are exporting the full firm object including 'data'
+        const firmJson = JSON.stringify(firm, null, 2);
+        const fileName = `${firm.slug}.json`;
+        folder.file(fileName, firmJson);
+      });
+
+      const content = await zip.generateAsync({ type: 'blob' });
+      saveAs(content, `mohamon_platform_full_backup_${timestamp}.zip`);
+      showToast(isAr ? 'تم بدء تحميل النسخة الاحتياطية الشاملة لكافة المكاتب' : 'Platform full backup started');
+    } catch (err: any) {
+      console.error('Backup error:', err);
+      showToast(isAr ? 'فشل إنشاء النسخة الاحتياطية الشاملة' : 'Failed to create platform backup');
+    }
+  };
+
   // Aggregated platform metrics
   const totalFirms = firms.length;
   const totalAttorneys = firms.reduce((acc, f) => acc + (f.data?.partners?.length || 0), 0);
@@ -405,6 +438,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-purple-400 rounded-t-full shadow-[0_-2px_10px_rgba(192,132,252,0.5)]" />
             )}
           </button>
+
+          <button
+            onClick={() => setActiveTab('backup')}
+            className={`pb-3 px-6 pt-1 font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer relative group ${
+              activeTab === 'backup'
+                ? 'text-rose-400 bg-rose-400/10 rounded-t-xl'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'backup' ? 'bg-rose-400/20' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
+              <Archive className="w-5 h-5" />
+            </div>
+            <span className="text-base">{isAr ? 'النسخ الاحتياطي الشامل' : 'Full Backup'}</span>
+            {activeTab === 'backup' && (
+              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-400 rounded-t-full shadow-[0_-2px_10px_rgba(244,63,94,0.5)]" />
+            )}
+          </button>
         </div>
 
         {/* Toast Alert */}
@@ -520,6 +570,92 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     {isAr
                       ? 'كل مكتب مسجل في المنصة يمتلك رابط صفحة هبوط خاص ومعزول 100% مثل (your-domain.vercel.app?firm=slug) يمكن للمحامي استخدامه في بطاقته الرقمية، أو توجيه CNAME دومينه الخاص إليه.'
                       : 'Every registered firm can use its isolated direct link (?firm=slug) or map its custom domain via CNAME.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: PLATFORM-WIDE BACKUP */}
+          {activeTab === 'backup' && (
+            <div className="space-y-6 max-w-4xl">
+              <div className="p-8 rounded-3xl bg-gradient-to-br from-rose-950/40 via-slate-900 to-slate-950 border border-rose-500/30 shadow-2xl space-y-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl pointer-events-none" />
+                
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shadow-lg">
+                        <Archive className="w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-2xl font-bold text-white font-serif-title">
+                          {isAr ? 'النسخ الاحتياطي الشامل للمنصة' : 'Platform-Wide Full Backup'}
+                        </h3>
+                        <p className="text-xs text-rose-300 font-medium">
+                          {isAr ? 'تنزيل نسخة مضغوطة تحتوي على بيانات كافة المكاتب المسجلة' : 'Download a ZIP archive containing JSON data for every registered firm'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
+                      {isAr 
+                        ? 'هذه الميزة تتيح لك كمدير للمنصة الحصول على لقطة كاملة (Snapshot) لكل محتويات المنصة. سيتم إنشاء ملف JSON مستقل لكل مكتب محاماة يحتوي على الشركاء، الخدمات، المقالات، الإعدادات، والرسائل، ثم جمعها جميعاً في ملف ZIP واحد للتنزيل بضغطة زر.' 
+                        : 'This feature allows you to export a complete snapshot of all firms. A separate JSON file will be created for each firm containing all its content, and bundled into a single ZIP file for easy download.'}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleDownloadAllFirmsBackup}
+                    className="px-8 py-5 rounded-2xl bg-gradient-to-r from-rose-500 via-rose-600 to-rose-700 hover:brightness-110 text-white font-black text-base flex items-center justify-center gap-3 transition transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-rose-950/40 cursor-pointer"
+                  >
+                    <Download className="w-6 h-6" />
+                    <span>{isAr ? 'تنزيل النسخة الاحتياطية الآن' : 'Download Full Backup Now'}</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800/60">
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                      <Building2 className="w-4 h-4" />
+                      <span>{isAr ? 'نطاق التصدير' : 'Export Scope'}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      {isAr ? `سيتم تصدير عدد ${firms.length} مكتب محاماة مسجل حالياً.` : `Exporting data for all ${firms.length} registered firms.`}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                      <FileJson className="w-4 h-4" />
+                      <span>{isAr ? 'صيغة البيانات' : 'Data Format'}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      {isAr ? 'ملفات JSON مستقلة لكل مكتب مع كافة الصور والنصوص.' : 'Isolated JSON files per firm with all assets and content.'}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>{isAr ? 'الأمان' : 'Security'}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400">
+                      {isAr ? 'تنزيل مباشر وآمن لبيانات المكاتب للاحتفاظ بها خارجياً.' : 'Secure direct download for external long-term retention.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning Notice */}
+              <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-amber-300">{isAr ? 'تنبيه لمدير المنصة' : 'Important Manager Notice'}</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {isAr 
+                      ? 'هذه النسخة تحتوي على البيانات الحساسة للمكاتب وكلمات مرور المديرين. يرجى الاحتفاظ بها في مكان آمن وعدم مشاركتها مع أطراف غير مصرح لها. يفضل إجراء هذا النسخ بشكل دوري (أسبوعي أو شهري).' 
+                      : 'This backup contains sensitive data and manager passwords. Keep it secure and do not share with unauthorized parties. Regular weekly/monthly backups are recommended.'}
                   </p>
                 </div>
               </div>
