@@ -59,6 +59,7 @@ export default function App() {
 
   // App Initialization state: Fast path - no loading if cached
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isFetchingFirm, setIsFetchingFirm] = useState(false);
 
   // Multi-Firm State
   const [activeFirmSlug, setActiveFirmSlug] = useState<string>(() => firmService.getActiveFirmSlug());
@@ -125,14 +126,15 @@ export default function App() {
         
         // Load specific firm
         if (urlSlug) {
-          // Need to fetch specific firm data or ensure it's loaded
-          setIsInitializing(true);
+          // Immediately stop blocking the whole UI so the skeleton/cached layout shows
+          setIsInitializing(false);
+          setIsFetchingFirm(true);
           
           const cachedFirm = firmService.getFirmBySlug(urlSlug);
           if (cachedFirm && cachedFirm.hasFullData) {
             storageService.loadFirm(urlSlug, false);
             refreshData();
-            setIsInitializing(false);
+            setIsFetchingFirm(false);
           } else {
             // Fetch from cloud
             try {
@@ -145,7 +147,7 @@ export default function App() {
             } catch (err) {
               console.warn('Failed to fetch firm data', err);
             } finally {
-              setIsInitializing(false);
+              setIsFetchingFirm(false);
             }
           }
         } else {
@@ -264,12 +266,12 @@ export default function App() {
     refreshData();
   };
 
-  if (isInitializing) {
+  if (isInitializing && isPlatformView) {
     return (
       <div className="min-h-screen bg-[#181512] flex items-center justify-center flex-col gap-4">
         <div className="w-12 h-12 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin"></div>
         <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse text-center px-4">
-          {isPlatformView ? "جاري تحميل المكاتب المسجلة في المنصة..." : "جاري تحميل بيانات المكتب..."}
+          جاري تحميل المكاتب المسجلة في المنصة...
         </p>
       </div>
     );
@@ -304,8 +306,23 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbf8f2] text-[#181512] selection:bg-[#b38a38]/30 selection:text-[#87641d] font-body-custom">
+    <div className="min-h-screen bg-[#fbf8f2] text-[#181512] selection:bg-[#b38a38]/30 selection:text-[#87641d] font-body-custom relative">
       
+      {/* Progress Bar for progressive loading */}
+      {isFetchingFirm && (
+        <div className="fixed top-0 left-0 w-full h-1 bg-[#fbf8f2] z-[100] overflow-hidden">
+          <div className="h-full bg-[#c5a869] animate-pulse w-full origin-left" style={{ animation: 'progress-indeterminate 1.5s infinite linear' }}></div>
+        </div>
+      )}
+      <style>{`
+        @keyframes progress-indeterminate {
+          0% { transform: scaleX(0); transform-origin: left; }
+          50% { transform: scaleX(1); transform-origin: left; }
+          50.1% { transform: scaleX(1); transform-origin: right; }
+          100% { transform: scaleX(0); transform-origin: right; }
+        }
+      `}</style>
+
       {/* If current firm is suspended / expired, show the suspension notice */}
       {!isFirmActive && activeFirm ? (
         <FirmSuspendedNotice
