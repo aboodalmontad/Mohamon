@@ -16,9 +16,9 @@ interface ImageUploaderProps {
 // Compress and process image file on client-side using Canvas to ensure fast performance and compact storage
 export const processImageFile = (
   file: File,
-  maxWidth = 1000,
-  maxHeight = 1000,
-  quality = 0.85
+  maxWidth = 600,
+  maxHeight = 600,
+  quality = 0.7
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {

@@ -12,7 +12,7 @@ import {
 import { storageService } from '../services/storageService';
 import { firmService } from '../services/firmService';
 import { supabaseConfigService, testSupabaseConnection, SupabaseConfig, SUPABASE_QUICK_RLS_FIX_SQL, SUPABASE_SQL_SCHEMA } from '../lib/supabase';
-import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, OfficeLocation, Language } from '../types';
+import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, OfficeLocation, Language, LawFirm } from '../types';
 import { ImageUploader } from './ImageUploader';
 import { 
   autoTranslatePartner, 
@@ -106,7 +106,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   >('messages');
 
   // About Section Editing State
-  const [aboutLangTab, setAboutLangTab] = useState<'ar' | 'en' | 'tr'>('ar');
   const [aboutPreviewTab, setAboutPreviewTab] = useState<'vision' | 'methodology' | 'standards'>('vision');
 
   // Loaded Data
@@ -207,6 +206,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
         const currentActive = firmService.getActiveFirmSlug();
         setSelectedFirmSlug(currentActive || (firms[0]?.slug ?? ''));
       });
+
+      // Listen for storage sync events (from IndexedDB hydration)
+      const handleSync = () => {
+        loadData();
+      };
+      window.addEventListener('aladl_storage_sync', handleSync);
+      window.addEventListener('aladl_firms_updated', handleSync);
+      return () => {
+        window.removeEventListener('aladl_storage_sync', handleSync);
+        window.removeEventListener('aladl_firms_updated', handleSync);
+      };
     }
   }, [isOpen]);
 
@@ -385,43 +395,65 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
 
     try {
-      // Refresh available firms
-      await firmService.init();
-      const allFirms = firmService.getAllFirms();
-
-      // Find matching firm:
-      // 1. If a specific firm is selected in dropdown
-      // 2. OR matching by username (slug / name / email / license)
-      // 3. OR checking currently active firm
-      let targetFirm = selectedFirmSlug ? allFirms.find(f => f.slug === selectedFirmSlug) : null;
-
-      if (!targetFirm && userInput) {
-        targetFirm = allFirms.find(f => 
-          f.slug.toLowerCase() === userInput ||
-          f.email.toLowerCase() === userInput ||
-          (f.licenseNumber && f.licenseNumber.toLowerCase() === userInput) ||
-          f.nameAr.toLowerCase().includes(userInput) ||
-          (f.nameEn && f.nameEn.toLowerCase().includes(userInput))
-        ) || null;
-      }
-
-      if (!targetFirm) {
-        const activeSlug = firmService.getActiveFirmSlug();
-        targetFirm = allFirms.find(f => f.slug === activeSlug) || allFirms[0];
-      }
-
-      // Check if password matches target firm
-      const firmPass = (targetFirm?.adminPassword || '').trim();
-      const settingsPass = (storageService.getSettings().adminPassword || '').trim();
+      // 1. Try to find the firm from what we already have in memory/cache first
+      let allFirms = firmService.getAllFirms();
       
-      const allowedCommonPass = ['admin', 'admin123', '123456', 'law2026', '12345678', 'password'];
+      const findTarget = (firms: LawFirm[]) => {
+        let target = selectedFirmSlug ? firms.find(f => f.slug === selectedFirmSlug) : null;
+        if (!target && userInput) {
+          target = firms.find(f => 
+            f.slug.toLowerCase() === userInput ||
+            f.email.toLowerCase() === userInput ||
+            (f.licenseNumber && f.licenseNumber.toLowerCase() === userInput) ||
+            f.nameAr.toLowerCase().includes(userInput) ||
+            (f.nameEn && f.nameEn.toLowerCase().includes(userInput))
+          ) || null;
+        }
+        if (!target) {
+          const activeSlug = firmService.getActiveFirmSlug();
+          target = firms.find(f => f.slug === activeSlug) || firms[0];
+        }
+        return target;
+      };
 
-      const isMatch = 
-        (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input)) ||
-        (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input)) ||
-        allowedCommonPass.includes(input);
+      const checkMatch = (target: LawFirm | null) => {
+        if (!target) return false;
+        const firmPass = (target.adminPassword || '').trim();
+        const settingsPass = (storageService.getSettings().adminPassword || '').trim();
+        const allowedCommonPass = ['admin', 'admin123', '123456', 'law2026', '12345678', 'password'];
+        
+        return (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input)) ||
+               (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input)) ||
+               allowedCommonPass.includes(input);
+      };
 
-      if (isMatch) {
+      let targetFirm = findTarget(allFirms);
+      
+      // If we found the firm and password matches, login INSTANTLY
+      if (targetFirm && checkMatch(targetFirm)) {
+        if (targetFirm.slug !== firmService.getActiveFirmSlug()) {
+          storageService.switchFirm(targetFirm.slug);
+        }
+        setIsAuthenticated(true);
+        setAuthError(null);
+        loadData();
+        showToast(
+          isAr 
+            ? `✅ تم تسجيل الدخول بنجاح لإدارة: ${targetFirm?.nameAr || 'المكتب'}` 
+            : `✅ Successfully logged in to: ${targetFirm?.nameEn || targetFirm?.nameAr || 'Law Firm'}`
+        );
+        // Still trigger background sync for later
+        firmService.init().catch(() => {});
+        setIsLoggingIn(false);
+        return;
+      }
+
+      // 2. If not found or password didn't match, we might need a fresh sync from server/Supabase
+      await firmService.init();
+      allFirms = firmService.getAllFirms();
+      targetFirm = findTarget(allFirms);
+
+      if (checkMatch(targetFirm)) {
         if (targetFirm && targetFirm.slug !== firmService.getActiveFirmSlug()) {
           storageService.switchFirm(targetFirm.slug);
         }
@@ -451,14 +483,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const handleSavePartner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPartner) return;
-    let toSave = editingPartner;
-    if (autoSyncEnabled) {
-      toSave = await autoTranslatePartner(editingPartner);
+    
+    console.log('[AdminDashboard] Saving partner:', editingPartner);
+    let toSave = { ...editingPartner };
+    
+    setIsTranslating(true);
+    try {
+      if (autoSyncEnabled) {
+        console.log('[AdminDashboard] Auto-translating partner...');
+        const translated = await autoTranslatePartner(editingPartner);
+        toSave = { ...toSave, ...translated };
+      }
+    } catch (err) {
+      console.warn('[AdminDashboard] Partner translation failed, saving original:', err);
+    } finally {
+      setIsTranslating(false);
     }
-    storageService.savePartner(toSave);
-    setPartners(storageService.getPartners());
-    setEditingPartner(null);
-    showToast(isAr ? 'تم حفظ وتحديث بيانات الشريك/المحامي بكافة اللغات بنجاح' : 'Partner saved in all languages');
+
+    try {
+      storageService.savePartner(toSave);
+      setPartners(storageService.getPartners());
+      setEditingPartner(null);
+      showToast(isAr ? 'تم حفظ وتحديث بيانات الشريك/المحامي بنجاح' : 'Partner saved successfully');
+    } catch (err: any) {
+      console.error('[AdminDashboard] Failed to save partner:', err);
+      if (err.message === 'QUOTA_EXCEEDED') {
+        showToast(isAr ? '⚠️ عذراً، ذاكرة المتصفح ممتلئة بالصور. جرب تقليل حجم الصور أو حذف سجلات النشاط.' : '⚠️ Browser storage full. Try using smaller images or clearing old logs.');
+      } else {
+        showToast(isAr ? '❌ فشل حفظ البيانات' : '❌ Failed to save partner');
+      }
+    }
   };
 
   const handleDeletePartner = (id: string, name: string = '') => {
@@ -469,14 +523,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const handleSavePractice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPractice) return;
-    let toSave = editingPractice;
-    if (autoSyncEnabled) {
-      toSave = await autoTranslatePracticeArea(editingPractice);
+    
+    console.log('[AdminDashboard] Saving practice area:', editingPractice);
+    let toSave = { ...editingPractice };
+
+    setIsTranslating(true);
+    try {
+      if (autoSyncEnabled) {
+        console.log('[AdminDashboard] Auto-translating practice area...');
+        const translated = await autoTranslatePracticeArea(editingPractice);
+        toSave = { ...toSave, ...translated };
+      }
+    } catch (err) {
+      console.warn('[AdminDashboard] Practice area translation failed:', err);
+    } finally {
+      setIsTranslating(false);
     }
-    storageService.savePracticeArea(toSave);
-    setPracticeAreas(storageService.getPracticeAreas());
-    setEditingPractice(null);
-    showToast(isAr ? 'تم حفظ وتحديث الاختصاص بكافة اللغات بنجاح' : 'Practice area saved in all languages');
+
+    try {
+      storageService.savePracticeArea(toSave);
+      setPracticeAreas(storageService.getPracticeAreas());
+      setEditingPractice(null);
+      showToast(isAr ? 'تم حفظ وتحديث الاختصاص بنجاح' : 'Practice area saved successfully');
+    } catch (err: any) {
+      console.error('[AdminDashboard] Failed to save practice area:', err);
+      if (err.message === 'QUOTA_EXCEEDED') {
+        showToast(isAr ? '⚠️ ذاكرة المتصفح ممتلئة. جرب حذف سجلات النشاط أو المزامنة مع Supabase.' : '⚠️ Browser storage full. Try clearing old logs or syncing with Supabase.');
+      } else {
+        showToast(isAr ? '❌ فشل حفظ البيانات' : '❌ Failed to save practice area');
+      }
+    }
   };
 
   const handleDeletePractice = (id: string, title: string = '') => {
@@ -709,6 +785,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
   };
 
+  const handleClearLogs = () => {
+    if (window.confirm(isAr ? 'هل أنت متأكد من مسح جميع سجلات النشاط؟ سيؤدي هذا لتوفير مساحة في ذاكرة التخزين.' : 'Are you sure you want to clear all audit logs? This will free up storage space.')) {
+      storageService.resetAuditLogs();
+      showToast(isAr ? 'تم مسح سجلات النشاط بنجاح' : 'Audit logs cleared successfully');
+    }
+  };
+
   // Safe Cache Clear & Application Refresh (Preserving All Data)
   const handleClearCacheAndRefresh = async () => {
     setCacheRefreshProgress({
@@ -765,20 +848,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
           <div className="flex items-center gap-2.5 sm:gap-3">
             {isAuthenticated && (
               <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setAutoSyncEnabled(!autoSyncEnabled)}
-                  className={`flex items-center gap-1.5 font-medium cursor-pointer transition ${
-                    autoSyncEnabled ? 'text-amber-300' : 'text-slate-400'
-                  }`}
-                  title={isAr ? 'عند التفعيل، يتم ترجمة أي تعديل عربي للإنجليزية والتركية تلقائياً' : 'Auto-translate all Arabic edits to EN & TR'}
-                >
-                  <span className={`w-2 h-2 rounded-full ${autoSyncEnabled ? 'bg-amber-400 animate-pulse' : 'bg-slate-600'}`} />
-                  <span>{isAr ? 'مزامنة اللغات تلقائياً:' : 'Multi-Lang Sync:'}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${autoSyncEnabled ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-slate-800 text-slate-400'}`}>
-                    {autoSyncEnabled ? (isAr ? 'مفعلة ✅' : 'ON') : (isAr ? 'معطلة' : 'OFF')}
-                  </span>
-                </button>
               </div>
             )}
 
@@ -1426,38 +1495,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2.5">
-                      {/* Language Switcher for editing */}
-                      <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-                        <button
-                          type="button"
-                          onClick={() => setAboutLangTab('ar')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                            aboutLangTab === 'ar' ? 'bg-[#c5a869] text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          <span>🇸🇦</span>
-                          <span>العربية</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAboutLangTab('en')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                            aboutLangTab === 'en' ? 'bg-[#c5a869] text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          <span>🇬🇧</span>
-                          <span>English</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAboutLangTab('tr')}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                            aboutLangTab === 'tr' ? 'bg-[#c5a869] text-slate-950 shadow-sm' : 'text-slate-400 hover:text-white'
-                          }`}
-                        >
-                          <span>🇹🇷</span>
-                          <span>Türkçe</span>
-                        </button>
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+                        <Globe className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'الترجمة للإنجليزية والتركية تلقائية' : 'Auto-translating to En & Tr'}</span>
                       </div>
 
                       {/* Auto-Translate Button */}
@@ -1584,9 +1624,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               {isAr ? '1. العنوان الرئيسي وشارة القسم والزر' : '1. Section Header, Badge & Action Button'}
                             </span>
                           </h4>
-                          <span className="text-[11px] font-mono text-[#c5a869] font-bold uppercase">
-                            [{aboutLangTab.toUpperCase()}]
-                          </span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1595,31 +1632,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             <label className="block text-xs text-slate-300 font-semibold mb-1">
                               {isAr ? 'شارة القسم الصغيرة (Badge)' : 'Section Tag / Badge'}
                             </label>
-                            {aboutLangTab === 'ar' ? (
-                              <input
-                                type="text"
-                                value={settings.aboutBadgeAr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutBadgeAr: e.target.value })}
-                                placeholder="عن المكتب والمسيرة"
-                                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : aboutLangTab === 'en' ? (
-                              <input
-                                type="text"
-                                value={settings.aboutBadgeEn || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutBadgeEn: e.target.value })}
-                                placeholder="About The Firm & Journey"
-                                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={settings.aboutBadgeTr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutBadgeTr: e.target.value })}
-                                placeholder="Büromuz ve Tarihçemiz"
-                                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            )}
+                            <input
+                              type="text"
+                              value={settings.aboutBadgeAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutBadgeAr: e.target.value })}
+                              placeholder="عن المكتب والمسيرة"
+                              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                            />
                           </div>
 
                           {/* CTA Button Text */}
@@ -1627,31 +1646,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             <label className="block text-xs text-slate-300 font-semibold mb-1">
                               {isAr ? 'نص زر حجز الجلسة (CTA)' : 'Action Button (CTA)'}
                             </label>
-                            {aboutLangTab === 'ar' ? (
-                              <input
-                                type="text"
-                                value={settings.aboutCtaTextAr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutCtaTextAr: e.target.value })}
-                                placeholder="حجز جلسة عمل مع الشريك الإداري"
-                                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : aboutLangTab === 'en' ? (
-                              <input
-                                type="text"
-                                value={settings.aboutCtaTextEn || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutCtaTextEn: e.target.value })}
-                                placeholder="Book Strategy Session with Managing Partner"
-                                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                value={settings.aboutCtaTextTr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutCtaTextTr: e.target.value })}
-                                placeholder="Yönetici Ortak ile Strateji Görüşmesi Planlayın"
-                                className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            )}
+                            <input
+                              type="text"
+                              value={settings.aboutCtaTextAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutCtaTextAr: e.target.value })}
+                              placeholder="حجز جلسة عمل مع الشريك الإداري"
+                              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                            />
                           </div>
                         </div>
 
@@ -1660,31 +1661,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           <label className="block text-xs text-slate-300 font-semibold mb-1">
                             {isAr ? 'العنوان الرئيسي العريض (Heading)' : 'Main Big Heading'}
                           </label>
-                          {aboutLangTab === 'ar' ? (
-                            <input
-                              type="text"
-                              value={settings.aboutHeadingAr || ''}
-                              onChange={(e) => setSettings({ ...settings, aboutHeadingAr: e.target.value })}
-                              placeholder="أكثر من ربع قرن في حماية الاستثمارات وصناعة القرارات القانونية الفارقة"
-                              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                            />
-                          ) : aboutLangTab === 'en' ? (
-                            <input
-                              type="text"
-                              value={settings.aboutHeadingEn || ''}
-                              onChange={(e) => setSettings({ ...settings, aboutHeadingEn: e.target.value })}
-                              placeholder="Over a Quarter Century of Protecting Capital & Shaping High-Stakes Law"
-                              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              value={settings.aboutHeadingTr || ''}
-                              onChange={(e) => setSettings({ ...settings, aboutHeadingTr: e.target.value })}
-                              placeholder="Çeyrek asrı aşkın süredir Yatırımları Koruyor ve Stratejik Hukuki Zaferlere İmza Atıyoruz"
-                              className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                            />
-                          )}
+                          <input
+                            type="text"
+                            value={settings.aboutHeadingAr || ''}
+                            onChange={(e) => setSettings({ ...settings, aboutHeadingAr: e.target.value })}
+                            placeholder="أكثر من ربع قرن في حماية الاستثمارات وصناعة القرارات القانونية الفارقة"
+                            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                          />
                         </div>
                       </div>
 
@@ -1698,7 +1681,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             </span>
                           </h4>
                           <span className="text-[11px] font-mono text-slate-400">
-                            {((aboutLangTab === 'ar' ? settings.aboutTextAr : aboutLangTab === 'en' ? settings.aboutTextEn : settings.aboutTextTr) || '').length} {isAr ? 'حرف' : 'chars'}
+                            {(settings.aboutTextAr || '').length} {isAr ? 'حرف' : 'chars'}
                           </span>
                         </div>
 
@@ -1706,7 +1689,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           <label className="block text-xs text-slate-300 font-semibold mb-1">
                             {isAr ? 'نص قصة المسيرة والتأسيس (يدعم فواصل الأسطر والفقرات):' : 'Journey narrative text (supports paragraphs):'}
                           </label>
-                          {aboutLangTab === 'ar' ? (
                             <textarea
                               rows={5}
                               value={settings.aboutTextAr || ''}
@@ -1714,23 +1696,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               placeholder="تأسس مكتبنا ليكون المرجع القانوني الأول..."
                               className="w-full p-3.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] leading-relaxed"
                             />
-                          ) : aboutLangTab === 'en' ? (
-                            <textarea
-                              rows={5}
-                              value={settings.aboutTextEn || ''}
-                              onChange={(e) => setSettings({ ...settings, aboutTextEn: e.target.value })}
-                              placeholder="Founded to stand as the premier legal authority..."
-                              className="w-full p-3.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] leading-relaxed"
-                            />
-                          ) : (
-                            <textarea
-                              rows={5}
-                              value={settings.aboutTextTr || ''}
-                              onChange={(e) => setSettings({ ...settings, aboutTextTr: e.target.value })}
-                              placeholder="Büromuz, çok uluslu şirketler için..."
-                              className="w-full p-3.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] leading-relaxed"
-                            />
-                          )}
                           <p className="text-[11px] text-slate-500 mt-1">
                             {isAr ? '💡 يمكنك كتابة فقرة أو فقرتين لشرح خلفية المكتب وإنجازاته التاريخية.' : 'Tip: You can write multiple paragraphs highlighting firm history.'}
                           </p>
@@ -1756,40 +1721,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           </div>
                           <div>
                             <label className="block text-[11px] text-slate-400 mb-1">{isAr ? 'النص التفصيلي للرؤية:' : 'Vision paragraph:'}</label>
-                            {aboutLangTab === 'ar' ? (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutVisionAr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutVisionAr: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : aboutLangTab === 'en' ? (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutVisionEn || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutVisionEn: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutVisionTr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutVisionTr: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            )}
+                            <textarea
+                              rows={2}
+                              value={settings.aboutVisionAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutVisionAr: e.target.value })}
+                              className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                            />
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                             <div>
                               <label className="block text-[10px] text-slate-400 mb-0.5">{isAr ? 'النقطة المدعمة 1:' : 'Bullet Point 1:'}</label>
                               <input
                                 type="text"
-                                value={(aboutLangTab === 'ar' ? settings.aboutVisionPoint1Ar : aboutLangTab === 'en' ? settings.aboutVisionPoint1En : settings.aboutVisionPoint1Tr) || ''}
-                                onChange={(e) => {
-                                  if (aboutLangTab === 'ar') setSettings({ ...settings, aboutVisionPoint1Ar: e.target.value });
-                                  else if (aboutLangTab === 'en') setSettings({ ...settings, aboutVisionPoint1En: e.target.value });
-                                  else setSettings({ ...settings, aboutVisionPoint1Tr: e.target.value });
-                                }}
+                                value={settings.aboutVisionPoint1Ar || ''}
+                                onChange={(e) => setSettings({ ...settings, aboutVisionPoint1Ar: e.target.value })}
                                 placeholder={isAr ? 'حماية استباقية للأصول والمصالح' : 'Proactive asset shielding'}
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                               />
@@ -1798,12 +1743,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               <label className="block text-[10px] text-slate-400 mb-0.5">{isAr ? 'النقطة المدعمة 2:' : 'Bullet Point 2:'}</label>
                               <input
                                 type="text"
-                                value={(aboutLangTab === 'ar' ? settings.aboutVisionPoint2Ar : aboutLangTab === 'en' ? settings.aboutVisionPoint2En : settings.aboutVisionPoint2Tr) || ''}
-                                onChange={(e) => {
-                                  if (aboutLangTab === 'ar') setSettings({ ...settings, aboutVisionPoint2Ar: e.target.value });
-                                  else if (aboutLangTab === 'en') setSettings({ ...settings, aboutVisionPoint2En: e.target.value });
-                                  else setSettings({ ...settings, aboutVisionPoint2Tr: e.target.value });
-                                }}
+                                value={settings.aboutVisionPoint2Ar || ''}
+                                onChange={(e) => setSettings({ ...settings, aboutVisionPoint2Ar: e.target.value })}
                                 placeholder={isAr ? 'تمثيل قضائي وتحكيمي لا مثيل له' : 'Unmatched arbitral representation'}
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                               />
@@ -1819,40 +1760,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           </div>
                           <div>
                             <label className="block text-[11px] text-slate-400 mb-1">{isAr ? 'النص التفصيلي للمنهجية:' : 'Methodology paragraph:'}</label>
-                            {aboutLangTab === 'ar' ? (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutMethodologyAr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutMethodologyAr: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : aboutLangTab === 'en' ? (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutMethodologyEn || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutMethodologyEn: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutMethodologyTr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutMethodologyTr: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            )}
+                            <textarea
+                              rows={2}
+                              value={settings.aboutMethodologyAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutMethodologyAr: e.target.value })}
+                              className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                            />
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                             <div>
                               <label className="block text-[10px] text-slate-400 mb-0.5">{isAr ? 'النقطة المدعمة 1:' : 'Bullet Point 1:'}</label>
                               <input
                                 type="text"
-                                value={(aboutLangTab === 'ar' ? settings.aboutMethodologyPoint1Ar : aboutLangTab === 'en' ? settings.aboutMethodologyPoint1En : settings.aboutMethodologyPoint1Tr) || ''}
-                                onChange={(e) => {
-                                  if (aboutLangTab === 'ar') setSettings({ ...settings, aboutMethodologyPoint1Ar: e.target.value });
-                                  else if (aboutLangTab === 'en') setSettings({ ...settings, aboutMethodologyPoint1En: e.target.value });
-                                  else setSettings({ ...settings, aboutMethodologyPoint1Tr: e.target.value });
-                                }}
+                                value={settings.aboutMethodologyPoint1Ar || ''}
+                                onChange={(e) => setSettings({ ...settings, aboutMethodologyPoint1Ar: e.target.value })}
                                 placeholder={isAr ? 'تدقيق قانوني نافي للجهالة متكامل' : 'Comprehensive due diligence'}
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                               />
@@ -1861,12 +1782,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               <label className="block text-[10px] text-slate-400 mb-0.5">{isAr ? 'النقطة المدعمة 2:' : 'Bullet Point 2:'}</label>
                               <input
                                 type="text"
-                                value={(aboutLangTab === 'ar' ? settings.aboutMethodologyPoint2Ar : aboutLangTab === 'en' ? settings.aboutMethodologyPoint2En : settings.aboutMethodologyPoint2Tr) || ''}
-                                onChange={(e) => {
-                                  if (aboutLangTab === 'ar') setSettings({ ...settings, aboutMethodologyPoint2Ar: e.target.value });
-                                  else if (aboutLangTab === 'en') setSettings({ ...settings, aboutMethodologyPoint2En: e.target.value });
-                                  else setSettings({ ...settings, aboutMethodologyPoint2Tr: e.target.value });
-                                }}
+                                value={settings.aboutMethodologyPoint2Ar || ''}
+                                onChange={(e) => setSettings({ ...settings, aboutMethodologyPoint2Ar: e.target.value })}
                                 placeholder={isAr ? 'صياغة عقود محصنة من النزاعات' : 'Dispute-proof contractual drafting'}
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                               />
@@ -1882,40 +1799,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           </div>
                           <div>
                             <label className="block text-[11px] text-slate-400 mb-1">{isAr ? 'النص التفصيلي للسرية:' : 'Confidentiality paragraph:'}</label>
-                            {aboutLangTab === 'ar' ? (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutConfidentialityAr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutConfidentialityAr: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : aboutLangTab === 'en' ? (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutConfidentialityEn || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutConfidentialityEn: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            ) : (
-                              <textarea
-                                rows={2}
-                                value={settings.aboutConfidentialityTr || ''}
-                                onChange={(e) => setSettings({ ...settings, aboutConfidentialityTr: e.target.value })}
-                                className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            )}
+                            <textarea
+                              rows={2}
+                              value={settings.aboutConfidentialityAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutConfidentialityAr: e.target.value })}
+                              className="w-full p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                            />
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                             <div>
                               <label className="block text-[10px] text-slate-400 mb-0.5">{isAr ? 'النقطة المدعمة 1:' : 'Bullet Point 1:'}</label>
                               <input
                                 type="text"
-                                value={(aboutLangTab === 'ar' ? settings.aboutConfidentialityPoint1Ar : aboutLangTab === 'en' ? settings.aboutConfidentialityPoint1En : settings.aboutConfidentialityPoint1Tr) || ''}
-                                onChange={(e) => {
-                                  if (aboutLangTab === 'ar') setSettings({ ...settings, aboutConfidentialityPoint1Ar: e.target.value });
-                                  else if (aboutLangTab === 'en') setSettings({ ...settings, aboutConfidentialityPoint1En: e.target.value });
-                                  else setSettings({ ...settings, aboutConfidentialityPoint1Tr: e.target.value });
-                                }}
+                                value={settings.aboutConfidentialityPoint1Ar || ''}
+                                onChange={(e) => setSettings({ ...settings, aboutConfidentialityPoint1Ar: e.target.value })}
                                 placeholder={isAr ? 'اتفاقيات عدم إفصاح مغلظة' : 'Stringent NDA protocols'}
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                               />
@@ -1924,12 +1821,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               <label className="block text-[10px] text-slate-400 mb-0.5">{isAr ? 'النقطة المدعمة 2:' : 'Bullet Point 2:'}</label>
                               <input
                                 type="text"
-                                value={(aboutLangTab === 'ar' ? settings.aboutConfidentialityPoint2Ar : aboutLangTab === 'en' ? settings.aboutConfidentialityPoint2En : settings.aboutConfidentialityPoint2Tr) || ''}
-                                onChange={(e) => {
-                                  if (aboutLangTab === 'ar') setSettings({ ...settings, aboutConfidentialityPoint2Ar: e.target.value });
-                                  else if (aboutLangTab === 'en') setSettings({ ...settings, aboutConfidentialityPoint2En: e.target.value });
-                                  else setSettings({ ...settings, aboutConfidentialityPoint2Tr: e.target.value });
-                                }}
+                                value={settings.aboutConfidentialityPoint2Ar || ''}
+                                onChange={(e) => setSettings({ ...settings, aboutConfidentialityPoint2Ar: e.target.value })}
                                 placeholder={isAr ? 'قنوات اتصال مشفرة مع الموكلين' : 'Encrypted client communications'}
                                 className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                               />
@@ -1956,12 +1849,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             </label>
                             <input
                               type="text"
-                              value={(aboutLangTab === 'ar' ? settings.aboutRankingTitleAr : aboutLangTab === 'en' ? settings.aboutRankingTitleEn : settings.aboutRankingTitleTr) || ''}
-                              onChange={(e) => {
-                                if (aboutLangTab === 'ar') setSettings({ ...settings, aboutRankingTitleAr: e.target.value });
-                                else if (aboutLangTab === 'en') setSettings({ ...settings, aboutRankingTitleEn: e.target.value });
-                                else setSettings({ ...settings, aboutRankingTitleTr: e.target.value });
-                              }}
+                              value={settings.aboutRankingTitleAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutRankingTitleAr: e.target.value })}
                               placeholder={isAr ? 'مصنف كأفضل مكتب محاماة للشركات والتحكيم' : 'Ranked Top-Tier Corporate Firm'}
                               className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                             />
@@ -1972,12 +1861,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             </label>
                             <input
                               type="text"
-                              value={(aboutLangTab === 'ar' ? settings.aboutRankingDescAr : aboutLangTab === 'en' ? settings.aboutRankingDescEn : settings.aboutRankingDescTr) || ''}
-                              onChange={(e) => {
-                                if (aboutLangTab === 'ar') setSettings({ ...settings, aboutRankingDescAr: e.target.value });
-                                else if (aboutLangTab === 'en') setSettings({ ...settings, aboutRankingDescEn: e.target.value });
-                                else setSettings({ ...settings, aboutRankingDescTr: e.target.value });
-                              }}
+                              value={settings.aboutRankingDescAr || ''}
+                              onChange={(e) => setSettings({ ...settings, aboutRankingDescAr: e.target.value })}
                               placeholder={isAr ? 'وفق التصنيف القانوني الدولي 2024-2026' : 'According to Global Legal Directories 2024-2026'}
                               className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
                             />
@@ -2039,26 +1924,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             <Eye className="w-4 h-4" />
                             <span>{isAr ? 'معاينة تفاعلية حية (مظهر القسم الفعلي):' : 'Live Interactive Preview:'}</span>
                           </div>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#b38a38]/15 text-[#87641d] font-bold">
-                            {aboutLangTab.toUpperCase()}
-                          </span>
                         </div>
 
                         {/* Miniature Render */}
                         <div className="space-y-3">
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#b38a38]/15 text-[#87641d] text-[10px] font-bold">
                             <BookOpen className="w-3 h-3" />
-                            <span>
-                              {aboutLangTab === 'ar' ? (settings.aboutBadgeAr || 'عن المكتب والمسيرة') : aboutLangTab === 'en' ? (settings.aboutBadgeEn || 'About Us') : (settings.aboutBadgeTr || 'Hakkımızda')}
-                            </span>
+                            <span>{settings.aboutBadgeAr || 'عن المكتب والمسيرة'}</span>
                           </div>
 
                           <h3 className="text-sm font-bold text-[#181512] font-serif leading-snug">
-                            {aboutLangTab === 'ar' ? (settings.aboutHeadingAr || 'أكثر من ربع قرن في حماية الاستثمارات') : aboutLangTab === 'en' ? (settings.aboutHeadingEn || 'Over a Quarter Century...') : (settings.aboutHeadingTr || 'Çeyrek asrı aşkın süredir...')}
+                            {settings.aboutHeadingAr || 'أكثر من ربع قرن في حماية الاستثمارات'}
                           </h3>
 
                           <p className="text-xs text-[#4b4334] line-clamp-3 leading-relaxed">
-                            {aboutLangTab === 'ar' ? (settings.aboutTextAr || 'نبذة المكتب...') : aboutLangTab === 'en' ? (settings.aboutTextEn || 'Firm narrative...') : (settings.aboutTextTr || 'Büro hikayesi...')}
+                            {settings.aboutTextAr || 'نبذة المكتب...'}
                           </p>
 
                           {/* Mini Tabs */}
@@ -2081,28 +1961,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           <div className="text-[11px] text-[#4b4334] bg-white/80 p-2.5 rounded-xl border border-[#e6ddcc]">
                             {aboutPreviewTab === 'vision' && (
                               <div>
-                                <p className="line-clamp-2">{aboutLangTab === 'ar' ? settings.aboutVisionAr : aboutLangTab === 'en' ? settings.aboutVisionEn : settings.aboutVisionTr}</p>
+                                <p className="line-clamp-2">{settings.aboutVisionAr}</p>
                                 <div className="mt-1 flex items-center gap-1 text-[10px] text-[#2c261e] font-semibold">
                                   <CheckCircle2 className="w-3 h-3 text-[#b38a38]" />
-                                  <span>{aboutLangTab === 'ar' ? settings.aboutVisionPoint1Ar : settings.aboutVisionPoint1En || 'حماية استباقية'}</span>
+                                  <span>{settings.aboutVisionPoint1Ar || 'حماية استباقية'}</span>
                                 </div>
                               </div>
                             )}
                             {aboutPreviewTab === 'methodology' && (
                               <div>
-                                <p className="line-clamp-2">{aboutLangTab === 'ar' ? settings.aboutMethodologyAr : aboutLangTab === 'en' ? settings.aboutMethodologyEn : settings.aboutMethodologyTr}</p>
+                                <p className="line-clamp-2">{settings.aboutMethodologyAr}</p>
                                 <div className="mt-1 flex items-center gap-1 text-[10px] text-[#2c261e] font-semibold">
                                   <CheckCircle2 className="w-3 h-3 text-[#b38a38]" />
-                                  <span>{aboutLangTab === 'ar' ? settings.aboutMethodologyPoint1Ar : settings.aboutMethodologyPoint1En || 'تدقيق نافي للجهالة'}</span>
+                                  <span>{settings.aboutMethodologyPoint1Ar || 'تدقيق نافي للجهالة'}</span>
                                 </div>
                               </div>
                             )}
                             {aboutPreviewTab === 'standards' && (
                               <div>
-                                <p className="line-clamp-2">{aboutLangTab === 'ar' ? settings.aboutConfidentialityAr : aboutLangTab === 'en' ? settings.aboutConfidentialityEn : settings.aboutConfidentialityTr}</p>
+                                <p className="line-clamp-2">{settings.aboutConfidentialityAr}</p>
                                 <div className="mt-1 flex items-center gap-1 text-[10px] text-[#2c261e] font-semibold">
                                   <CheckCircle2 className="w-3 h-3 text-[#b38a38]" />
-                                  <span>{aboutLangTab === 'ar' ? settings.aboutConfidentialityPoint1Ar : settings.aboutConfidentialityPoint1En || 'سرية بنكية مشددة'}</span>
+                                  <span>{settings.aboutConfidentialityPoint1Ar || 'سرية بنكية مشددة'}</span>
                                 </div>
                               </div>
                             )}
@@ -2114,7 +1994,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               type="button"
                               className="w-full py-2 rounded-xl bg-gradient-to-r from-[#b38a38] via-[#c5a869] to-[#87641d] text-white font-bold text-xs shadow"
                             >
-                              {aboutLangTab === 'ar' ? (settings.aboutCtaTextAr || 'حجز جلسة عمل') : aboutLangTab === 'en' ? (settings.aboutCtaTextEn || 'Book Strategy Session') : (settings.aboutCtaTextTr || 'Strateji Görüşmesi')}
+                              {settings.aboutCtaTextAr || 'حجز جلسة عمل'}
                             </button>
                           </div>
                         </div>
@@ -2550,59 +2430,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       />
 
                       {/* Names */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'الاسم بالعربية *' : 'Name (Arabic) *'}</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="مثال: أ.د. طارق السبيعي"
-                            value={editingPartner.name}
-                            onChange={(e) => setEditingPartner({ ...editingPartner, name: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'الاسم بالإنجليزية *' : 'Name in English *'}</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Prof. Dr. Tariq Al-Subaie"
-                            value={editingPartner.nameEn}
-                            onChange={(e) => setEditingPartner({ ...editingPartner, nameEn: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'الاسم بالعربية *' : 'Name (Arabic) *'}</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="مثال: أ.د. طارق السبيعي"
+                          value={editingPartner.name}
+                          onChange={(e) => setEditingPartner({ ...editingPartner, name: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                        />
                       </div>
 
                       {/* Titles */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'المسمى المهني بالعربية *' : 'Professional Title (Arabic) *'}</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="مثال: محامٍ مشارك أول - قسم الشركات"
-                            value={editingPartner.title}
-                            onChange={(e) => setEditingPartner({ ...editingPartner, title: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'المسمى المهني بالإنجليزية *' : 'Title (English) *'}</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Senior Associate Attorney - Corporate"
-                            value={editingPartner.titleEn}
-                            onChange={(e) => setEditingPartner({ ...editingPartner, titleEn: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'المسمى المهني بالعربية *' : 'Professional Title (Arabic) *'}</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="مثال: محامٍ مشارك أول - قسم الشركات"
+                          value={editingPartner.title}
+                          onChange={(e) => setEditingPartner({ ...editingPartner, title: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                        />
                       </div>
 
                       {/* Specialty & Stats */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'مجال الاختصاص الرئيسي بالعربية *' : 'Primary Specialty (Arabic) *'}</label>
                           <input
@@ -2620,16 +2474,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             type="number"
                             value={editingPartner.experienceYears}
                             onChange={(e) => setEditingPartner({ ...editingPartner, experienceYears: parseInt(e.target.value) || 0 })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'ترخيص المحاماة / القيد' : 'Bar Admission / License'}</label>
-                          <input
-                            type="text"
-                            placeholder="مثال: الهيئة السعودية للمحامين (رقم 1432)"
-                            value={editingPartner.barAdmission}
-                            onChange={(e) => setEditingPartner({ ...editingPartner, barAdmission: e.target.value })}
                             className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
                           />
                         </div>
@@ -4175,27 +4019,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs text-slate-300 mb-1">{isAr ? 'المدينة بالعربية *' : 'City (Arabic) *'}</label>
-                          <input
-                            type="text"
-                            required
-                            value={editingOffice.cityAr}
-                            onChange={(e) => setEditingOffice({ ...editingOffice, cityAr: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-slate-300 mb-1">{isAr ? 'المدينة بالإنجليزية *' : 'City (English) *'}</label>
-                          <input
-                            type="text"
-                            required
-                            value={editingOffice.cityEn}
-                            onChange={(e) => setEditingOffice({ ...editingOffice, cityEn: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs"
-                          />
-                        </div>
+                      <div>
+                        <label className="block text-xs text-slate-300 mb-1">{isAr ? 'المدينة بالعربية *' : 'City (Arabic) *'}</label>
+                        <input
+                          type="text"
+                          required
+                          value={editingOffice.cityAr}
+                          onChange={(e) => setEditingOffice({ ...editingOffice, cityAr: e.target.value })}
+                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs"
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -4330,7 +4162,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
-                  {/* Multi-Language & Translation Control Card */}
                   <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/30 border border-amber-500/40 shadow-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
@@ -4339,15 +4170,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         </div>
                         <div>
                           <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                            <span>{isAr ? 'مزامنة وترجمة اللغات الثلاث (العربية - الإنجليزية - التركية)' : 'Multi-Language Sync & Auto-Translation (AR - EN - TR)'}</span>
+                            <span>{isAr ? 'نظام الترجمة والمزامنة التلقائية (العربية ➡️ الإنجليزية والتركية)' : 'Auto-Translation System (AR ➡️ EN & TR)'}</span>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                              {isAr ? 'نظام ذكي متصل' : 'Connected'}
+                              {isAr ? 'مفعل دائماً ✅' : 'Always Active'}
                             </span>
                           </h4>
                           <p className="text-[11px] text-slate-400">
                             {isAr 
-                              ? 'عند تعديل أي بيان بالعربية، يتم تحديث وترجمة باقي اللغات (الإنجليزية والتركية) تلقائياً ودون الحاجة لإعادة كتابتها يدوياً.' 
-                              : 'Editing any Arabic content automatically synchronizes and updates English & Turkish translations.'}
+                              ? 'أدخل بياناتك باللغة العربية فقط، وسيقوم النظام فور الحفظ بترجمتها للإنجليزية والتركية بأعلى جودة.' 
+                              : 'Enter your data in Arabic only; the system will auto-translate to English and Turkish upon saving.'}
                           </p>
                         </div>
                       </div>
@@ -4359,30 +4190,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#c5a869] hover:from-amber-400 hover:to-[#d4af37] text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-lg transition cursor-pointer disabled:opacity-50"
                       >
                         <Sparkles className="w-4 h-4 text-slate-950" />
-                        <span>{isAr ? '⚡ ترجمة كل الموقع دفعة واحدة' : '⚡ Bulk Translate All'}</span>
+                        <span>{isAr ? '⚡ إعادة ترجمة الموقع بالكامل' : '⚡ Re-translate Entire Site'}</span>
                       </button>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={autoSyncEnabled}
-                          onChange={(e) => setAutoSyncEnabled(e.target.checked)}
-                          className="rounded bg-slate-950 border-slate-700 text-[#c5a869] focus:ring-0 w-4 h-4 cursor-pointer"
-                        />
-                        <span className="font-semibold text-slate-200">
-                          {isAr ? 'تفعيل الترجمة والمزامنة التلقائية عند الحفظ (Auto-sync on save)' : 'Enable auto-translate on save'}
-                        </span>
-                      </label>
-
-                      <div className="flex items-center gap-1.5 text-[11px] text-[#e5cb8e]">
-                        <span>🇸🇦 العربية (الأصل)</span>
-                        <span>➡️</span>
-                        <span>🇬🇧 English</span>
-                        <span>➕</span>
-                        <span>🇹🇷 Türkçe</span>
-                      </div>
                     </div>
                   </div>
 
@@ -4405,11 +4214,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           onClick={() => setSettings({
                             ...settings,
                             firmNameAr: 'مكتب المحامي محمد النحوي للمحاماة والاستشارات القانونية',
-                            firmNameEn: 'Nahwi Law Firm & Legal Consultations',
                             sloganAr: 'حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية',
-                            sloganEn: 'Safeguarding Your Rights, Pioneering Your Legal Success',
                             subSloganAr: 'خبرة عريقة في الترافع أمام كافة المحاكم وتقديم الاستشارات النوعية للأفراد والشركات بأعلى معايير الأمانة والسرية.',
-                            subSloganEn: 'Distinguished experience in judicial advocacy and tailored legal advisory with the highest standards of integrity.',
                           })}
                           className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-[#c5a869] text-start text-[11px] text-slate-200 hover:text-white transition cursor-pointer"
                         >
@@ -4422,11 +4228,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           onClick={() => setSettings({
                             ...settings,
                             firmNameAr: 'شركة النخبة والعدالة للمحاماة والتحكيم الدولي',
-                            firmNameEn: 'Al-Nokhba & Justice International Law Firm',
                             sloganAr: 'حلول قانونية استراتيجية واستشارات تجارية عابرة للحدود',
-                            sloganEn: 'Strategic Legal Solutions & Cross-Border Advisory',
                             subSloganAr: 'تحالف قانوني يضم نخبة من كبار المحامين والمحكّمين المعتمدين لحماية الاستثمارات وإدارة الصفقات الكبرى.',
-                            subSloganEn: 'A premier legal alliance of accredited attorneys and arbitrators securing investments and complex transactions.',
                           })}
                           className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-[#c5a869] text-start text-[11px] text-slate-200 hover:text-white transition cursor-pointer"
                         >
@@ -4439,11 +4242,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           onClick={() => setSettings({
                             ...settings,
                             firmNameAr: 'مجموعة النبراس للاستشارات القانونية وحوكمة الشركات',
-                            firmNameEn: 'Al-Nebras Corporate Governance & Legal Advisory',
                             sloganAr: 'الحصن القانوني المتكامل لنمو الأعمال وحماية رأس المال',
-                            sloganEn: 'The Comprehensive Legal Fortress for Enterprise Growth',
                             subSloganAr: 'نقدم استشارات متقدمة في حوكمة الشركات، الاندماج والاستحواذ، وصياغة العقود التجارية الدولية المعقدة.',
-                            subSloganEn: 'Pioneering corporate governance, M&A structuring, and international contract drafting.',
                           })}
                           className="p-2 rounded-lg bg-slate-900 border border-slate-700 hover:border-[#c5a869] text-start text-[11px] text-slate-200 hover:text-white transition cursor-pointer"
                         >
@@ -4453,59 +4253,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-200 mb-1">{isAr ? 'اسم المكتب بالعربية *' : 'Firm Name in Arabic *'}</label>
-                        <input
-                          type="text"
-                          required
-                          value={settings.firmNameAr}
-                          onChange={(e) => setSettings({ ...settings, firmNameAr: e.target.value })}
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-200 mb-1">{isAr ? 'اسم المكتب بالإنجليزية *' : 'Firm Name in English *'}</label>
-                        <input
-                          type="text"
-                          required
-                          value={settings.firmNameEn}
-                          onChange={(e) => setSettings({ ...settings, firmNameEn: e.target.value })}
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-200 mb-1">{isAr ? 'اسم المكتب بالعربية *' : 'Firm Name in Arabic *'}</label>
+                      <input
+                        type="text"
+                        required
+                        value={settings.firmNameAr}
+                        onChange={(e) => setSettings({ ...settings, firmNameAr: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                      />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-[#e5cb8e] mb-1">
-                          {isAr ? 'الشعار اللفظي الرئيسي بالعربية *' : 'Main Slogan in Arabic *'}
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={settings.sloganAr}
-                          onChange={(e) => setSettings({ ...settings, sloganAr: e.target.value })}
-                          placeholder="مثال: حماية حقوقكم أولويتنا، وصناعة ريادتكم القانونية"
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                        />
-                        <p className="text-[10px] text-slate-400 mt-1">
-                          {isAr ? 'هذا النص يظهر كعنوان رئيسي عريض في أعلى الصفحة الرئيسية' : 'Displays as the prominent main title in the hero section'}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-semibold text-[#e5cb8e] mb-1">
-                          {isAr ? 'الشعار اللفظي الرئيسي بالإنجليزية *' : 'Main Slogan in English *'}
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={settings.sloganEn}
-                          onChange={(e) => setSettings({ ...settings, sloganEn: e.target.value })}
-                          placeholder="e.g. Safeguarding Your Rights, Pioneering Your Legal Success"
-                          className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                        />
-                      </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#e5cb8e] mb-1">
+                        {isAr ? 'الشعار اللفظي الرئيسي بالعربية *' : 'Main Slogan in Arabic *'}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={settings.sloganAr}
+                        onChange={(e) => setSettings({ ...settings, sloganAr: e.target.value })}
+                        placeholder="مثال: حماية حقوقكم أولويتنا، وصناعة ريادتكم القانونية"
+                        className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                      />
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        {isAr ? 'هذا النص يظهر كعنوان رئيسي عريض في أعلى الصفحة الرئيسية' : 'Displays as the prominent main title in the hero section'}
+                      </p>
                     </div>
 
                     <div>
@@ -4950,27 +4723,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           </label>
                         </div>
                         {settings.showNavbarSubtitle !== false && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                            <div>
-                              <label className="block text-[11px] text-slate-400 mb-1">{isAr ? 'السطر التعريفي (عربي)' : 'Subtitle (Arabic)'}</label>
-                              <input
-                                type="text"
-                                value={settings.navbarSubtitleAr || ''}
-                                onChange={(e) => setSettings({ ...settings, navbarSubtitleAr: e.target.value })}
-                                placeholder="مثال: محامون ومستشارون قانونيون ومحكّمون"
-                                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-[11px] text-slate-400 mb-1">{isAr ? 'Subtitle (English)' : 'Subtitle (English)'}</label>
-                              <input
-                                type="text"
-                                value={settings.navbarSubtitleEn || ''}
-                                onChange={(e) => setSettings({ ...settings, navbarSubtitleEn: e.target.value })}
-                                placeholder="e.g. Attorneys, Legal Counsel & Arbitrators"
-                                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
-                              />
-                            </div>
+                          <div className="pt-1">
+                            <label className="block text-[11px] text-slate-400 mb-1">{isAr ? 'السطر التعريفي (عربي)' : 'Subtitle (Arabic)'}</label>
+                            <input
+                              type="text"
+                              value={settings.navbarSubtitleAr || ''}
+                              onChange={(e) => setSettings({ ...settings, navbarSubtitleAr: e.target.value })}
+                              placeholder="مثال: محامون ومستشارون قانونيون ومحكّمون"
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                            />
                           </div>
                         )}
                       </div>
@@ -5680,7 +5441,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </button>
                   </div>
 
-                  {/* 4. SAFE CACHE CLEAR & APP UPDATE */}
+                  {/* 4. SAFE CACHE CLEAR & STORAGE CLEANUP */}
                   <div className="p-6 rounded-2xl bg-gradient-to-br from-cyan-950/40 via-slate-900 to-slate-900 border border-cyan-500/40 space-y-4 shadow-xl">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2.5">
@@ -5689,10 +5450,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         </div>
                         <div>
                           <h4 className="font-bold text-white text-sm">
-                            {isAr ? 'مسح الكاش وتحديث التطبيق (مع الحفاظ الكامل على البيانات)' : 'Safe Cache Clear & App Refresh (Preserving All Data)'}
+                            {isAr ? 'صيانة النظام وتفريغ المساحة' : 'System Maintenance & Storage Cleanup'}
                           </h4>
                           <span className="text-[11px] text-cyan-300 font-medium">
-                            {isAr ? 'تحديث فوري لملفات وشفرات التطبيق دون المساس بالبيانات' : 'Instant app update without touching any stored records'}
+                            {isAr ? 'تحسين سرعة الموقع ومسح السجلات غير الضرورية' : 'Optimize performance and clear non-essential data'}
                           </span>
                         </div>
                       </div>
@@ -5704,30 +5465,58 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
                     <p className="text-xs text-slate-300 leading-relaxed">
                       {isAr 
-                        ? 'يقوم هذا الخيار بمسح ذاكرة التخزين المؤقت للمتصفح (Cache Storage) وإعادة تحميل أحدث ملفات الواجهة مع التحقق المسبق من حفظ وتأمين كافة بيانات الشركاء، المقالات، الاستشارات، والإعدادات في التخزين المزدوج (LocalStorage + IndexedDB).'
-                        : 'This safely purges stale browser caches & reloads the latest app code while ensuring all your partners, articles, consultations, and settings remain 100% intact and backed up.'}
+                        ? 'استخدم هذه الأدوات إذا شعرت ببطء في الموقع أو إذا ظهر تنبيه بامتلاء ذاكرة التخزين. هذه العمليات آمنة ولا تؤثر على بيانات الشركاء أو المحتوى الأساسي.'
+                        : 'Use these tools if the site feels slow or storage is near its limit. These operations are safe and will not affect your core firm data.'}
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-300 bg-slate-950/80 p-3 rounded-xl border border-slate-800">
-                      <div className="flex items-center gap-1.5 text-emerald-400">
-                        <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{isAr ? 'حفظ البيانات محلياً وفي IndexedDB' : 'Dual LocalStorage + IDB backup'}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {/* Audit Logs Cleanup */}
+                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <History className="w-4 h-4" />
+                          <span className="text-xs font-bold">{isAr ? 'سجلات النشاط' : 'Audit Logs'}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-relaxed">
+                          {isAr ? 'مسح سجلات التعديلات القديمة لتوفير مساحة كبيرة في الذاكرة.' : 'Clear old operation logs to free up significant storage space.'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleClearLogs}
+                          className="w-full py-2 rounded-xl bg-slate-800 hover:bg-amber-500/20 hover:text-amber-300 text-slate-300 text-xs font-bold transition border border-slate-700 hover:border-amber-500/40 cursor-pointer"
+                        >
+                          {isAr ? 'مسح سجلات النشاط' : 'Clear Audit Logs'}
+                        </button>
                       </div>
-                      <div className="flex items-center gap-1.5 text-cyan-400">
-                        <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span>{isAr ? 'تفريغ الكاش القديم وتحديث الأصول' : 'Purge old cache & fetch latest assets'}</span>
+
+                      {/* Cache Refresh */}
+                      <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+                        <div className="flex items-center gap-2 text-cyan-400">
+                          <RefreshCw className="w-4 h-4" />
+                          <span className="text-xs font-bold">{isAr ? 'تحديث الذاكرة' : 'Refresh Cache'}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-relaxed">
+                          {isAr ? 'تحديث ملفات الموقع البرمجية مع ضمان أمان البيانات المخزنة.' : 'Safely reload app code and refresh stored data pointers.'}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleClearCacheAndRefresh}
+                          disabled={!!cacheRefreshProgress}
+                          className="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-500 hover:brightness-110 text-slate-950 text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-lg shadow-cyan-900/30"
+                        >
+                          {cacheRefreshProgress ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>{isAr ? 'جاري التحديث...' : 'Updating...'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5" />
+                              <span>{isAr ? 'تحديث شامل وآمن' : 'Safe Full Refresh'}</span>
+                            </>
+                          )}
+                        </button>
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleClearCacheAndRefresh}
-                      disabled={!!cacheRefreshProgress}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-500 hover:brightness-110 text-slate-950 text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-lg shadow-cyan-900/30"
-                    >
-                      <RefreshCw className="w-4 h-4 text-slate-950" />
-                      <span>{isAr ? 'مسح الكاش وتحديث التطبيق الآن' : 'Clear Cache & Update App Now'}</span>
-                    </button>
                   </div>
 
                   {/* 5. RESET TO DEFAULTS */}

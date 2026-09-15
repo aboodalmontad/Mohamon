@@ -602,25 +602,8 @@ EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
 -- -------------------------------------------------------------------------
--- 13. البيانات الأولية لمكتب العدل الدولي (Initial Seed Data)
+-- 13. البيانات الأولية (تترك فارغة لتعبئتها من قبل المستخدم)
 -- -------------------------------------------------------------------------
-INSERT INTO public.law_firms (slug, name_ar, name_en, city_ar, city_en, phone, email, admin_password, is_verified, featured, subscription)
-VALUES (
-  'al-adl',
-  'شركة العدل الدولية للمحاماة والاستشارات القانونية',
-  'Al-Adl International Law Firm',
-  'الرياض',
-  'Riyadh',
-  '+966 11 456 7890',
-  'contact@aladl-law.sa',
-  '123456',
-  true,
-  true,
-  '{"status": "active", "isSiteActive": true, "planTier": "enterprise", "annualFee": 5000, "currency": "SAR"}'::jsonb
-)
-ON CONFLICT (slug) DO UPDATE SET
-  name_ar = EXCLUDED.name_ar,
-  subscription = EXCLUDED.subscription;
 `;
 
 export const supabaseConfigService = {

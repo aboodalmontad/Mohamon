@@ -508,34 +508,18 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                       <span>VITE_SUPABASE_ANON_KEY = eyJhbGciOi...</span>
                       <span className="text-[10px] text-slate-500 font-sans">{isAr ? 'مفتاح anon key' : 'Anon key'}</span>
                     </div>
-                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-cyan-300 flex items-center justify-between">
-                      <span>VITE_DEFAULT_FIRM_SLUG = my-law-firm</span>
-                      <span className="text-[10px] text-slate-500 font-sans">{isAr ? 'المكتب المعروض للعالم على الدومين الرئيسي' : 'Public firm slug'}</span>
-                    </div>
                   </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                  <div className="font-bold text-[#c5a869] flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-[#c5a869]/20 text-[#c5a869] flex items-center justify-center text-[11px] font-bold">3</span>
-                    <span>{isAr ? 'المكتب الافتراضي للمنصة:' : 'Default Platform Firm:'}</span>
-                  </div>
-                  <p className="text-slate-300 leading-relaxed">
-                    {isAr
-                      ? 'يتم تحديد المكتب المعروض كواجهة للمنصة عبر متغير البيئة VITE_DEFAULT_FIRM_SLUG. حالياً يتم التحكم في هذا الإعداد من خلال إعدادات الاستضافة لضمان استقرار الواجهة العامة.'
-                      : 'The firm served on the root domain is determined by the VITE_DEFAULT_FIRM_SLUG environment variable in your hosting settings.'}
-                  </p>
                 </div>
 
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                   <div className="font-bold text-blue-400 flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-blue-400/20 text-blue-300 flex items-center justify-center text-[11px] font-bold">4</span>
+                    <span className="w-5 h-5 rounded-full bg-blue-400/20 text-blue-300 flex items-center justify-center text-[11px] font-bold">3</span>
                     <span>{isAr ? 'الدومين المخصص والروابط المستقلة (White-Label):' : 'Custom Domains & Direct Links:'}</span>
                   </div>
                   <p className="text-slate-300 leading-relaxed">
                     {isAr
-                      ? 'كل مكتب مسجل في المنصة يمتلك أيضاً رابط صفحة هبوط خاص ومعزول 100% مثل (your-domain.vercel.app?firm=slug) يمكن للمحامي استخدامه في بطاقته الرقمية، أو توجيه CNAME دومينه الخاص إليه.'
-                      : 'Every registered firm can also use its isolated direct link (?firm=slug) or map its custom domain via CNAME.'}
+                      ? 'كل مكتب مسجل في المنصة يمتلك رابط صفحة هبوط خاص ومعزول 100% مثل (your-domain.vercel.app?firm=slug) يمكن للمحامي استخدامه في بطاقته الرقمية، أو توجيه CNAME دومينه الخاص إليه.'
+                      : 'Every registered firm can use its isolated direct link (?firm=slug) or map its custom domain via CNAME.'}
                   </p>
                 </div>
               </div>

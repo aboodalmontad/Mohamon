@@ -172,13 +172,6 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
     setTimeout(() => setCopiedSchema(false), 2500);
   };
 
-  // Copy 1-line column update SQL for existing databases
-  const handleCopyColumnFix = () => {
-    navigator.clipboard.writeText('ALTER TABLE public.law_firms ADD COLUMN IF NOT EXISTS is_default_public BOOLEAN DEFAULT false;');
-    setCopiedColumnFix(true);
-    setTimeout(() => setCopiedColumnFix(false), 2500);
-  };
-
   // Copy quick RLS disable command to allow immediate anon writes
   const handleCopyRlsFix = () => {
     navigator.clipboard.writeText(SUPABASE_QUICK_RLS_FIX_SQL);
@@ -489,27 +482,6 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
             <p className="text-[11px] text-slate-400 leading-relaxed">
               طريقة الاستخدام: انسخ الكود أعلاه، ثم توجه إلى لوحة تحكم مشروعك في Supabase، اضغط على <strong>SQL Editor</strong>، ثم <strong>New query</strong> والصق الكود واضغط <strong>Run</strong>.
             </p>
-
-            {/* Quick 1-line schema update notice for existing tables */}
-            <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="space-y-1">
-                <span className="font-bold flex items-center gap-1.5 text-amber-300 text-[11px]">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>تحديث جدول law_firms الموجود مسبقاً (إضافة عمود الواجهة الافتراضية):</span>
-                </span>
-                <p className="text-[10px] text-slate-300 font-mono bg-slate-950 p-1.5 rounded border border-slate-800 break-all" dir="ltr">
-                  ALTER TABLE public.law_firms ADD COLUMN IF NOT EXISTS is_default_public BOOLEAN DEFAULT false;
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyColumnFix}
-                className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition shrink-0 cursor-pointer"
-              >
-                {copiedColumnFix ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedColumnFix ? 'تم النسخ!' : 'نسخ أمر التحديث'}</span>
-              </button>
-            </div>
           </div>
         )}
       </div>

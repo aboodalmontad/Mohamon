@@ -152,17 +152,23 @@ export interface ContactMessage {
 export interface PlatformSettings {
   platformNameAr: string;
   platformNameEn: string;
+  platformNameTr?: string;
   heroBadgeAr: string;
   heroBadgeEn: string;
+  heroBadgeTr?: string;
   heroHeadingAr: string;
   heroHeadingEn: string;
+  heroHeadingTr?: string;
   heroSubheadingAr: string;
   heroSubheadingEn: string;
+  heroSubheadingTr?: string;
   heroBannerUrl?: string;
   ctaPrimaryAr: string;
   ctaPrimaryEn: string;
+  ctaPrimaryTr?: string;
   ctaSecondaryAr: string;
   ctaSecondaryEn: string;
+  ctaSecondaryTr?: string;
 }
 
 export interface SiteSettings {
@@ -334,6 +340,7 @@ export interface FirmSubscription {
   planTier: SubscriptionPlanTier;
   planNameAr: string;
   planNameEn: string;
+  planNameTr?: string;
   status: SubscriptionStatus;
   isSiteActive: boolean; // Controls whether public landing page is active or suspended
   startDate: string; // ISO date
@@ -353,10 +360,13 @@ export interface LawFirm {
   nameTr?: string;
   taglineAr?: string;
   taglineEn?: string;
+  taglineTr?: string;
   cityAr?: string;
   cityEn?: string;
+  cityTr?: string;
   countryAr?: string;
   countryEn?: string;
+  countryTr?: string;
   phone?: string;
   email?: string;
   logoUrl?: string;

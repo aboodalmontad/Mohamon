@@ -20,6 +20,7 @@ import {
   X,
   Database,
   Check,
+  Users,
   Building2,
   AlertTriangle,
   MapPin,
@@ -184,449 +185,261 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
   });
 
   return (
-    <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
-      {/* Top Banner: Subscriptions Overview & Global Supabase Sync */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-amber-950/30 border border-slate-800 shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-8" dir={isAr ? 'rtl' : 'ltr'}>
+      {/* Premium Banner: Subscriptions Overview */}
+      <div className="relative overflow-hidden p-6 sm:p-8 rounded-[2rem] bg-slate-900 border border-slate-800 shadow-2xl">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/4 pointer-events-none" />
         
-        <div className="space-y-2 relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <h2 className="text-lg sm:text-xl font-bold text-white font-serif-title flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-[#c5a869]" />
-              <span>{isAr ? `إدارة المكاتب والاشتراكات السنوية (${firms.length} مكتب)` : `Law Firms & Subscriptions Directory (${firms.length} Firms)`}</span>
-            </h2>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-            {isAr
-              ? 'مركز التحكم الشامل بالمكاتب القانونية المسجلة: تتبع سريان الترخيص، تفعيل أو تعليق المواقع فوراً، إدارة المحتوى، ومزامنة كافة البيانات إلى السحاب.'
-              : 'Central hub for law firm subscriptions: track licenses, toggle site visibility, manage firm content, and sync with cloud database.'}
-          </p>
-        </div>
-
-        {/* Global Cloud Sync Action */}
-        <button
-          onClick={handleSyncAllToSupabase}
-          disabled={isSyncingAll}
-          className="w-full lg:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-[#c5a869] to-[#d4b068] hover:from-[#b59859] hover:to-[#c5a869] text-slate-950 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 transition cursor-pointer shrink-0"
-        >
-          <Database className={`w-4 h-4 ${isSyncingAll ? 'animate-spin' : ''}`} />
-          <span>
-            {isSyncingAll 
-              ? (isAr ? 'جارِ المزامنة السحابية...' : 'Syncing Cloud...') 
-              : (isAr ? 'مزامنة السحاب (Supabase Sync)' : 'Sync All to Supabase')}
-          </span>
-        </button>
-      </div>
-
-      {/* Subscription KPI Metrics Dashboard */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 text-xs">
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-md hover:border-slate-700 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">{isAr ? 'إجمالي المكاتب' : 'Total Firms'}</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-[#c5a869]">
-              <Building2 className="w-4 h-4" />
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-lg">
+                <Building2 className="w-6 h-6 text-[#c5a869]" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white font-serif-title tracking-tight">
+                {isAr ? `شبكة المكاتب القانونية والاشتراكات` : `Law Firms Network & Subscriptions`}
+              </h2>
             </div>
+            <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
+              {isAr
+                ? 'لوحة تحكم مركزية لمراقبة أداء المكاتب، تتبع سريان التراخيص السنوية، وإدارة التواجد الرقمي للمشتركين بفعالية ومصداقية عالية.'
+                : 'Centralized control panel for monitoring firm performance, tracking annual licenses, and managing digital presence for all subscribers.'}
+            </p>
           </div>
-          <div className="text-2xl font-bold font-mono text-white mb-1">{totalFirms}</div>
-          <span className="text-[11px] text-slate-400">{isAr ? 'مكاتب مسجلة بالمنصة' : 'Registered firms'}</span>
-        </div>
 
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-emerald-500/30 shadow-md hover:border-emerald-500/50 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">{isAr ? 'المواقع المفعلة' : 'Live Sites'}</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <button
+              onClick={handleSyncAllToSupabase}
+              disabled={isSyncingAll}
+              className="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm flex items-center justify-center gap-2 border border-slate-700 transition shadow-xl active:scale-95 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSyncingAll ? 'animate-spin' : ''}`} />
+              <span>{isAr ? 'تحديث البيانات' : 'Refresh Data'}</span>
+            </button>
+            
+            <button
+              onClick={handleSyncAllToSupabase}
+              disabled={isSyncingAll}
+              className="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-gradient-to-br from-[#c5a869] to-[#d4b068] hover:from-[#b59859] hover:to-[#c5a869] text-slate-950 font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 transition active:scale-95 disabled:opacity-50"
+            >
+              <Database className="w-4 h-4" />
+              <span>{isAr ? 'مزامنة السحاب' : 'Cloud Sync'}</span>
+            </button>
           </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400 mb-1">{activeFirms}</div>
-          <span className="text-[11px] text-emerald-400/80">{isAr ? 'متاحة للزوار حالياً' : 'Live for visitors'}</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-rose-500/30 shadow-md hover:border-rose-500/50 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">{isAr ? 'المتوقفة أو المنتهية' : 'Suspended / Expired'}</span>
-            <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-              <ShieldAlert className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-rose-400 mb-1">{suspendedFirms + expiredFirms}</div>
-          <span className="text-[11px] text-rose-400/80">{isAr ? 'تحتاج تفعيل أو تجديد' : 'Requires renewal'}</span>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/30 shadow-md hover:border-amber-500/50 transition">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-slate-400 font-medium">{isAr ? 'العائدات السنوية التقديرية' : 'Annual Revenue'}</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-300">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-bold font-mono text-amber-300 mb-1">
-            {totalAnnualRevenueSAR.toLocaleString()} <span className="text-xs font-sans">ر.س</span>
-          </div>
-          <span className="text-[11px] text-amber-400/80">{isAr ? 'رسوم التراخيص الإجمالية' : 'Annual recurring revenue'}</span>
         </div>
       </div>
 
-      {/* Control & Search Bar Header */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs bg-slate-900/80 p-3 sm:p-4 rounded-2xl border border-slate-800">
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800 overflow-x-auto max-w-full">
-          <button
-            onClick={() => setFilterStatus('all')}
-            className={`px-3 py-2 rounded-lg transition font-medium cursor-pointer whitespace-nowrap text-xs ${
-              filterStatus === 'all' ? 'bg-[#c5a869] text-slate-950 font-bold shadow' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {isAr ? 'الكل' : 'All'} ({firms.length})
-          </button>
-          <button
-            onClick={() => setFilterStatus('active')}
-            className={`px-3 py-2 rounded-lg transition font-medium cursor-pointer whitespace-nowrap text-xs ${
-              filterStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {isAr ? 'المفعلة' : 'Active'} ({activeFirms})
-          </button>
-          <button
-            onClick={() => setFilterStatus('suspended')}
-            className={`px-3 py-2 rounded-lg transition font-medium cursor-pointer whitespace-nowrap text-xs ${
-              filterStatus === 'suspended' ? 'bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {isAr ? 'المتوقفة' : 'Suspended'} ({suspendedFirms})
-          </button>
-          <button
-            onClick={() => setFilterStatus('expired')}
-            className={`px-3 py-2 rounded-lg transition font-medium cursor-pointer whitespace-nowrap text-xs ${
-              filterStatus === 'expired' ? 'bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {isAr ? 'المنتهية' : 'Expired'} ({expiredFirms})
-          </button>
+      {/* Modern KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        {[
+          { 
+            label: isAr ? 'إجمالي المكاتب' : 'Total Firms', 
+            val: totalFirms, 
+            sub: isAr ? 'مشتركاً بالمنصة' : 'active partners',
+            icon: Building2, 
+            color: 'amber' 
+          },
+          { 
+            label: isAr ? 'المواقع النشطة' : 'Live Sites', 
+            val: activeFirms, 
+            sub: isAr ? 'متاحة للجمهور' : 'publicly accessible',
+            icon: CheckCircle2, 
+            color: 'emerald' 
+          },
+          { 
+            label: isAr ? 'متوقفة / منتهية' : 'Pending Action', 
+            val: suspendedFirms + expiredFirms, 
+            sub: isAr ? 'تحتاج تدخل إداري' : 'require attention',
+            icon: AlertTriangle, 
+            color: 'rose' 
+          },
+          { 
+            label: isAr ? 'الإيراد السنوي المتوقع' : 'Projected ARR', 
+            val: `${totalAnnualRevenueSAR.toLocaleString()} ر.س`, 
+            sub: isAr ? 'عائدات سنوية تقديرية' : 'estimated annual revenue',
+            icon: TrendingUp, 
+            color: 'blue' 
+          }
+        ].map((kpi, i) => (
+          <div key={i} className="p-6 rounded-3xl bg-slate-900 border border-slate-800 shadow-lg hover:border-slate-700 transition-all group">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">{kpi.label}</span>
+              <div className={`p-2 rounded-xl bg-${kpi.color}-500/10 border border-${kpi.color}-500/20 text-${kpi.color}-400 group-hover:scale-110 transition-transform`}>
+                <kpi.icon className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-white mb-1 font-mono">{kpi.val}</div>
+            <p className="text-[10px] text-slate-500 font-medium">{kpi.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Advanced Filter & Search Toolbar */}
+      <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 p-4 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            { id: 'all', label: isAr ? 'جميع المكاتب' : 'All Firms', count: firms.length },
+            { id: 'active', label: isAr ? 'نشطة' : 'Active', count: activeFirms },
+            { id: 'suspended', label: isAr ? 'متوقفة' : 'Suspended', count: suspendedFirms },
+            { id: 'expired', label: isAr ? 'منتهية' : 'Expired', count: expiredFirms },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterStatus(tab.id)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                filterStatus === tab.id
+                  ? 'bg-[#c5a869] text-slate-950 shadow-lg shadow-amber-500/20'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${filterStatus === tab.id ? 'bg-slate-950/20' : 'bg-slate-800'}`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Search & View Mode Toggle */}
-        <div className="flex items-center gap-2">
-          {/* View Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-xl border border-slate-800 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex items-center gap-1 p-1.5 bg-slate-950 rounded-2xl border border-slate-800">
             <button
               onClick={() => setViewMode('cards')}
-              className={`p-2 rounded-lg transition ${viewMode === 'cards' ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}
-              title={isAr ? 'عرض البطاقات الاحترافية' : 'Card View'}
+              className={`flex-1 sm:flex-none p-2 rounded-xl transition ${viewMode === 'cards' ? 'bg-amber-500/20 text-amber-400' : 'text-slate-500 hover:text-slate-300'}`}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2 rounded-lg transition ${viewMode === 'table' ? 'bg-amber-500/20 text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}
-              title={isAr ? 'عرض الجدول المدمج' : 'Table View'}
+              className={`flex-1 sm:flex-none p-2 rounded-xl transition ${viewMode === 'table' ? 'bg-amber-500/20 text-amber-400' : 'text-slate-500 hover:text-slate-300'}`}
             >
               <List className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Search Input */}
-          <div className="relative flex-1 md:w-80">
-            <Search className="w-4 h-4 absolute right-3 top-2.5 text-slate-500 rtl:right-3 rtl:left-auto" />
+          <div className="relative flex-1 sm:w-80">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
-              placeholder={isAr ? 'بحث باسم المكتب، المدينه، الهاتف، Slug...' : 'Search name, city, phone, slug...'}
+              placeholder={isAr ? 'ابحث عن اسم، مدينة، أو معرف...' : 'Search by name, city, or slug...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pr-9 pl-4 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-amber-400 focus:outline-none"
+              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-white focus:border-[#c5a869] focus:outline-none transition-all placeholder:text-slate-600"
             />
           </div>
         </div>
       </div>
 
-      {/* VIEW MODE 1: PROFESSIONAL RESPONSIVE CARDS */}
+      {/* Firm Inventory Grid */}
       {viewMode === 'cards' ? (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
           {filteredFirms.map((firm) => {
             const ensured = ensureFirmSubscription({ ...firm });
             const sub = ensured.subscription!;
             const isSiteActive = sub.isSiteActive !== false;
-            
-            // Remaining days calculation
             const expiryTime = new Date(sub.endDate).getTime();
             const isExpired = !isNaN(expiryTime) && expiryTime < Date.now();
-            const daysRemaining = !isNaN(expiryTime) 
-              ? Math.ceil((expiryTime - Date.now()) / (1000 * 60 * 60 * 24))
-              : 0;
-
-            const formattedStartDate = new Date(sub.startDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US');
-            const formattedEndDate = new Date(sub.endDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US');
-
-            const isCopied = copiedSlug === firm.slug;
-            
-            // Progress percentage for license duration (out of 365 days)
+            const daysRemaining = !isNaN(expiryTime) ? Math.ceil((expiryTime - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
             const progressPercent = Math.max(0, Math.min(100, (daysRemaining / 365) * 100));
 
             return (
               <div
                 key={firm.id}
-                className={`p-5 sm:p-6 rounded-3xl border transition-all shadow-xl relative overflow-hidden ${
-                  !isSiteActive
-                    ? 'bg-slate-900/90 border-rose-900/50 hover:border-rose-700/80'
-                    : isExpired
-                    ? 'bg-slate-900/90 border-amber-900/50 hover:border-amber-700/80'
-                    : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
-                }`}
+                className="group relative flex flex-col bg-slate-900 rounded-[2.5rem] border border-slate-800 hover:border-[#c5a869]/50 transition-all shadow-xl hover:shadow-amber-500/5 overflow-hidden"
               >
-                {/* Top Accent Line */}
-                <div 
-                  className={`absolute top-0 right-0 left-0 h-1 ${
-                    !isSiteActive 
-                      ? 'bg-rose-500' 
-                      : isExpired 
-                      ? 'bg-amber-500' 
-                      : 'bg-gradient-to-r from-[#c5a869] to-emerald-400'
-                  }`}
-                />
+                {/* Visual Status Indicator */}
+                <div className={`h-1.5 w-full ${!isSiteActive ? 'bg-rose-500' : isExpired ? 'bg-amber-500' : 'bg-emerald-500'}`} />
 
-                <div className="flex flex-col space-y-5">
-                  {/* Header Row: Firm Avatar, Title, Slug Badge, Status Badges */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start sm:items-center gap-3">
-                      {/* Avatar initial */}
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-amber-500/30 text-[#c5a869] font-bold text-lg flex items-center justify-center shadow-inner shrink-0 font-serif-title">
+                <div className="p-6 sm:p-8 flex-1 flex flex-col gap-6">
+                  {/* Header: Identity & Status */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-700 text-[#c5a869] font-black text-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform font-serif-title">
                         {firm.nameAr.charAt(0)}
                       </div>
-
                       <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base sm:text-lg font-bold text-white font-serif-title">
-                            {firm.nameAr}
-                          </h3>
-                          {firm.nameEn && (
-                            <span className="text-slate-400 text-xs font-sans">({firm.nameEn})</span>
-                          )}
-                        </div>
-
-                        {/* Slug Link Button */}
+                        <h3 className="text-lg font-bold text-white font-serif-title leading-tight">{firm.nameAr}</h3>
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleCopyLink(firm.slug)}
-                            className="px-2.5 py-1 rounded-lg text-[11px] font-mono bg-slate-950 text-amber-300 border border-slate-800 hover:border-amber-500/40 flex items-center gap-1.5 transition cursor-pointer"
-                            title={isAr ? 'نسخ الرابط المباشر للمكتب' : 'Copy Firm Link'}
-                          >
-                            <span>?firm={firm.slug}</span>
-                            {isCopied ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
-                          </button>
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">?firm={firm.slug}</span>
+                          <button onClick={() => handleCopyLink(firm.slug)} className="p-1 text-slate-500 hover:text-amber-400 transition cursor-pointer"><Copy className="w-3 h-3" /></button>
                         </div>
                       </div>
                     </div>
-
-                    {/* Status Badges */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Plan Tier Badge */}
-                      <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 shadow-sm">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>{isAr ? sub.planNameAr : sub.planNameEn}</span>
-                      </span>
-
-                      {/* Site Active Status Badge */}
-                      {isSiteActive && !isExpired ? (
-                        <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>{isAr ? 'موقع نشط' : 'Live Site'}</span>
-                        </span>
-                      ) : !isSiteActive ? (
-                        <span className="px-3 py-1 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-rose-500" />
-                          <span>{isAr ? 'متوقف مؤقتاً' : 'Suspended'}</span>
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
-                          <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>{isAr ? 'الاشتراك منتهي' : 'Expired'}</span>
-                        </span>
-                      )}
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                      !isSiteActive ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' : 
+                      isExpired ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 
+                      'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                    }`}>
+                      {!isSiteActive ? (isAr ? 'معلق' : 'Suspended') : isExpired ? (isAr ? 'منتهي' : 'Expired') : (isAr ? 'نشط' : 'Live')}
                     </div>
                   </div>
 
-                  {/* Firm Metadata Info Chips Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800/80 text-xs">
-                    <div className="space-y-0.5">
-                      <span className="text-slate-500 text-[10px] block flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-amber-500/70" /> {isAr ? 'الموقع' : 'Location'}
-                      </span>
-                      <span className="text-white font-medium truncate block">{firm.cityAr || 'غير محدد'} ({firm.countryAr || '—'})</span>
+                  {/* Info Matrix */}
+                  <div className="grid grid-cols-2 gap-4 p-4 rounded-3xl bg-slate-950/50 border border-slate-800/50">
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] flex items-center gap-1"><MapPin className="w-3 h-3" /> {isAr ? 'المقر' : 'City'}</span>
+                      <span className="text-xs text-white font-bold block truncate">{firm.cityAr || '—'}</span>
                     </div>
-
-                    <div className="space-y-0.5">
-                      <span className="text-slate-500 text-[10px] block flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-emerald-500/70" /> {isAr ? 'الهاتف' : 'Phone'}
-                      </span>
-                      <span className="text-white font-mono select-all truncate block">{firm.phone || '—'}</span>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] flex items-center gap-1"><Tag className="w-3 h-3" /> {isAr ? 'الباقة' : 'Plan'}</span>
+                      <span className="text-xs text-amber-400 font-bold block truncate">{isAr ? sub.planNameAr : sub.planNameEn}</span>
                     </div>
-
-                    <div className="space-y-0.5">
-                      <span className="text-slate-500 text-[10px] block flex items-center gap-1">
-                        <Mail className="w-3 h-3 text-blue-500/70" /> {isAr ? 'البريد' : 'Email'}
-                      </span>
-                      <span className="text-white font-mono select-all truncate block" title={firm.email}>{firm.email || '—'}</span>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] flex items-center gap-1"><Users className="w-3 h-3" /> {isAr ? 'المحامون' : 'Lawyers'}</span>
+                      <span className="text-xs text-white font-bold block">{firm.data?.partners?.length || 0}</span>
                     </div>
-
-                    <div className="space-y-0.5">
-                      <span className="text-slate-500 text-[10px] block flex items-center gap-1">
-                        <FileText className="w-3 h-3 text-purple-500/70" /> {isAr ? 'الترخيص' : 'License'}
-                      </span>
-                      <span className="text-white font-mono truncate block">{firm.licenseNumber || 'غير متاح'}</span>
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <span className="text-slate-500 text-[10px] block flex items-center gap-1">
-                        <UserCheck className="w-3 h-3 text-cyan-500/70" /> {isAr ? 'المحامون' : 'Attorneys'}
-                      </span>
-                      <span className="text-white font-bold block">{firm.data?.partners?.length || 0} {isAr ? 'محامي' : 'attorneys'}</span>
-                    </div>
-
-                    <div className="space-y-0.5">
-                      <span className="text-slate-500 text-[10px] block flex items-center gap-1">
-                        <Database className="w-3 h-3 text-amber-500/70" /> {isAr ? 'السجلات' : 'Records'}
-                      </span>
-                      <span className="text-white font-bold block">{firm.data?.messages?.length || 0} {isAr ? 'رسالة' : 'messages'}</span>
+                    <div className="space-y-1">
+                      <span className="text-slate-500 text-[10px] flex items-center gap-1"><DollarSign className="w-3 h-3" /> {isAr ? 'الرسوم' : 'Fee'}</span>
+                      <span className="text-xs text-emerald-400 font-bold block">{(sub.annualFee || 0).toLocaleString()} <span className="text-[10px] opacity-70">SAR</span></span>
                     </div>
                   </div>
 
-                  {/* Subscription License Bar & Fee details */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-950/40 border border-slate-800/60 text-xs">
-                    {/* Dates & Timeline */}
-                    <div className="md:col-span-2 space-y-2">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400 flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                          <span>{isAr ? 'فترة الاشتراك السنوي:' : 'Subscription Duration:'}</span>
-                        </span>
-                        <span className="font-mono text-slate-300">
-                          {formattedStartDate} — <span className={`font-bold ${isExpired ? 'text-rose-400' : 'text-amber-300'}`}>{formattedEndDate}</span>
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden relative">
-                        <div 
-                          className={`h-full transition-all duration-500 rounded-full ${
-                            daysRemaining < 30 ? 'bg-rose-500' : daysRemaining < 90 ? 'bg-amber-400' : 'bg-emerald-400'
-                          }`}
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-500">{isAr ? 'الأيام المتبقية في الاشتراك:' : 'Days Remaining:'}</span>
-                        <span className={`font-bold font-mono ${daysRemaining < 30 ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}>
-                          {daysRemaining > 0 
-                            ? (isAr ? `${daysRemaining} يوم متبقي` : `${daysRemaining} days left`) 
-                            : (isAr ? 'منتهي الصلاحية' : 'Expired')}
-                        </span>
-                      </div>
+                  {/* License Progress Bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-slate-400 flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {isAr ? 'صلاحية الترخيص' : 'License Validity'}</span>
+                      <span className={`font-bold ${daysRemaining < 30 ? 'text-rose-400' : 'text-slate-300'}`}>
+                        {daysRemaining > 0 ? (isAr ? `${daysRemaining} يوم متبقي` : `${daysRemaining} days left`) : (isAr ? 'منتهي' : 'Expired')}
+                      </span>
                     </div>
-
-                    {/* Annual Fees & Payment Status */}
-                    <div className="flex flex-col justify-between space-y-1">
-                      <span className="text-slate-400 text-[11px] block">{isAr ? 'الرسوم السنوية:' : 'Annual Fee:'}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold font-mono text-white">
-                          {(sub.annualFee ?? 0).toLocaleString()} {sub.currency || 'SAR'}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                          sub.paymentStatus === 'paid' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                        }`}>
-                          {sub.paymentStatus === 'paid' ? (isAr ? 'مدفوع' : 'Paid') : (isAr ? 'معلق' : 'Pending')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Quick +1 Year Renewal Action */}
-                    <div className="flex items-center justify-end">
-                      <button
-                        onClick={() => handleRenewOneYear(firm)}
-                        className="w-full md:w-auto px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer"
-                        title={isAr ? 'تمديد الاشتراك لسنة كاملة إضافية' : 'Renew for +1 Year'}
-                      >
-                        <Plus className="w-4 h-4 text-amber-400" />
-                        <span>{isAr ? 'تجديد (+1 سنة)' : 'Renew (+1 Year)'}</span>
-                      </button>
+                    <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div className={`h-full transition-all duration-1000 ${daysRemaining < 30 ? 'bg-rose-500' : 'bg-[#c5a869]'}`} style={{ width: `${progressPercent}%` }} />
                     </div>
                   </div>
 
-                  {/* Notes if present */}
-                  {sub.notes && (
-                    <div className="text-[11px] text-slate-400 italic bg-slate-950/80 px-4 py-2 rounded-xl border border-slate-800/80">
-                      💡 {sub.notes}
+                  {/* Quick Actions Row */}
+                  <div className="flex items-center gap-2 mt-2">
+                    <button
+                      onClick={() => onSelectFirmToManage(firm.slug)}
+                      className="flex-1 px-4 py-3 rounded-2xl bg-[#c5a869] hover:bg-[#b59859] text-slate-950 font-black text-xs transition active:scale-95 shadow-lg shadow-amber-500/10 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Sliders className="w-4 h-4" />
+                      <span>{isAr ? 'إدارة المحتوى' : 'Manage Content'}</span>
+                    </button>
+                    <button
+                      onClick={() => onSwitchToFirm(firm)}
+                      className="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white transition active:scale-95 border border-slate-700 cursor-pointer"
+                      title={isAr ? 'معاينة الموقع' : 'Preview Site'}
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* System Controls */}
+                  <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-800/50">
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => handleToggleSiteActive(firm)} className={`p-2 rounded-xl transition cursor-pointer ${isSiteActive ? 'text-slate-500 hover:text-rose-400 hover:bg-rose-400/5' : 'text-emerald-500 bg-emerald-500/10'}`} title={isAr ? 'تعطيل/تفعيل' : 'Toggle Access'}><Power className="w-4 h-4" /></button>
+                      <button onClick={() => handleOpenEdit(firm)} className="p-2 rounded-xl text-slate-500 hover:text-white hover:bg-slate-800 transition cursor-pointer" title={isAr ? 'تعديل الباقة' : 'Edit Subscription'}><Settings2 className="w-4 h-4" /></button>
+                      <button onClick={() => onOpenPasswordModal(firm)} className="p-2 rounded-xl text-slate-500 hover:text-amber-400 hover:bg-amber-400/5 transition cursor-pointer" title={isAr ? 'تغيير كلمة المرور' : 'Change Password'}><Key className="w-4 h-4" /></button>
                     </div>
-                  )}
-
-                  {/* Comprehensive Action Control Toolbar */}
-                  <div className="flex flex-wrap items-center justify-between gap-2.5 pt-4 border-t border-slate-800/80">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* Manage Content Primary Button */}
-                      <button
-                        onClick={() => onSelectFirmToManage(firm.slug)}
-                        className="px-4 py-2.5 rounded-xl bg-[#c5a869] hover:bg-[#b59859] text-slate-950 font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-lg"
-                      >
-                        <Sliders className="w-4 h-4" />
-                        <span>{isAr ? 'إدارة محتوى المكتب' : 'Manage Content'}</span>
-                      </button>
-
-                      {/* Visit Live Website Button */}
-                      <button
-                        onClick={() => onSwitchToFirm(firm)}
-                        className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer border border-slate-700"
-                      >
-                        <ExternalLink className="w-4 h-4 text-amber-400" />
-                        <span>{isAr ? 'تصفح الموقع' : 'Visit Site'}</span>
-                      </button>
-                    </div>
-
-                    {/* Secondary Actions Row */}
-                    <div className="flex items-center gap-2">
-                      {/* Toggle Live Visibility Switch */}
-                      <button
-                        onClick={() => handleToggleSiteActive(firm)}
-                        className={`px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer border ${
-                          isSiteActive
-                            ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
-                            : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                        }`}
-                        title={isSiteActive ? (isAr ? 'إيقاف موقع المكتب مؤقتاً' : 'Suspend site') : (isAr ? 'تفعيل موقع المكتب' : 'Activate site')}
-                      >
-                        <Power className="w-4 h-4" />
-                        <span className="hidden sm:inline">
-                          {isSiteActive ? (isAr ? 'إيقاف مؤقت' : 'Suspend') : (isAr ? 'تفعيل الموقع' : 'Activate')}
-                        </span>
-                      </button>
-
-                      {/* Edit Subscription Settings Modal */}
-                      <button
-                        onClick={() => handleOpenEdit(firm)}
-                        className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer border border-slate-700"
-                        title={isAr ? 'تعديل بيانات الباقة والرسوم والتواريخ' : 'Edit Plan Details'}
-                      >
-                        <Settings2 className="w-4 h-4 text-slate-300" />
-                      </button>
-
-                      {/* Change Password Modal */}
-                      <button
-                        onClick={() => onOpenPasswordModal(firm)}
-                        className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer border border-slate-700"
-                        title={isAr ? 'تغيير كلمة مرور المدير' : 'Change Admin Password'}
-                      >
-                        <Key className="w-4 h-4 text-amber-400" />
-                      </button>
-
-                      {/* Delete Firm Button */}
-                      <button
-                        onClick={() => onDeleteFirm(firm)}
-                        className="p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition cursor-pointer border border-rose-500/30"
-                        title={isAr ? 'حذف المكتب بشكل كامل ونهائي' : 'Delete Firm Permanently'}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => onDeleteFirm(firm)}
+                      className="p-2 rounded-xl text-slate-600 hover:text-rose-500 hover:bg-rose-500/5 transition cursor-pointer"
+                      title={isAr ? 'حذف المكتب نهائياً' : 'Delete Permanently'}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -634,95 +447,58 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
           })}
         </div>
       ) : (
-        /* VIEW MODE 2: COMPACT HIGH-DENSITY TABLE VIEW FOR DESKTOP */
-        <div className="bg-slate-900/90 rounded-3xl border border-slate-800 overflow-hidden shadow-xl">
+        /* Enhanced Table View */
+        <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-950 text-slate-400 font-semibold border-b border-slate-800">
+            <table className="w-full text-right text-sm">
+              <thead className="bg-slate-950 text-slate-500 border-b border-slate-800">
                 <tr>
-                  <th className="p-3.5">{isAr ? 'المكتب القانوني' : 'Firm'}</th>
-                  <th className="p-3.5">{isAr ? 'الرابط (Slug)' : 'Slug'}</th>
-                  <th className="p-3.5">{isAr ? 'المدينة' : 'City'}</th>
-                  <th className="p-3.5">{isAr ? 'الباقة' : 'Tier'}</th>
-                  <th className="p-3.5">{isAr ? 'تاريخ التجديد' : 'Renewal'}</th>
-                  <th className="p-3.5">{isAr ? 'الرسوم' : 'Fee'}</th>
-                  <th className="p-3.5">{isAr ? 'الحالة' : 'Status'}</th>
-                  <th className="p-3.5 text-center">{isAr ? 'الإجراءات' : 'Actions'}</th>
+                  <th className="px-6 py-5 font-bold uppercase tracking-widest text-[10px]">{isAr ? 'المكتب' : 'Firm'}</th>
+                  <th className="px-6 py-5 font-bold uppercase tracking-widest text-[10px]">{isAr ? 'الباقة' : 'Plan'}</th>
+                  <th className="px-6 py-5 font-bold uppercase tracking-widest text-[10px]">{isAr ? 'الرسوم' : 'Fees'}</th>
+                  <th className="px-6 py-5 font-bold uppercase tracking-widest text-[10px]">{isAr ? 'الحالة' : 'Status'}</th>
+                  <th className="px-6 py-5 font-bold uppercase tracking-widest text-[10px]">{isAr ? 'الموعد النهائي' : 'Expiry'}</th>
+                  <th className="px-6 py-5 font-bold uppercase tracking-widest text-[10px] text-center">{isAr ? 'التحكم' : 'Actions'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80">
+              <tbody className="divide-y divide-slate-800/50">
                 {filteredFirms.map((firm) => {
-                  const ensured = ensureFirmSubscription({ ...firm });
-                  const sub = ensured.subscription!;
+                  const sub = firm.subscription!;
                   const isSiteActive = sub.isSiteActive !== false;
                   const expiryTime = new Date(sub.endDate).getTime();
                   const isExpired = !isNaN(expiryTime) && expiryTime < Date.now();
-                  const formattedEndDate = new Date(sub.endDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US');
 
                   return (
-                    <tr key={firm.id} className="hover:bg-slate-800/50 transition-colors">
-                      <td className="p-3.5 font-bold text-white">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-slate-800 text-amber-400 font-bold flex items-center justify-center font-serif-title">
-                            {firm.nameAr.charAt(0)}
-                          </div>
+                    <tr key={firm.id} className="hover:bg-slate-800/30 transition-colors group">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-[#c5a869] font-serif-title">{firm.nameAr.charAt(0)}</div>
                           <div>
-                            <div>{firm.nameAr}</div>
-                            {firm.nameEn && <div className="text-[10px] text-slate-400 font-normal">{firm.nameEn}</div>}
+                            <div className="font-bold text-white text-sm">{firm.nameAr}</div>
+                            <div className="text-[10px] text-slate-500 font-mono tracking-tight">?firm={firm.slug}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="p-3.5 font-mono text-amber-300">?firm={firm.slug}</td>
-                      <td className="p-3.5 text-slate-300">{firm.cityAr || '—'}</td>
-                      <td className="p-3.5">
-                        <span className="px-2 py-0.5 rounded-lg text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                          {sub.planTier || 'Standard'}
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-500 text-[10px] font-bold border border-amber-500/10">
+                          {isAr ? sub.planNameAr : sub.planNameEn}
                         </span>
                       </td>
-                      <td className="p-3.5 font-mono text-slate-300">{formattedEndDate}</td>
-                      <td className="p-3.5 font-mono text-emerald-400 font-bold">
-                        {(sub.annualFee || 0).toLocaleString()} {sub.currency || 'SAR'}
+                      <td className="px-6 py-4 font-mono text-emerald-400 font-bold">{(sub.annualFee || 0).toLocaleString()} SAR</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${isSiteActive && !isExpired ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                          <span className="text-[11px] font-medium text-slate-300">{isSiteActive && !isExpired ? (isAr ? 'نشط' : 'Live') : (isAr ? 'معلق' : 'Suspended')}</span>
+                        </div>
                       </td>
-                      <td className="p-3.5">
-                        {isSiteActive && !isExpired ? (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                            {isAr ? 'نشط' : 'Live'}
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">
-                            {isAr ? 'متوقف' : 'Suspended'}
-                          </span>
-                        )}
+                      <td className="px-6 py-4 font-mono text-slate-400 text-xs">
+                        {new Date(sub.endDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US')}
                       </td>
-                      <td className="p-3.5">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => onSelectFirmToManage(firm.slug)}
-                            className="px-2.5 py-1 rounded-lg bg-[#c5a869] text-slate-950 text-[11px] font-bold hover:bg-[#b59859] transition"
-                          >
-                            {isAr ? 'إدارة' : 'Manage'}
-                          </button>
-                          <button
-                            onClick={() => onSwitchToFirm(firm)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                            title={isAr ? 'زيارة الموقع' : 'Visit Site'}
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleOpenEdit(firm)}
-                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-                            title={isAr ? 'تعديل الاشتراك' : 'Edit Plan'}
-                          >
-                            <Settings2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => onDeleteFirm(firm)}
-                            className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400"
-                            title={isAr ? 'حذف المكتب' : 'Delete'}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <button onClick={() => onSelectFirmToManage(firm.slug)} className="px-4 py-2 rounded-xl bg-[#c5a869] text-slate-950 text-[11px] font-black hover:bg-[#b59859] transition cursor-pointer">{isAr ? 'إدارة' : 'Manage'}</button>
+                          <button onClick={() => onSwitchToFirm(firm)} className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"><ExternalLink className="w-4 h-4" /></button>
+                          <button onClick={() => handleOpenEdit(firm)} className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer"><Settings2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     </tr>
@@ -733,6 +509,7 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
           </div>
         </div>
       )}
+
 
       {filteredFirms.length === 0 && (
         <div className="p-12 text-center text-slate-400 text-sm border-2 border-dashed border-slate-800 rounded-3xl space-y-3">

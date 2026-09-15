@@ -80,11 +80,13 @@ export function createDefaultFirms(): LawFirm[] {
 class FirmService {
   private memoryFirms: LawFirm[] = [];
   private isInitialized = false;
+  private initPromise: Promise<void> | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.initLocal();
-      this.init();
+      // Start background init but don't block
+      this.init().catch(() => {});
     }
   }
 
@@ -113,49 +115,52 @@ class FirmService {
   }
 
   public async init(): Promise<void> {
-    if (this.isInitialized) return;
+    if (this.isInitialized) return Promise.resolve();
+    if (this.initPromise) return this.initPromise;
 
-    // 0. Fetch Supabase config from server API first if available
-    if (typeof fetch !== 'undefined') {
+    this.initPromise = (async () => {
+      // 1. Read local cache FIRST for instant UI
+      this.initLocal();
+
+      // 2. Fetch config and data in parallel to save time
       try {
-        const res = await fetch('/api/supabase/config');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.config && json.config.url && json.config.anonKey) {
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('aladl_supabase_config_v1', JSON.stringify(json.config));
-            }
+        const fetchConfig = async () => {
+          if (typeof fetch !== 'undefined') {
+            try {
+              const res = await fetch('/api/supabase/config');
+              if (res.ok) {
+                const json = await res.json();
+                if (json.success && json.config && json.config.url && json.config.anonKey) {
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('aladl_supabase_config_v1', JSON.stringify(json.config));
+                  }
+                }
+              }
+            } catch {}
           }
-        }
-      } catch {}
-    }
+        };
 
-    // 1. Read local cache FIRST for instant UI
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY_FIRMS);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          this.memoryFirms = parsed.map((f: LawFirm) => ensureFirmSubscription(f));
-        }
+        // Parallel execution of all fetch tasks
+        await Promise.allSettled([
+          fetchConfig(),
+          this.fetchFromServer(),
+          this.fetchFromSupabase()
+        ]);
+      } catch (err) {
+        console.warn('Network sync in init() partially failed', err);
       }
-    } catch (e) {
-      console.warn('Error reading local firms cache', e);
-    }
 
-    // 2. Fetch from Express server backend (/api/firms) to get shared firms across browsers/sessions
-    await this.fetchFromServer().catch(() => {});
+      // 3. Finalize
+      if (this.memoryFirms.length === 0) {
+        this.memoryFirms = createDefaultFirms();
+        this.saveToLocalCache();
+      }
 
-    // 3. Fetch from Supabase as well if configured
-    await this.fetchFromSupabase().catch(() => {});
+      this.isInitialized = true;
+      this.initPromise = null;
+    })();
 
-    // 4. If still no firms, seed defaults
-    if (this.memoryFirms.length === 0) {
-      this.memoryFirms = createDefaultFirms();
-      this.saveToLocalCache();
-    }
-
-    this.isInitialized = true;
+    return this.initPromise;
   }
 
   // Fetch a single firm by its slug directly from Supabase
@@ -220,10 +225,25 @@ class FirmService {
   private saveToLocalCache(): void {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(this.memoryFirms));
+      // Stripping heavy 'data' field (which contains Base64 images) from localStorage cache
+      // to avoid QuotaExceededError. The data is preserved in memory and mirrored to IndexedDB.
+      const firmsForStorage = this.memoryFirms.map(firm => {
+        const { data, ...rest } = firm;
+        // Keep a very tiny stub of data if needed, but avoid the large lists
+        return { 
+          ...rest,
+          // We keep essential metadata for fast rendering in lists
+          hasFullData: !!(data && (data.partners?.length || data.blogPosts?.length))
+        };
+      });
+      localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(firmsForStorage));
       window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
     } catch (e) {
       console.warn('Failed to save firms to local cache', e);
+      // If even stripped firms fail, clear some space
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        localStorage.removeItem('aladl_audit_logs_v1');
+      }
     }
   }
 
@@ -1238,12 +1258,35 @@ class FirmService {
       counter++;
     }
 
-    const defaultFirmTemplate = createDefaultFirms()[0];
     const newSettings: SiteSettings = {
-      ...defaultFirmTemplate.data.settings,
       firmNameAr: info.nameAr,
       firmNameEn: info.nameEn || 'Law Firm & Legal Counsel',
       sloganAr: info.taglineAr || 'حلول قانونية واستشارات استراتيجية رائدة',
+      sloganEn: 'Strategic Legal Solutions',
+      subSloganAr: 'خبرة عريقة في الأنظمة والقوانين',
+      subSloganEn: 'Excellence in Legal Practice',
+      aboutTextAr: 'نحن مكتب محاماة رائد يضم نخبة من المستشارين القانونيين...',
+      aboutTextEn: 'We are a leading law firm with elite legal advisors...',
+      phone: info.phone || '+966 11 000 0000',
+      emergencyPhone: info.phone || '+966 50 000 0000',
+      email: info.email || 'info@lawfirm.com',
+      consultationEmail: info.email || 'consult@lawfirm.com',
+      addressAr: info.cityAr ? `${info.cityAr}، المملكة العربية السعودية` : 'الرياض، المملكة العربية السعودية',
+      addressEn: info.cityEn ? `${info.cityEn}, Saudi Arabia` : 'Riyadh, Saudi Arabia',
+      workingHoursAr: 'الأحد - الخميس: 8:00 صباحاً - 5:00 مساءً',
+      workingHoursEn: 'Sun - Thu: 8:00 AM - 5:00 PM',
+      stats: {
+        yearsExperience: 10,
+        casesWon: 100,
+        activeClients: 500,
+        successRate: 95,
+        recoveredMillionsUSD: 10
+      },
+      socialLinks: {
+        linkedin: 'https://linkedin.com',
+        twitter: 'https://twitter.com',
+        youtube: 'https://youtube.com'
+      },
       contactPhone: info.phone || '+966 11 000 0000',
       contactEmail: info.email || 'info@lawfirm.com',
       licenseNumber: info.licenseNumber || 'LIC-2025-001',
@@ -1276,11 +1319,11 @@ class FirmService {
       updatedAt: new Date().toISOString(),
       data: {
         settings: newSettings,
-        partners: [...defaultFirmTemplate.data.partners],
-        practiceAreas: [...defaultFirmTemplate.data.practiceAreas],
-        caseStudies: [...defaultFirmTemplate.data.caseStudies],
-        testimonials: [...defaultFirmTemplate.data.testimonials],
-        blogPosts: [...defaultFirmTemplate.data.blogPosts],
+        partners: [],
+        practiceAreas: [],
+        caseStudies: [],
+        testimonials: [],
+        blogPosts: [],
         offices: [
           {
             id: `off-${Date.now()}`,
