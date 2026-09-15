@@ -104,6 +104,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             
             <div className="flex items-center gap-3 sm:gap-4">
               <button 
+                onClick={() => setIsRegistrationOpen(true)}
+                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c5a869] text-[#181512] font-bold text-sm hover:bg-[#b38a38] transition-all shadow-lg shadow-[#c5a869]/20 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>{isRtl ? 'تسجيل مكتب جديد' : 'Register New Firm'}</span>
+              </button>
+              <button 
                 onClick={() => storageService.clearCacheAndRefreshApp()}
                 className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition-colors bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-lg cursor-pointer"
                 title={isRtl ? 'مسح الكاش وتحديث الصفحة' : 'Clear Cache & Refresh'}
@@ -116,7 +123,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 className="flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
               >
                 <Server className="w-4 h-4" />
-                <span>إدارة المنصة</span>
+                <span>{isRtl ? 'إدارة المنصة' : 'Platform Admin'}</span>
               </button>
             </div>
           </div>
@@ -156,8 +163,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button 
+                onClick={() => setIsRegistrationOpen(true)}
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-10 py-4 rounded-xl text-lg font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl"
+              >
+                <UserPlus className="w-5 h-5 text-[#c5a869]" />
+                <span>{isRtl ? 'سجل مكتبك الآن' : 'Register Your Firm'}</span>
+              </button>
+              <button 
                 onClick={() => document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-10 py-4 rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#c5a869]/20 flex items-center justify-center gap-2"
+                className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-10 py-4 rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#c5a869]/20 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Building className="w-5 h-5" />
                 <span>{isRtl ? settings.ctaSecondaryAr : settings.ctaSecondaryEn}</span>
