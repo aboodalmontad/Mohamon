@@ -107,7 +107,12 @@ export default function App() {
         // Platform View check
         if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
           setIsPlatformView(true);
-          firmService.init(); 
+          // Start background fetch immediately
+          firmService.init().then(() => {
+            refreshData();
+          }).catch(e => console.warn('Platform firms fetch failed:', e));
+          
+          setIsInitializing(false);
           return;
         }
         

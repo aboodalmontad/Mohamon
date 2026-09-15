@@ -133,6 +133,13 @@ class FirmService {
       this.initLocal();
       // Only trigger configuration fetch, don't fetch ALL firms yet
       this.initMinimal().catch(() => {});
+
+      window.addEventListener('aladl_supabase_config_changed', () => {
+        this.isInitialized = false;
+        this.init().then(() => {
+          window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+        });
+      });
     }
   }
 

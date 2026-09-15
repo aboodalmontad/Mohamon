@@ -36,35 +36,8 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
   };
 
   useEffect(() => {
-    // Automatically clear browser cache & hard-reload ONCE when entering the home page per session
-    if (typeof window !== 'undefined') {
-      const HOME_CACHE_KEY = 'aladl_home_cache_cleared_session_v4';
-      if (!sessionStorage.getItem(HOME_CACHE_KEY)) {
-        sessionStorage.setItem(HOME_CACHE_KEY, 'true');
-        (async () => {
-          if ('caches' in window) {
-            try {
-              const keys = await window.caches.keys();
-              await Promise.all(keys.map(k => window.caches.delete(k)));
-            } catch (e) {
-              console.warn('Cache storage clear warning:', e);
-            }
-          }
-          if ('serviceWorker' in navigator) {
-            try {
-              const regs = await navigator.serviceWorker.getRegistrations();
-              for (const r of regs) await r.unregister();
-            } catch (e) {
-              console.warn('Service worker unregister warning:', e);
-            }
-          }
-          window.location.reload();
-        })();
-        return;
-      }
-    }
-
     loadFirms();
+    
     const handleStorageSync = () => {
       setSettings(storageService.getPlatformSettings());
       loadFirms();
@@ -105,10 +78,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             <div className="flex items-center gap-3 sm:gap-4">
               <button 
                 onClick={() => setIsRegistrationOpen(true)}
-                className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c5a869] text-[#181512] font-bold text-sm hover:bg-[#b38a38] transition-all shadow-lg shadow-[#c5a869]/20 cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c5a869] text-[#181512] font-bold text-sm hover:bg-[#ebd397] transition-all shadow-lg shadow-[#c5a869]/30 cursor-pointer whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>{isRtl ? 'تسجيل مكتب جديد' : 'Register New Firm'}</span>
+                <span>{isRtl ? 'سجل مكتبك' : 'Register'}</span>
               </button>
               <button 
                 onClick={() => storageService.clearCacheAndRefreshApp()}
