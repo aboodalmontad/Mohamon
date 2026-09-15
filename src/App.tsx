@@ -126,17 +126,33 @@ export default function App() {
         
         // Load specific firm
         if (urlSlug) {
-          // Immediately stop blocking the whole UI so the skeleton/cached layout shows
-          setIsInitializing(false);
-          setIsFetchingFirm(true);
-          
           const cachedFirm = firmService.getFirmBySlug(urlSlug);
-          if (cachedFirm && cachedFirm.hasFullData) {
+          
+          if (cachedFirm) {
+            // We have at least basic data for this firm (e.g. from the directory).
+            // Show it immediately for a fast, progressive feel.
             storageService.loadFirm(urlSlug, false);
             refreshData();
-            setIsFetchingFirm(false);
+            setIsInitializing(false);
+            
+            // Now fetch the full, fresh data in the background
+            if (!cachedFirm.hasFullData) {
+              setIsFetchingFirm(true);
+              firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
+                if (sbRes.success && sbRes.firm) {
+                  firmService.setFirm(sbRes.firm);
+                  storageService.loadFirm(urlSlug, false);
+                  refreshData();
+                }
+              }).catch(err => {
+                console.warn('Background fetch for firm failed', err);
+              }).finally(() => {
+                setIsFetchingFirm(false);
+              });
+            }
           } else {
-            // Fetch from cloud
+            // We have absolutely no data for this firm yet. We MUST show the loading screen.
+            setIsInitializing(true);
             try {
               const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug);
               if (sbRes.success && sbRes.firm) {
@@ -147,7 +163,7 @@ export default function App() {
             } catch (err) {
               console.warn('Failed to fetch firm data', err);
             } finally {
-              setIsFetchingFirm(false);
+              setIsInitializing(false);
             }
           }
         } else {
