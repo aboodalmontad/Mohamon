@@ -32,20 +32,13 @@ import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, 
 let initialIsPlatformView = false;
 if (typeof window !== 'undefined') {
   try {
-    firmService.initLocal();
     const urlParams = new URLSearchParams(window.location.search);
     const urlSlug = urlParams.get('firm');
     
     if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
-      // Platform View by default if no firm specified
       initialIsPlatformView = true;
-    } else if (urlSlug && firmService.getFirmBySlug(urlSlug)) {
-      storageService.loadFirm(urlSlug, false);
-    } else {
-      storageService.init();
     }
   } catch (err) {
-    console.warn('Eager init fallback:', err);
     initialIsPlatformView = true;
   }
 }
@@ -64,18 +57,8 @@ export default function App() {
     offices: storageService.getOffices()
   }));
 
-  // App Initialization state: Skip loading screen entirely if data is already locally cached
-  const [isInitializing, setIsInitializing] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    if (initialIsPlatformView) return false;
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
-    if (urlSlug && !firmService.getFirmBySlug(urlSlug)) {
-      return true; // We need to fetch it from network, show loading
-    }
-    return false; // We already have it, render instantly!
-  });
+  // App Initialization state: Fast path - no loading if cached
+  const [isInitializing, setIsInitializing] = useState(true);
 
   // Multi-Firm State
   const [activeFirmSlug, setActiveFirmSlug] = useState<string>(() => firmService.getActiveFirmSlug());
@@ -92,8 +75,8 @@ export default function App() {
   const [isSiteBuilderOpen, setIsSiteBuilderOpen] = useState(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
 
-  // Sync state with storage service & active firm
-  const refreshData = () => {
+  // Sync state with storage service & active firm - optimized with callback
+  const refreshData = React.useCallback(() => {
     const slug = firmService.getActiveFirmSlug();
     setActiveFirmSlug(slug);
     const firm = firmService.getFirmBySlug(slug);
@@ -110,82 +93,45 @@ export default function App() {
       blogPosts: storageService.getBlogPosts(),
       offices: storageService.getOffices()
     });
-  };
+  }, []);
 
   useEffect(() => {
     const loadAppData = async () => {
-      // 1. Instantly read local cache
+      // 1. Initialize services inside effect
       firmService.initLocal();
-      
-      if (initialIsPlatformView) {
-        setIsInitializing(false);
-        firmService.init(); // fetch firms in background for admin panel
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('admin') === 'super' || urlParams.get('super') === '1' || urlParams.get('superadmin') === 'true') {
-          setIsSuperAdminOpen(true);
-        }
-        return;
-      }
       
       const urlParams = new URLSearchParams(window.location.search);
       const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
 
-      // If we have cached data for the firm, render it instantly (optimistic UI)
+      if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
+        setIsPlatformView(true);
+        setIsInitializing(false);
+        firmService.init(); 
+        return;
+      }
+      
+      // Load specific firm
       if (urlSlug) {
-        const cachedFirm = firmService.getFirmBySlug(urlSlug);
-        if (cachedFirm) {
-          storageService.loadFirm(urlSlug, false);
-          refreshData();
-          setIsInitializing(false);
-        }
+        storageService.loadFirm(urlSlug, false);
       } else {
         storageService.init();
-        refreshData();
-        setIsInitializing(false);
       }
+      
+      refreshData();
+      setIsInitializing(false);
 
-      // Check for direct super admin access immediately
-      if (urlParams.get('admin') === 'super' || urlParams.get('super') === '1' || urlParams.get('superadmin') === 'true') {
-        setIsSuperAdminOpen(true);
-      }
-
-      // 2. Fetch the LATEST data for THIS SPECIFIC office in the background
+      // Fetch background updates
       if (urlSlug) {
-        Promise.allSettled([
-          firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
-            if (sbRes.success && sbRes.firm) {
-              firmService.setFirm(sbRes.firm);
-              storageService.loadFirm(urlSlug, false);
-              refreshData();
-              setIsInitializing(false);
-            }
-          }).catch(() => {}),
-          
-          fetch(`/api/firms/${urlSlug}`).then(async (res) => {
-            if (res.ok) {
-              const json = await res.json();
-              if (json.success && json.data) {
-                const firm = firmService['ensureFirmSubscription'] ? firmService['ensureFirmSubscription'](json.data) : json.data;
-                firmService.setFirm(firm);
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
-                setIsInitializing(false);
-              }
-            }
-          }).catch(() => {})
-        ]).finally(() => {
-          // If the network completes and we were still waiting, fallback to defaults/cache
-          setIsInitializing(false);
-          storageService.loadFirm(urlSlug, true);
-          refreshData();
-        });
+        firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
+          if (sbRes.success && sbRes.firm) {
+            firmService.setFirm(sbRes.firm);
+            storageService.loadFirm(urlSlug, false);
+            refreshData();
+          }
+        }).catch(() => {});
       }
-
-      // 3. Initialize background services only if potentially needed
-      if (initialIsPlatformView || urlParams.get('admin') || urlParams.get('super')) {
-        firmService.init();
-      }
+      
+      firmService.init();
     };
 
     loadAppData();

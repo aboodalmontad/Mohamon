@@ -216,27 +216,24 @@ class FirmService {
 
   private saveToLocalCache(): void {
     if (typeof window === 'undefined') return;
-    try {
-      // Stripping heavy 'data' field (which contains Base64 images) from localStorage cache
-      // to avoid QuotaExceededError. The data is preserved in memory and mirrored to IndexedDB.
-      const firmsForStorage = this.memoryFirms.map(firm => {
-        const { data, ...rest } = firm;
-        // Keep a very tiny stub of data if needed, but avoid the large lists
-        return { 
-          ...rest,
-          // We keep essential metadata for fast rendering in lists
-          hasFullData: !!(data && (data.partners?.length || data.blogPosts?.length))
-        };
-      });
-      localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(firmsForStorage));
-      window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
-    } catch (e) {
-      console.warn('Failed to save firms to local cache', e);
-      // If even stripped firms fail, clear some space
-      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        localStorage.removeItem('aladl_audit_logs_v1');
+    
+    if ((this as any)._saveTimeout) clearTimeout((this as any)._saveTimeout);
+    
+    (this as any)._saveTimeout = setTimeout(() => {
+      try {
+        const firmsForStorage = this.memoryFirms.map(firm => {
+          const { data, ...rest } = firm;
+          return { 
+            ...rest,
+            hasFullData: !!(data && (data.partners?.length || data.blogPosts?.length))
+          };
+        });
+        localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(firmsForStorage));
+        window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+      } catch (e) {
+        console.warn('Failed to save firms to local cache', e);
       }
-    }
+    }, 1000); // Batched save every 1 second
   }
 
   // Fetch all firms from the Express backend or static asset fallback
