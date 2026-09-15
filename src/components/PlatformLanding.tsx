@@ -42,10 +42,20 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
     
     const handleStorageSync = () => {
       setSettings(storageService.getPlatformSettings());
-      loadFirms();
     };
-    const handleFirmsUpdated = () => {
-      loadFirms();
+    
+    const handleFirmsUpdated = (e?: any) => {
+      let latestFirms = [];
+      if (e && e.detail && Array.isArray(e.detail)) {
+        latestFirms = e.detail;
+      } else {
+        latestFirms = firmService.getAllFirms();
+      }
+      
+      if (latestFirms && latestFirms.length > 0) {
+        setActiveFirms(latestFirms.filter(f => f.status !== 'suspended'));
+        setIsLoading(false);
+      }
     };
 
     window.addEventListener('aladl_storage_sync', handleStorageSync);

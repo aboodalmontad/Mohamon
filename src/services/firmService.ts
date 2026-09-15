@@ -955,6 +955,7 @@ class FirmService {
           };
           return ensureFirmSubscription(firmObj);
         });
+
         for (const ff of fetchedFirms) {
           const idx = this.memoryFirms.findIndex((m) => m.slug === ff.slug);
           if (idx >= 0) {
@@ -963,7 +964,13 @@ class FirmService {
             this.memoryFirms.push(ff);
           }
         }
+        
+        // Save to cache and immediately dispatch event so UI updates instantly with newly fetched data
         this.saveToLocalCache();
+        if (typeof window !== 'undefined') {
+           window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+        }
+
         this.pushToServer();
         return { success: true, count: fetchedFirms.length, message: `تم جلب ${fetchedFirms.length} موقع مكتب من Supabase بنجاح!` };
       }
