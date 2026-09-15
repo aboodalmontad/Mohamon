@@ -125,27 +125,29 @@ export default function App() {
         
         // Load specific firm
         if (urlSlug) {
-          // Check if we already have this specific firm in memory/cache
+          // Need to fetch specific firm data or ensure it's loaded
+          setIsInitializing(true);
+          
           const cachedFirm = firmService.getFirmBySlug(urlSlug);
           if (cachedFirm && cachedFirm.hasFullData) {
             storageService.loadFirm(urlSlug, false);
             refreshData();
             setIsInitializing(false);
           } else {
-            // Need to fetch specific firm data
-            setIsInitializing(true);
-          }
-
-          firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
-            if (sbRes.success && sbRes.firm) {
-              firmService.setFirm(sbRes.firm);
-              storageService.loadFirm(urlSlug, false);
-              refreshData();
+            // Fetch from cloud
+            try {
+              const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug);
+              if (sbRes.success && sbRes.firm) {
+                firmService.setFirm(sbRes.firm);
+                storageService.loadFirm(urlSlug, false);
+                refreshData();
+              }
+            } catch (err) {
+              console.warn('Failed to fetch firm data', err);
+            } finally {
+              setIsInitializing(false);
             }
-            setIsInitializing(false);
-          }).catch(() => {
-            setIsInitializing(false);
-          });
+          }
         } else {
           storageService.init();
           refreshData();
@@ -156,7 +158,6 @@ export default function App() {
         firmService.init().catch(() => {});
       } catch (err) {
         console.error('Critical initialization error:', err);
-      } finally {
         setIsInitializing(false);
       }
     };
