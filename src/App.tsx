@@ -107,14 +107,16 @@ export default function App() {
         // Platform View check
         if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
           setIsPlatformView(true);
-          // Wait for essential cloud fetch
-          try {
-            await firmService.init();
-            refreshData();
-          } catch (e) {
-            console.warn('Initial platform fetch warning:', e);
-          }
+          
+          // 1. Instantly show what we have (local or seed)
+          refreshData();
           setIsInitializing(false);
+
+          // 2. Start background fetch immediately without blocking UI
+          firmService.init().then(() => {
+            refreshData();
+          }).catch(e => console.warn('Background platform fetch warning:', e));
+          
           return;
         }
         
