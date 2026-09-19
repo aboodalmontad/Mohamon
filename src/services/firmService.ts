@@ -195,6 +195,7 @@ class FirmService {
           isVerified: row.is_verified ?? true,
           featured: row.featured ?? false,
           isDefaultPublic: row.is_default_public ?? false,
+          customDomain: row.custom_domain || row.data?.customDomain || '',
           themeColor: row.theme_color || '#c5a869',
           createdAt: row.created_at || new Date().toISOString(),
           updatedAt: row.updated_at || new Date().toISOString(),
@@ -660,6 +661,7 @@ class FirmService {
         theme_color: firm.themeColor || '#c5a869',
         is_verified: firm.isVerified ?? true,
         featured: firm.featured ?? false,
+        custom_domain: firm.customDomain || null,
         subscription: firm.subscription || {
           status: "active",
           isSiteActive: true,
@@ -669,6 +671,7 @@ class FirmService {
         },
         data: {
           ...firm.data,
+          customDomain: firm.customDomain || null,
           isDefaultPublic: firm.isDefaultPublic ?? (firm.slug === this.getDefaultPublicFirmSlug()),
           subscription: firm.subscription,
         },
@@ -945,6 +948,7 @@ class FirmService {
             adminPassword: row.admin_password || '123456',
             isVerified: row.is_verified ?? true,
             featured: row.featured ?? false,
+            customDomain: row.custom_domain || row.data?.customDomain || '',
             taglineAr: row.data?.settings?.sloganAr || '',
             taglineEn: row.data?.settings?.sloganEn || '',
             themeColor: row.theme_color || '#c5a869',
@@ -997,6 +1001,97 @@ class FirmService {
       this.initLocal();
     }
     return [...this.memoryFirms];
+  }
+
+  public cleanDomain(domain: string): string {
+    if (!domain) return '';
+    let cleaned = domain.trim().toLowerCase();
+    // Remove protocol http:// or https://
+    cleaned = cleaned.replace(/^https?:\/\//i, '');
+    // Remove trailing slashes and paths
+    cleaned = cleaned.split('/')[0];
+    // Remove port numbers e.g. :3000
+    cleaned = cleaned.split(':')[0];
+    return cleaned;
+  }
+
+  public getFirmByDomain(hostOrDomain: string): LawFirm | undefined {
+    const target = this.cleanDomain(hostOrDomain);
+    if (!target) return undefined;
+    const targetWithoutWww = target.replace(/^www\./i, '');
+    
+    return this.getAllFirms().find(f => {
+      if (!f.customDomain) return false;
+      const firmDom = this.cleanDomain(f.customDomain);
+      const firmDomWithoutWww = firmDom.replace(/^www\./i, '');
+      return firmDom === target || firmDomWithoutWww === targetWithoutWww;
+    });
+  }
+
+  public async updateFirmCustomDomain(
+    slug: string, 
+    domain: string
+  ): Promise<{ success: boolean; message: string; domain?: string }> {
+    const firm = this.getFirmBySlug(slug);
+    if (!firm) {
+      return { success: false, message: 'المكتب المطلوب غير موجود.' };
+    }
+
+    const cleaned = this.cleanDomain(domain);
+    
+    // If clearing domain
+    if (!cleaned) {
+      firm.customDomain = '';
+      this.setFirm(firm);
+      this.saveToLocalCache();
+      this.pushToServer();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+      }
+      // Sync in background to Supabase
+      this.syncFirmToSupabase(firm).catch(() => {});
+      return { success: true, message: 'تم إزالة ربط الدومين بنجاح.', domain: '' };
+    }
+
+    // Validate domain format (standard domain syntax)
+    const domainRegex = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/i;
+    if (!domainRegex.test(cleaned)) {
+      return { 
+        success: false, 
+        message: 'صيغة الدومين غير صحيحة. مثال صحيح: mylawfirm.com أو www.nahwi-law.sa' 
+      };
+    }
+
+    // Check if domain is already taken by another firm
+    const existingFirmWithDomain = this.getFirmByDomain(cleaned);
+    if (existingFirmWithDomain && existingFirmWithDomain.slug.toLowerCase() !== slug.toLowerCase()) {
+      return { 
+        success: false, 
+        message: `الدومين (${cleaned}) مربوط بالفعل بمكتب آخر (${existingFirmWithDomain.nameAr}).` 
+      };
+    }
+
+    firm.customDomain = cleaned;
+    this.setFirm(firm);
+    this.saveToLocalCache();
+    this.pushToServer();
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+    }
+
+    // Sync to Supabase
+    try {
+      await this.syncFirmToSupabase(firm);
+    } catch (e) {
+      console.warn('Custom domain sync to Supabase encountered an error:', e);
+    }
+
+    return { 
+      success: true, 
+      message: `تم ربط الدومين (${cleaned}) بالمكتب بنجاح وتحديث إعدادات التوجيه!`, 
+      domain: cleaned 
+    };
   }
 
   public getFirmBySlug(slug: string): LawFirm | null {

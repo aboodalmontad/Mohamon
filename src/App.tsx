@@ -103,7 +103,17 @@ export default function App() {
         firmService.initLocal();
         
         const urlParams = new URLSearchParams(window.location.search);
-        const urlSlug = urlParams.get('firm') || firmService.getActiveFirmSlug();
+        
+        // Check if accessed via a law firm custom domain (e.g. www.nahwi-law.com)
+        const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+        const isStandardDevOrPlatformHost = 
+          currentHost === 'localhost' || 
+          currentHost === '127.0.0.1' || 
+          currentHost.endsWith('.run.app') || 
+          currentHost.endsWith('.vercel.app');
+
+        const domainFirm = !isStandardDevOrPlatformHost && currentHost ? firmService.getFirmByDomain(currentHost) : undefined;
+        const urlSlug = domainFirm ? domainFirm.slug : (urlParams.get('firm') || firmService.getActiveFirmSlug());
 
         // Platform View check
         if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
