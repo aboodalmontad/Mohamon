@@ -361,8 +361,11 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
                       <div className="space-y-1">
                         <h3 className="text-lg font-bold text-white font-serif-title leading-tight">{firm.nameAr}</h3>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">?firm={firm.slug}</span>
-                          <button onClick={() => handleCopyLink(firm.slug)} className="p-1 text-slate-500 hover:text-amber-400 transition cursor-pointer"><Copy className="w-3 h-3" /></button>
+                          <span className="text-[11px] font-mono font-bold text-[#e5cb8e] bg-slate-950 px-2.5 py-0.5 rounded-md border border-[#c5a869]/30 dir-ltr flex items-center gap-1">
+                            <Globe className="w-3 h-3 text-[#c5a869]" />
+                            <span>{firmService.getFirmDisplayDomain(firm)}</span>
+                          </span>
+                          <button onClick={() => handleCopyLink(firm.slug)} className="p-1 text-slate-500 hover:text-amber-400 transition cursor-pointer" title="نسخ الرابط"><Copy className="w-3 h-3" /></button>
                         </div>
                       </div>
                     </div>
@@ -475,7 +478,10 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
                           <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-[#c5a869] font-serif-title">{firm.nameAr.charAt(0)}</div>
                           <div>
                             <div className="font-bold text-white text-sm">{firm.nameAr}</div>
-                            <div className="text-[10px] text-slate-500 font-mono tracking-tight">?firm={firm.slug}</div>
+                            <div className="text-[10px] text-[#c5a869] font-mono font-semibold tracking-tight dir-ltr flex items-center gap-1">
+                              <Globe className="w-2.5 h-2.5" />
+                              <span>{firmService.getFirmDisplayDomain(firm)}</span>
+                            </div>
                           </div>
                         </div>
                       </td>

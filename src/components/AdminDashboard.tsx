@@ -1247,9 +1247,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     {isAr ? 'متصل' : 'Connected'}
                   </span>
                 </div>
-                <p className="font-bold text-white text-xs truncate mb-1.5" title={settings.firmNameAr || 'المكتب'}>
+                <p className="font-bold text-white text-xs truncate mb-1" title={settings.firmNameAr || 'المكتب'}>
                   {settings.firmNameAr || 'مكتب المحاماة'}
                 </p>
+                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#c5a869] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 dir-ltr mb-1.5 truncate">
+                  <Globe className="w-3 h-3 text-[#c5a869] shrink-0" />
+                  <span className="truncate">{firmService.getFirmDisplayDomain(firmService.getActiveFirmSlug())}</span>
+                </div>
                 {availableFirms.length > 1 && (
                   <select
                     value={firmService.getActiveFirmSlug()}
@@ -5298,13 +5302,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                                 <span>{isAr ? 'مربوط ومفعل' : 'Connected & Active'}</span>
                               </span>
                             ) : (
-                              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                                {isAr ? 'يعمل برابط المنصة الفرعي' : 'Running on Sub-link'}
+                              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                                {isAr ? 'النطاق الرسمي المعتمد للمكتب' : 'Official Registered Domain'}
                               </span>
                             )}
                           </div>
-                          <p className="text-base font-bold text-white font-mono mt-0.5">
-                            {customDomainInput || `${window.location.origin}/?firm=${firmService.getActiveFirmSlug()}`}
+                          <p className="text-base font-bold text-[#c5a869] font-mono mt-0.5 flex items-center gap-2">
+                            <span>{customDomainInput || `${firmService.getActiveFirmSlug()}.mohamoon.sa`}</span>
+                            <span className="text-[10px] text-slate-400 font-sans font-normal">
+                              ({isAr ? 'رسمي ومفعل تلقائياً' : 'Official'})
+                            </span>
                           </p>
                         </div>
                       </div>

@@ -1028,6 +1028,33 @@ class FirmService {
     });
   }
 
+  /**
+   * Get concise official domain representation for a firm
+   * e.g. "nahwi.mohamoon.sa" or custom domain "nahwi-law.com"
+   */
+  public getFirmDisplayDomain(firmOrSlug?: LawFirm | string | null): string {
+    if (!firmOrSlug) {
+      const activeSlug = this.getActiveFirmSlug();
+      const activeFirm = this.getFirmBySlug(activeSlug);
+      if (activeFirm?.customDomain) return this.cleanDomain(activeFirm.customDomain);
+      return `${activeSlug || 'firm'}.mohamoon.sa`;
+    }
+
+    let firm: LawFirm | undefined;
+    if (typeof firmOrSlug === 'string') {
+      firm = this.getFirmBySlug(firmOrSlug);
+    } else {
+      firm = firmOrSlug;
+    }
+
+    if (firm?.customDomain) {
+      return this.cleanDomain(firm.customDomain);
+    }
+
+    const slug = typeof firmOrSlug === 'string' ? firmOrSlug : firm?.slug || 'firm';
+    return `${slug}.mohamoon.sa`;
+  }
+
   public async updateFirmCustomDomain(
     slug: string, 
     domain: string

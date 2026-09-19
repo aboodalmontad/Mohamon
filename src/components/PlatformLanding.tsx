@@ -193,6 +193,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 const name = firm.nameAr || firm.data?.settings?.firmNameAr || 'مكتب محاماة معتمد';
                 const city = firm.cityAr || (firm.data as any)?.offices?.[0]?.cityAr || 'الرياض';
                 const tagline = firm.taglineAr || firm.data?.settings?.sloganAr || '';
+                const officialDomain = firmService.getFirmDisplayDomain(firm);
 
                 return (
                   <a 
@@ -211,9 +212,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-[#c5a869] transition-colors leading-snug break-words mb-1.5">
-                          {name}
-                        </h4>
+                        <div className="flex items-start justify-between gap-2 mb-1.5 flex-wrap">
+                          <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-[#c5a869] transition-colors leading-snug break-words">
+                            {name}
+                          </h4>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-[#e5cb8e] bg-[#c5a869]/15 px-2.5 py-0.5 rounded-full border border-[#c5a869]/30 dir-ltr shadow-xs">
+                            <Globe className="w-3 h-3 text-[#c5a869]" />
+                            <span>{officialDomain}</span>
+                          </span>
+                        </div>
                         
                         {tagline && (
                           <p className="text-xs text-white/70 mb-3 font-normal leading-relaxed break-words">
@@ -221,14 +228,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                           </p>
                         )}
 
-                        <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-white/10">
-                          <div className="flex items-center gap-1.5 text-xs text-white/70">
+                        <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/10 text-xs">
+                          <div className="flex items-center gap-1.5 text-white/70">
                             <MapPin className="w-3.5 h-3.5 text-[#c5a869] shrink-0" />
                             <span className="break-words">{city}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-[#c5a869] font-mono">
-                            <Globe className="w-3.5 h-3.5 shrink-0" />
-                            <span className="break-all dir-ltr">mohamoon.com/?firm={firm.slug}</span>
+                          <div className="flex items-center gap-1.5 text-xs text-[#e5cb8e] font-mono dir-ltr font-semibold bg-black/40 px-2 py-0.5 rounded-md border border-white/10 group-hover:border-[#c5a869]/40 transition-colors">
+                            <span className="text-emerald-400 text-[9px] animate-pulse">●</span>
+                            <span>{officialDomain}</span>
                           </div>
                         </div>
                       </div>
@@ -260,9 +267,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               <div className="w-12 h-12 bg-[#c5a869]/10 rounded-xl flex items-center justify-center mb-6">
                 <Globe className="w-6 h-6 text-[#c5a869]" />
               </div>
-              <h4 className="text-xl font-medium text-white mb-3">موقع إلكتروني خاص</h4>
+              <h4 className="text-xl font-medium text-white mb-3">نطاق رسمي وموقع مستقل</h4>
               <p className="text-white/50 leading-relaxed">
-                رابط مخصص لمكتبك (مثال: mohamoon.com/your-name) بواجهة احترافية تعكس هويتك القانونية.
+                رابط رسمي ونطاق مخصص لمكتبك (مثال: nahwi.mohamoon.sa أو نطاقك الخاص المستقل .sa / .com) بواجهة مهنية فاخرة تعكس هويتك القانونية.
               </p>
             </div>
             

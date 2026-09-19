@@ -156,10 +156,15 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
 
               <div className="bg-black/50 border border-white/10 rounded-xl p-4 mb-8 flex items-center justify-between gap-4 max-w-md mx-auto">
                 <div className="overflow-hidden text-right w-full">
-                  <span className="text-xs text-white/40 block mb-1">رابط موقعك الجديد:</span>
-                  <span className="text-[#c5a869] font-mono text-sm break-all" dir="ltr">
-                    {window.location.origin}/?firm={generatedSlugForView}
-                  </span>
+                  <span className="text-xs text-white/40 block mb-1">النطاق الرقمي الرسمي لمكتبك:</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#c5a869] font-mono text-base font-bold break-all" dir="ltr">
+                      {generatedSlugForView}.mohamoon.sa
+                    </span>
+                    <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                      نطاق معتمد
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => {

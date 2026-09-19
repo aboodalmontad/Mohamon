@@ -277,7 +277,7 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                       معرف الرابط الفريد (Slug / URL Identifier) <span className="text-rose-500">*</span>
                     </label>
                     <div className="flex items-center text-xs text-stone-500 mb-1">
-                      <span>الرابط سيكون: ?firm=<strong>{newSlug || 'example-law'}</strong></span>
+                      <span>النطاق المعتمد للمكتب: <strong className="font-mono text-[#87641d]">{newSlug ? `${newSlug}.mohamoon.sa` : 'nahwi.mohamoon.sa'}</strong></span>
                     </div>
                     <input
                       type="text"
@@ -491,8 +491,9 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                               <span dir="ltr">{firm.phone}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2 font-mono text-[11px] text-stone-400">
-                            <span className="bg-stone-100 px-1.5 py-0.5 rounded">?firm={firm.slug}</span>
+                          <div className="flex items-center gap-1.5 font-mono text-[11px] text-[#87641d] bg-[#b38a38]/10 px-2 py-0.5 rounded-full border border-[#b38a38]/20 dir-ltr font-bold w-fit">
+                            <Globe2 className="w-3 h-3 text-[#b38a38]" />
+                            <span>{firmService.getFirmDisplayDomain(firm)}</span>
                           </div>
                         </div>
                       </div>
