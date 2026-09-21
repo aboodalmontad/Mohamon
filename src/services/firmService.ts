@@ -653,6 +653,8 @@ class FirmService {
         name_en: firm.nameEn || '',
         city_ar: firm.cityAr || 'الرياض',
         city_en: firm.cityEn || 'Riyadh',
+        country_ar: firm.countryAr || 'المملكة العربية السعودية',
+        country_en: firm.countryEn || 'Saudi Arabia',
         phone: firm.phone || '',
         email: firm.email || '',
         admin_password: firm.adminPassword || '123456',
@@ -1380,6 +1382,11 @@ class FirmService {
       counter++;
     }
 
+    const cAr = info.countryAr || 'المملكة العربية السعودية';
+    const cEn = info.countryEn || 'Saudi Arabia';
+    const cityAr = info.cityAr || 'الرياض';
+    const cityEn = info.cityEn || 'Riyadh';
+
     const newSettings: SiteSettings = {
       firmNameAr: info.nameAr,
       firmNameEn: info.nameEn || 'Law Firm & Legal Counsel',
@@ -1393,8 +1400,12 @@ class FirmService {
       emergencyPhone: info.phone || '+966 50 000 0000',
       email: info.email || 'info@lawfirm.com',
       consultationEmail: info.email || 'consult@lawfirm.com',
-      addressAr: info.cityAr ? `${info.cityAr}، المملكة العربية السعودية` : 'الرياض، المملكة العربية السعودية',
-      addressEn: info.cityEn ? `${info.cityEn}, Saudi Arabia` : 'Riyadh, Saudi Arabia',
+      countryAr: cAr,
+      countryEn: cEn,
+      cityAr: cityAr,
+      cityEn: cityEn,
+      addressAr: `${cityAr}، ${cAr}`,
+      addressEn: `${cityEn}, ${cEn}`,
       workingHoursAr: 'الأحد - الخميس: 8:00 صباحاً - 5:00 مساءً',
       workingHoursEn: 'Sun - Thu: 8:00 AM - 5:00 PM',
       stats: {
@@ -1415,9 +1426,6 @@ class FirmService {
       adminPassword: info.adminPassword || '123456',
     };
 
-    const cAr = info.countryAr || 'المملكة العربية السعودية';
-    const cEn = info.countryEn || 'Saudi Arabia';
-
     const newFirm: LawFirm = {
       id: toValidUUID(`firm-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`),
       slug: finalSlug,
@@ -1425,8 +1433,8 @@ class FirmService {
       nameEn: info.nameEn || 'Law Firm',
       taglineAr: info.taglineAr || 'حلول قانونية واستشارات استراتيجية رائدة',
       taglineEn: 'Premier Legal Consultancy',
-      cityAr: info.cityAr || 'الرياض',
-      cityEn: info.cityEn || 'Riyadh',
+      cityAr: cityAr,
+      cityEn: cityEn,
       countryAr: cAr,
       countryEn: cEn,
       phone: info.phone || '+966 11 000 0000',

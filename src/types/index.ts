@@ -234,6 +234,12 @@ export interface SiteSettings {
   addressAr: string;
   addressEn: string;
   addressTr?: string;
+  countryAr?: string;
+  countryEn?: string;
+  countryTr?: string;
+  cityAr?: string;
+  cityEn?: string;
+  cityTr?: string;
   workingHoursAr: string;
   workingHoursEn: string;
   workingHoursTr?: string;
@@ -251,6 +257,10 @@ export interface SiteSettings {
   };
   customLogoUrl?: string;
   logoIcon?: string;
+  customBannerUrl?: string;
+  heroBannerOpacity?: number;
+  heroBannerOverlayColor?: 'warm' | 'dark' | 'none';
+  heroBannerBlur?: 'none' | 'sm' | 'md';
   
   // Visual Branding & Layout Customization
   logoSizeNavbar?: 'sm' | 'md' | 'lg' | 'xl';
@@ -262,6 +272,10 @@ export interface SiteSettings {
   firmNameWeightNavbar?: 'normal' | 'semibold' | 'bold' | 'extrabold';
   firmNameLinesNavbar?: '1' | '2' | 'auto';
   firmNameSizeHero?: 'sm' | 'md' | 'lg' | 'xl';
+  sloganSizeHero?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  sloganWeightHero?: 'normal' | 'medium' | 'semibold' | 'bold' | 'extrabold';
+  subSloganSizeHero?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  subSloganWeightHero?: 'light' | 'normal' | 'medium' | 'semibold';
   heroAlignment?: 'center' | 'start';
   showNavbarSubtitle?: boolean;
   navbarSubtitleAr?: string;
@@ -370,6 +384,7 @@ export interface LawFirm {
   phone?: string;
   email?: string;
   logoUrl?: string;
+  bannerUrl?: string;
   licenseNumber?: string;
   adminPassword: string; // Password / PIN for this specific law office manager
   isVerified?: boolean;

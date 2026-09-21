@@ -24,17 +24,30 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
   const subSlogan = getLocalized(settings, 'subSlogan', lang, settings.subSloganAr);
   const officialDomain = firmService.getFirmDisplayDomain();
 
+  const heroBannerSrc = settings.customBannerUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920';
+  const heroOpacity = typeof settings.heroBannerOpacity === 'number' ? settings.heroBannerOpacity / 100 : 0.18;
+  const heroBlurClass = settings.heroBannerBlur === 'md' ? 'blur-md' : settings.heroBannerBlur === 'sm' ? 'blur-sm' : '';
+
   return (
     <section id="hero" className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 overflow-hidden bg-gradient-to-b from-[#fbf8f2] via-[#f7f2e7] to-[#f3ebd9]">
-      {/* Background Image with Warm Soft Champagne Tint */}
-      <div className="absolute inset-0 z-0 opacity-15">
+      {/* Background Image with Dynamic Custom Banner & Tint */}
+      <div 
+        className="absolute inset-0 z-0 transition-opacity duration-700" 
+        style={{ opacity: heroOpacity }}
+      >
         <img
-          src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=60&w=1600"
+          src={heroBannerSrc}
           alt="Courthouse & Legal Scale Background"
-          className="w-full h-full object-cover object-center filter contrast-[1.1] scale-105 transition-transform duration-1000"
+          className={`w-full h-full object-cover object-center filter contrast-[1.1] scale-105 transition-transform duration-1000 ${heroBlurClass}`}
           loading="eager"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f2] via-[#fbf8f2]/80 to-transparent" />
+        {settings.heroBannerOverlayColor === 'dark' ? (
+          <div className="absolute inset-0 bg-gradient-to-t from-[#12100e] via-[#1a1612]/75 to-transparent" />
+        ) : settings.heroBannerOverlayColor === 'none' ? (
+          <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f2] via-transparent to-transparent" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f2] via-[#fbf8f2]/80 to-transparent" />
+        )}
       </div>
 
       {/* Subtle gold grid lines accent */}
@@ -115,15 +128,28 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
           )
         )}
 
-        {/* Main Headline (Dynamic Slogan from Site Settings) */}
+        {/* Main Headline (Dynamic Verbal Slogan from Site Settings) */}
         {(() => {
           const headlineSizeMap = {
-            sm: 'text-2xl sm:text-4xl md:text-5xl',
-            md: 'text-3xl sm:text-5xl md:text-6xl',
+            xs: 'text-xl sm:text-2xl md:text-3xl',
+            sm: 'text-2xl sm:text-3xl md:text-4xl',
+            md: 'text-3xl sm:text-4xl md:text-5xl',
             lg: 'text-3xl sm:text-5xl md:text-6xl lg:text-7xl',
             xl: 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl',
+            '2xl': 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl',
           };
-          const headlineSizeClass = headlineSizeMap[settings.firmNameSizeHero || 'lg'];
+          const headlineWeightMap = {
+            normal: 'font-normal',
+            medium: 'font-medium',
+            semibold: 'font-semibold',
+            bold: 'font-bold',
+            extrabold: 'font-extrabold',
+          };
+
+          const chosenSize = settings.sloganSizeHero || settings.firmNameSizeHero || 'lg';
+          const headlineSizeClass = (headlineSizeMap as any)[chosenSize] || headlineSizeMap.lg;
+          const headlineWeightClass = (headlineWeightMap as any)[settings.sloganWeightHero || 'bold'] || 'font-bold';
+
           const lineClass = settings.heroHeadlineLines === '1'
             ? 'line-clamp-1'
             : settings.heroHeadlineLines === '2'
@@ -133,14 +159,31 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
             : '';
 
           return (
-            <h1 className={`${headlineSizeClass} ${lineClass} font-hero-headline font-bold text-[#181512] tracking-tight leading-[1.25] sm:leading-[1.2] max-w-5xl mb-6`}>
+            <h1 className={`${headlineSizeClass} ${headlineWeightClass} ${lineClass} font-hero-headline text-[#181512] tracking-tight leading-[1.25] sm:leading-[1.2] max-w-5xl mb-6`}>
               {slogan}
             </h1>
           );
         })()}
 
-        {/* Subtitle */}
+        {/* Subtitle / Sub-Slogan */}
         {(() => {
+          const subSizeMap = {
+            xs: 'text-xs sm:text-sm md:text-base',
+            sm: 'text-sm sm:text-base md:text-lg',
+            md: 'text-base sm:text-lg md:text-xl',
+            lg: 'text-lg sm:text-xl md:text-2xl',
+            xl: 'text-xl sm:text-2xl md:text-3xl',
+          };
+          const subWeightMap = {
+            light: 'font-light',
+            normal: 'font-normal',
+            medium: 'font-medium',
+            semibold: 'font-semibold',
+          };
+
+          const subSizeClass = (subSizeMap as any)[settings.subSloganSizeHero || 'md'] || subSizeMap.md;
+          const subWeightClass = (subWeightMap as any)[settings.subSloganWeightHero || 'normal'] || 'font-normal';
+
           const subLineClass = settings.heroSubheadlineLines === '1'
             ? 'line-clamp-1'
             : settings.heroSubheadlineLines === '2'
@@ -150,7 +193,7 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
             : '';
 
           return (
-            <p className={`text-base sm:text-lg md:text-xl text-[#4b4334] max-w-3xl leading-relaxed mb-10 font-normal ${subLineClass}`}>
+            <p className={`${subSizeClass} ${subWeightClass} text-[#4b4334] max-w-3xl leading-relaxed mb-10 ${subLineClass}`}>
               {subSlogan}
             </p>
           );

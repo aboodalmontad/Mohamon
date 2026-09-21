@@ -129,6 +129,10 @@ const mirrorAllDataToPersistence = () => {
         firm.phone = snapshot.settings.phone || firm.phone;
         firm.email = snapshot.settings.email || firm.email;
         firm.themeColor = snapshot.settings.primaryColor || firm.themeColor || '#c5a869';
+        if (snapshot.settings.countryAr) firm.countryAr = snapshot.settings.countryAr;
+        if (snapshot.settings.countryEn) firm.countryEn = snapshot.settings.countryEn;
+        if (snapshot.settings.cityAr) firm.cityAr = snapshot.settings.cityAr;
+        if (snapshot.settings.cityEn) firm.cityEn = snapshot.settings.cityEn;
         firmService.saveFirm(firm).catch(() => {});
       }
     } catch (e) {
@@ -237,6 +241,10 @@ export const storageService = {
       sloganEn: firm.taglineEn || '',
       phone: firm.phone || '',
       email: firm.email || '',
+      countryAr: firm.countryAr || initialSiteSettings.countryAr,
+      countryEn: firm.countryEn || initialSiteSettings.countryEn,
+      cityAr: firm.cityAr || initialSiteSettings.cityAr,
+      cityEn: firm.cityEn || initialSiteSettings.cityEn,
       primaryColor: firm.themeColor || '#c5a869',
       logoUrl: firm.logoUrl || ''
     };
@@ -732,6 +740,12 @@ export const storageService = {
             addressAr: settings.addressAr || offices[hqIndex].addressAr,
             addressEn: settings.addressEn || offices[hqIndex].addressEn,
             addressTr: settings.addressTr || offices[hqIndex].addressTr,
+            countryAr: settings.countryAr || offices[hqIndex].countryAr,
+            countryEn: settings.countryEn || offices[hqIndex].countryEn,
+            countryTr: settings.countryTr || offices[hqIndex].countryTr,
+            cityAr: settings.cityAr || offices[hqIndex].cityAr,
+            cityEn: settings.cityEn || offices[hqIndex].cityEn,
+            cityTr: settings.cityTr || offices[hqIndex].cityTr,
           };
           safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(offices));
         }
