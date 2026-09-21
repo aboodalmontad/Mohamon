@@ -255,13 +255,13 @@ export const storageService = {
       
       // Update Memory Cache - force override to prevent bleeding from previous firm
       MEMORY_CACHE.settings = data.settings || fallbackSettings;
-      MEMORY_CACHE.partners = data.partners || [];
-      MEMORY_CACHE.practiceAreas = data.practiceAreas || [];
-      MEMORY_CACHE.caseStudies = data.caseStudies || [];
-      MEMORY_CACHE.testimonials = data.testimonials || [];
-      MEMORY_CACHE.blogPosts = data.blogPosts || [];
-      MEMORY_CACHE.offices = data.offices || [];
-      MEMORY_CACHE.messages = data.messages || [];
+      MEMORY_CACHE.partners = (Array.isArray(data.partners) && data.partners.length > 0) ? data.partners : initialPartners;
+      MEMORY_CACHE.practiceAreas = (Array.isArray(data.practiceAreas) && data.practiceAreas.length > 0) ? data.practiceAreas : initialPracticeAreas;
+      MEMORY_CACHE.caseStudies = (Array.isArray(data.caseStudies) && data.caseStudies.length > 0) ? data.caseStudies : initialCaseStudies;
+      MEMORY_CACHE.testimonials = (Array.isArray(data.testimonials) && data.testimonials.length > 0) ? data.testimonials : initialTestimonials;
+      MEMORY_CACHE.blogPosts = (Array.isArray(data.blogPosts) && data.blogPosts.length > 0) ? data.blogPosts : initialBlogPosts;
+      MEMORY_CACHE.offices = (Array.isArray(data.offices) && data.offices.length > 0) ? data.offices : initialOffices;
+      MEMORY_CACHE.messages = Array.isArray(data.messages) ? data.messages : [];
   
       try {
         safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(MEMORY_CACHE.settings));
@@ -276,24 +276,24 @@ export const storageService = {
         console.error('Failed to load firm data to localStorage due to quota', e);
       }
     } else {
-      // Firm has no data yet, populate with safe fallbacks instead of dummy seed
+      // Firm has no data yet, populate with safe fallbacks instead of empty arrays
       MEMORY_CACHE.settings = fallbackSettings;
-      MEMORY_CACHE.partners = [];
-      MEMORY_CACHE.practiceAreas = [];
-      MEMORY_CACHE.caseStudies = [];
-      MEMORY_CACHE.testimonials = [];
-      MEMORY_CACHE.blogPosts = [];
-      MEMORY_CACHE.offices = [];
+      MEMORY_CACHE.partners = initialPartners;
+      MEMORY_CACHE.practiceAreas = initialPracticeAreas;
+      MEMORY_CACHE.caseStudies = initialCaseStudies;
+      MEMORY_CACHE.testimonials = initialTestimonials;
+      MEMORY_CACHE.blogPosts = initialBlogPosts;
+      MEMORY_CACHE.offices = initialOffices;
       MEMORY_CACHE.messages = [];
       
       try {
         safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(MEMORY_CACHE.settings));
-        safeLocalStorageSet(STORAGE_KEYS.PARTNERS, "[]");
-        safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, "[]");
-        safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, "[]");
-        safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, "[]");
-        safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, "[]");
-        safeLocalStorageSet(STORAGE_KEYS.OFFICES, "[]");
+        safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(MEMORY_CACHE.partners));
+        safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(MEMORY_CACHE.practiceAreas));
+        safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(MEMORY_CACHE.caseStudies));
+        safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(MEMORY_CACHE.testimonials));
+        safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(MEMORY_CACHE.blogPosts));
+        safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(MEMORY_CACHE.offices));
         safeLocalStorageSet(STORAGE_KEYS.MESSAGES, "[]");
       } catch (e) {}
     }
