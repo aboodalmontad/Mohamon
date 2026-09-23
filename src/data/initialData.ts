@@ -89,12 +89,16 @@ export const initialSiteSettings: SiteSettings = {
   workingHoursAr: 'الأحد - الخميس: 8:30 صباحاً - 6:30 مساءً (فريق الطوارئ 24/7)',
   workingHoursEn: 'Sun - Thu: 8:30 AM - 6:30 PM (Emergency Team 24/7)',
   workingHoursTr: 'Pazartesi - Cuma: 08:30 - 18:30 (7/24 Acil Müdahale Ekibi)',
+  currency: 'USD',
+  currencySymbolAr: '$',
+  currencySymbolEn: '$',
   stats: {
     yearsExperience: 28,
     casesWon: 3450,
     activeClients: 1200,
     successRate: 98.4,
-    recoveredMillionsUSD: 850
+    recoveredMillionsUSD: 850,
+    recoveredCapital: 850,
   },
   socialLinks: {
     linkedin: 'https://linkedin.com',

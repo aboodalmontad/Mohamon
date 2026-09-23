@@ -4,7 +4,7 @@ import {
   Database, RefreshCw, Copy, ShieldAlert, Sparkles, X, 
   Search, ShieldCheck, FileCode, Sliders, Users, MessageSquare,
   Globe2, ArrowUpRight, HelpCircle, Check, AlertCircle, Edit3,
-  Calendar, Power, Download, FileJson, Archive
+  Calendar, Power, Download, FileJson, Archive, Landmark
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import JSZip from 'jszip';
@@ -14,6 +14,7 @@ import { LawFirm } from '../types';
 import { SupabaseFirmsTab } from './SupabaseFirmsTab';
 import { FirmSubscriptionsTab } from './FirmSubscriptionsTab';
 import { PlatformSettingsTab } from './PlatformSettingsTab';
+import { PlatformFinanceTab } from './PlatformFinanceTab';
 
 interface SuperAdminDashboardProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const isAr = lang === 'ar';
   const [firms, setFirms] = useState<LawFirm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'firms' | 'supabase' | 'domains' | 'platform' | 'backup'>('firms');
+  const [activeTab, setActiveTab] = useState<'firms' | 'finance' | 'supabase' | 'domains' | 'platform' | 'backup'>('firms');
   
   // Feedback
   const [toastMsg, setToastMsg] = useState('');
@@ -358,103 +359,147 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
         </div>
 
-        {/* Section Label Header */}
-        <div className="px-6 py-2 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
-            {isAr ? 'أقسام لوحة التحكم المركزية' : 'Platform Master Control Sections'}
-          </h3>
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-600 font-bold">
-            <Sliders className="w-3 h-3" />
-            <span>V4.2.0-STABLE</span>
+        {/* Sticky Fixed Platform Master Navigation Bar */}
+        <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-xl border-b border-slate-700/80 shadow-xl">
+          {/* Section Header Title */}
+          <div className="px-6 py-2.5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800/80 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+              <h3 className="text-xs font-black tracking-wider text-amber-400/90 uppercase font-sans">
+                {isAr ? 'أقسام لوحة التحكم المركزية' : 'Platform Master Control Sections'}
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono border border-slate-700">
+                {isAr ? `إجمالي المكاتب: ${totalFirms}` : `Total Firms: ${totalFirms}`}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                SYSTEM ONLINE
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Navigation Tabs - ENHANCED FOR MAXIMUM CLARITY */}
-        <div className="flex items-center gap-1.5 px-4 pt-3 border-b border-slate-700 bg-slate-800 overflow-x-auto no-scrollbar scroll-smooth">
-          <button
-            onClick={() => setActiveTab('firms')}
-            className={`pb-3 px-6 pt-1 font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer relative group ${
-              activeTab === 'firms'
-                ? 'text-amber-400 bg-amber-400/10 rounded-t-xl'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'firms' ? 'bg-amber-400/20' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-              <Building2 className="w-5 h-5" />
-            </div>
-            <span className="text-base">{isAr ? 'إدارة المكاتب والاشتراكات' : 'Manage Firms & Subscriptions'}</span>
-            {activeTab === 'firms' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-amber-400 rounded-t-full shadow-[0_-2px_10px_rgba(251,191,36,0.5)]" />
-            )}
-          </button>
+          {/* High-Contrast Interactive Navigation Tabs */}
+          <div className="p-2.5 bg-slate-900/90">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {/* TAB 1: FIRMS & SUBSCRIPTIONS */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('firms')}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'firms'
+                    ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'firms' ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold truncate">{isAr ? 'المكاتب' : 'Firms'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? `${totalFirms} مكاتب` : `${totalFirms} Firms`}</div>
+                </div>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('supabase')}
-            className={`pb-3 px-6 pt-1 font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer relative group ${
-              activeTab === 'supabase'
-                ? 'text-emerald-400 bg-emerald-400/10 rounded-t-xl'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'supabase' ? 'bg-emerald-400/20' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-              <Database className="w-5 h-5" />
-            </div>
-            <span className="text-base">{isAr ? 'فتح قاعدة البيانات والمزامنة' : 'Database & Sync'}</span>
-            {activeTab === 'supabase' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-400 rounded-t-full shadow-[0_-2px_10px_rgba(52,211,153,0.5)]" />
-            )}
-          </button>
+              {/* TAB 2: PLATFORM ACCOUNTING & FINANCIAL INTELLIGENCE */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('finance')}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'finance'
+                    ? 'bg-gradient-to-r from-emerald-500/20 to-amber-600/10 text-emerald-300 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.25)] ring-1 ring-emerald-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'finance' ? 'bg-emerald-400 text-slate-950 font-black' : 'bg-slate-800 text-emerald-400'}`}>
+                  <Landmark className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold text-white flex items-center gap-1">
+                    <span>{isAr ? 'محاسبة المنصة' : 'Finance'}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  </div>
+                  <div className="text-[10px] text-emerald-400/90 font-medium">{isAr ? 'الواردات والمصاريف' : 'P&L & Ledger'}</div>
+                </div>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('platform')}
-            className={`pb-3 px-6 pt-1 font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer relative group ${
-              activeTab === 'platform'
-                ? 'text-blue-400 bg-blue-400/10 rounded-t-xl'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'platform' ? 'bg-blue-400/20' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-              <Layout className="w-5 h-5" />
-            </div>
-            <span className="text-base">{isAr ? 'تصميم المنصة' : 'Platform UI'}</span>
-            {activeTab === 'platform' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-blue-400 rounded-t-full shadow-[0_-2px_10px_rgba(96,165,250,0.5)]" />
-            )}
-          </button>
+              {/* TAB 3: SUPABASE CLOUD DATABASE */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('supabase')}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'supabase'
+                    ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 text-emerald-300 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.25)] ring-1 ring-emerald-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'supabase' ? 'bg-emerald-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                  <Database className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold truncate">{isAr ? 'قاعدة البيانات' : 'Database'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'Supabase' : 'Supabase'}</div>
+                </div>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('domains')}
-            className={`pb-3 px-6 pt-1 font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer relative group ${
-              activeTab === 'domains'
-                ? 'text-purple-400 bg-purple-400/10 rounded-t-xl'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'domains' ? 'bg-purple-400/20' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-              <Globe2 className="w-5 h-5" />
-            </div>
-            <span className="text-base">{isAr ? 'الدعم والربط' : 'Support & Integration'}</span>
-            {activeTab === 'domains' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-purple-400 rounded-t-full shadow-[0_-2px_10px_rgba(192,132,252,0.5)]" />
-            )}
-          </button>
+              {/* TAB 4: PLATFORM UI */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('platform')}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'platform'
+                    ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 text-blue-300 border-blue-400 shadow-[0_0_15px_rgba(96,165,250,0.25)] ring-1 ring-blue-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'platform' ? 'bg-blue-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                  <Layout className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold truncate">{isAr ? 'واجهة المنصة' : 'Platform UI'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'الهوية والألوان' : 'Styles'}</div>
+                </div>
+              </button>
 
-          <button
-            onClick={() => setActiveTab('backup')}
-            className={`pb-3 px-6 pt-1 font-bold text-sm transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer relative group ${
-              activeTab === 'backup'
-                ? 'text-rose-400 bg-rose-400/10 rounded-t-xl'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <div className={`p-1.5 rounded-lg transition-colors ${activeTab === 'backup' ? 'bg-rose-400/20' : 'bg-slate-800 group-hover:bg-slate-700'}`}>
-              <Archive className="w-5 h-5" />
+              {/* TAB 5: DEPLOYMENT & SUPPORT */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('domains')}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'domains'
+                    ? 'bg-gradient-to-r from-purple-500/20 to-purple-600/10 text-purple-300 border-purple-400 shadow-[0_0_15px_rgba(192,132,252,0.25)] ring-1 ring-purple-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'domains' ? 'bg-purple-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                  <Globe2 className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold truncate">{isAr ? 'الدعم والنشر' : 'Hosting'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'Vercel' : 'Vercel'}</div>
+                </div>
+              </button>
+
+              {/* TAB 6: FULL BACKUP */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('backup')}
+                className={`col-span-2 sm:col-span-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'backup'
+                    ? 'bg-gradient-to-r from-rose-500/20 to-rose-600/10 text-rose-300 border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.25)] ring-1 ring-rose-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'backup' ? 'bg-rose-400 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'}`}>
+                  <Archive className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold truncate">{isAr ? 'النسخ الاحتياطي' : 'Backup'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'تصدير ZIP' : 'ZIP Archive'}</div>
+                </div>
+              </button>
             </div>
-            <span className="text-base">{isAr ? 'النسخ الاحتياطي الشامل' : 'Full Backup'}</span>
-            {activeTab === 'backup' && (
-              <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1.5 bg-rose-400 rounded-t-full shadow-[0_-2px_10px_rgba(244,63,94,0.5)]" />
-            )}
-          </button>
+          </div>
         </div>
 
         {/* Toast Alert */}
@@ -481,6 +526,15 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 setNewPassword(firm.adminPassword || '123456');
               }}
               onSwitchToFirm={handleSwitchToFirm}
+            />
+          )}
+
+          {/* TAB 1: PLATFORM ACCOUNTING & FINANCIAL INTELLIGENCE */}
+          {activeTab === 'finance' && (
+            <PlatformFinanceTab
+              firms={firms}
+              isAr={isAr}
+              onRefreshFirms={refreshFirms}
             />
           )}
 

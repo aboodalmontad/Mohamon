@@ -243,12 +243,21 @@ export interface SiteSettings {
   workingHoursAr: string;
   workingHoursEn: string;
   workingHoursTr?: string;
+  currency?: 'SYP' | 'USD' | 'SAR' | 'AED' | 'EUR' | string;
+  currencyCustomLabelAr?: string;
+  currencyCustomLabelEn?: string;
+  currencySymbolAr?: string;
+  currencySymbolEn?: string;
   stats: {
     yearsExperience: number;
     casesWon: number;
     activeClients: number;
     successRate: number;
-    recoveredMillionsUSD: number;
+    recoveredMillionsUSD?: number;
+    recoveredCapital?: number;
+    recoveredCapitalTextAr?: string;
+    recoveredCapitalTextEn?: string;
+    recoveredCapitalTextTr?: string;
   };
   socialLinks: {
     linkedin: string;

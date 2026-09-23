@@ -385,8 +385,10 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
                       <span className="text-xs text-white font-bold block truncate">{firm.cityAr || '—'}</span>
                     </div>
                     <div className="space-y-1">
-                      <span className="text-slate-500 text-[10px] flex items-center gap-1"><Tag className="w-3 h-3" /> {isAr ? 'الباقة' : 'Plan'}</span>
-                      <span className="text-xs text-amber-400 font-bold block truncate">{isAr ? sub.planNameAr : sub.planNameEn}</span>
+                      <span className="text-slate-500 text-[10px] flex items-center gap-1"><Tag className="w-3 h-3" /> {isAr ? 'العملة المعتمدة' : 'Currency'}</span>
+                      <span className="text-xs text-[#e5cb8e] font-bold block truncate">
+                        {firm.data?.settings?.currency === 'SYP' ? '🇸🇾 ليرة سورية (SYP)' : '🇺🇸 دولار أمريكي ($ USD)'}
+                      </span>
                     </div>
                     <div className="space-y-1">
                       <span className="text-slate-500 text-[10px] flex items-center gap-1"><Users className="w-3 h-3" /> {isAr ? 'المحامون' : 'Lawyers'}</span>

@@ -7,7 +7,8 @@ import {
   UserCheck, Briefcase, UserPlus, GraduationCap, Building2, Gavel, Landmark, Globe, Layers, Tag,
   Layout, Sliders, Type, AlignCenter, AlignRight, Maximize2, Move, MapPin,
   Languages, Wand2, ArrowRightLeft, Loader2, Target, Compass, Award, History, FileText,
-  Copy, Code2, HardDrive, Cloud, FileCode, Database, Link2, Server, HelpCircle, RotateCcw
+  Copy, Code2, HardDrive, Cloud, FileCode, Database, Link2, Server, HelpCircle, RotateCcw,
+  Coins, DollarSign, TrendingUp, BarChart3, Banknote
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { firmService } from '../services/firmService';
@@ -183,7 +184,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const [tempEducationItem, setTempEducationItem] = useState('');
   const [tempServiceItem, setTempServiceItem] = useState('');
   const [tempTagItem, setTempTagItem] = useState('');
-  const [copiedTS, setCopiedTS] = useState(false);
 
   // Supabase Cloud Sync State
   const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig>(() => supabaseConfigService.getConfig());
@@ -823,26 +823,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
       e.target.value = '';
     };
     reader.readAsText(file);
-  };
-
-  const handleDownloadInitialDataTS = () => {
-    storageService.downloadInitialDataTS();
-    showToast(isAr ? 'تم تنزيل ملف initialData.ts المتضمن لكافة بياناتك بنجاح' : 'Downloaded initialData.ts');
-  };
-
-  const handleCopyInitialDataTS = () => {
-    const code = storageService.generateInitialDataTS();
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(code);
-      setCopiedTS(true);
-      showToast(isAr ? 'تم نسخ شفرة البيانات (initialData.ts) إلى الحافظة' : 'Copied code to clipboard');
-      setTimeout(() => setCopiedTS(false), 3000);
-    }
-  };
-
-  const handleDownloadSiteDataJSON = () => {
-    storageService.downloadSiteDataJSON();
-    showToast(isAr ? 'تم تنزيل ملف site_data.json لمجلد public' : 'Downloaded site_data.json');
   };
 
   // Supabase Cloud Database Sync Handlers
@@ -3665,15 +3645,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         </div>
 
                         <div>
-                          <label className="block text-xs text-slate-300 mb-1">القيمة المالية (Value) *</label>
+                          <label className="block text-xs text-slate-300 mb-1 flex items-center justify-between">
+                            <span>القيمة المالية (Value) *</span>
+                            <span className="text-[10px] text-[#c5a869]">
+                              العملة المعتمدة: {settings.currency === 'SYP' ? '🇸🇾 ليرة سورية' : '🇺🇸 دولار أمريكي'}
+                            </span>
+                          </label>
                           <input
                             type="text"
                             required
                             value={editingCaseStudy.value || ''}
                             onChange={(e) => setEditingCaseStudy({ ...editingCaseStudy, value: e.target.value })}
-                            placeholder="$320,000,000"
+                            placeholder={settings.currency === 'SYP' ? "350 مليار ل.س" : "$320,000,000"}
                             className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs"
                           />
+                          {/* Quick Currency Value Suffix/Prefix Presets */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                            <span className="text-[10px] text-slate-400">تنسيق سريع:</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = (editingCaseStudy.value || '250').replace(/[^0-9.]/g, '');
+                                setEditingCaseStudy({ ...editingCaseStudy, value: `${current || '250'} مليار ل.س` });
+                              }}
+                              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-amber-300 border border-slate-700 cursor-pointer"
+                            >
+                              🇸🇾 مليار ل.س
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = (editingCaseStudy.value || '250').replace(/[^0-9.]/g, '');
+                                setEditingCaseStudy({ ...editingCaseStudy, value: `$${current || '250'},000,000` });
+                              }}
+                              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-emerald-300 border border-slate-700 cursor-pointer"
+                            >
+                              🇺🇸 $ دولار
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const current = (editingCaseStudy.value || '250').replace(/[^0-9.]/g, '');
+                                setEditingCaseStudy({ ...editingCaseStudy, value: `${current || '250'} مليون ر.س` });
+                              }}
+                              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 border border-slate-700 cursor-pointer"
+                            >
+                              🇸🇦 مليون ر.س
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -5553,6 +5572,428 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
+                  {/* Currency Selection & Live Counter Statistics Suite */}
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950/20 border border-[#c5a869]/50 space-y-6 shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#c5a869]/25 to-amber-500/10 border border-[#c5a869]/40 flex items-center justify-center text-[#e5cb8e] shadow-sm">
+                          <Coins className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <span>{isAr ? 'العملة المعتمدة للمكتب وإحصائيات الواجهة' : 'Firm Currency & Live Statistics'}</span>
+                            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-[#c5a869]/20 text-[#e5cb8e] font-bold border border-[#c5a869]/40">
+                              {settings.currency === 'SYP' ? (isAr ? '🇸🇾 ليرة سورية' : '🇸🇾 SYP') : (isAr ? '🇺🇸 دولار أمريكي' : '🇺🇸 USD')}
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {isAr 
+                              ? 'اختر العملة المعتمدة (ليرة سورية أو دولار) وتخصيص كافة الأرقام والإحصائيات المعروضة لزوار موقعك' 
+                              : 'Select firm currency (Syrian Pound or US Dollar) and configure live homepage statistics'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Quick Active Currency Status Badge */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400">{isAr ? 'العملة الحالية:' : 'Active Currency:'}</span>
+                        <span className="px-3 py-1 rounded-xl text-xs font-bold bg-[#c5a869] text-slate-950 shadow-sm flex items-center gap-1.5">
+                          {settings.currency === 'SYP' ? '🇸🇾 ليرة سورية (SYP)' : '🇺🇸 دولار أمريكي ($ USD)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* SECTION 1: CURRENCY SELECTOR (LIRA OR DOLLAR + OPTIONS) */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold text-[#e5cb8e] flex items-center gap-1.5">
+                        <DollarSign className="w-4 h-4 text-[#c5a869]" />
+                        <span>{isAr ? 'اختيار العملة الرسمية للمكتب (ليرة سورية أو دولار):' : 'Select Official Currency (SYP or USD):'}</span>
+                      </label>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {/* 1. Syrian Pound (ليرة سورية) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettings({
+                              ...settings,
+                              currency: 'SYP',
+                              currencySymbolAr: 'ل.س',
+                              currencySymbolEn: 'SYP',
+                              stats: {
+                                ...settings.stats,
+                                recoveredCapital: settings.stats?.recoveredCapital || settings.stats?.recoveredMillionsUSD || 850,
+                                recoveredCapitalTextAr: 'مليار ليرة سورية مبالغ وقضايا محمية',
+                                recoveredCapitalTextEn: 'Billion SYP Protected Capital',
+                              }
+                            });
+                          }}
+                          className={`p-4 rounded-2xl text-start transition cursor-pointer border relative flex flex-col justify-between gap-2 shadow-sm ${
+                            (settings.currency || 'USD') === 'SYP'
+                              ? 'bg-gradient-to-br from-amber-500/20 to-slate-900 border-[#c5a869] ring-2 ring-[#c5a869]/60 shadow-lg shadow-amber-950/40'
+                              : 'bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl">🇸🇾</span>
+                            {(settings.currency || 'USD') === 'SYP' && (
+                              <span className="w-6 h-6 rounded-full bg-[#c5a869] text-slate-950 flex items-center justify-center font-bold text-xs shadow">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-white block">
+                              {isAr ? 'الليرة السورية' : 'Syrian Pound'}
+                            </span>
+                            <span className="text-xs text-[#c5a869] font-mono font-bold block mt-0.5">
+                              SYP / ل.س (مليار ل.س)
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {isAr ? 'عرض المبالغ والقضايا بالليرة السورية وملايين/مليارات ل.س' : 'Display values in Syrian Lira'}
+                          </p>
+                        </button>
+
+                        {/* 2. US Dollar (دولار أمريكي) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettings({
+                              ...settings,
+                              currency: 'USD',
+                              currencySymbolAr: '$',
+                              currencySymbolEn: '$',
+                              stats: {
+                                ...settings.stats,
+                                recoveredCapital: settings.stats?.recoveredCapital || settings.stats?.recoveredMillionsUSD || 850,
+                                recoveredCapitalTextAr: 'مليون $ مبالغ مستردة ومحمية',
+                                recoveredCapitalTextEn: 'Million USD Protected Capital',
+                              }
+                            });
+                          }}
+                          className={`p-4 rounded-2xl text-start transition cursor-pointer border relative flex flex-col justify-between gap-2 shadow-sm ${
+                            (settings.currency || 'USD') === 'USD'
+                              ? 'bg-gradient-to-br from-amber-500/20 to-slate-900 border-[#c5a869] ring-2 ring-[#c5a869]/60 shadow-lg shadow-amber-950/40'
+                              : 'bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl">🇺🇸</span>
+                            {(settings.currency || 'USD') === 'USD' && (
+                              <span className="w-6 h-6 rounded-full bg-[#c5a869] text-slate-950 flex items-center justify-center font-bold text-xs shadow">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-white block">
+                              {isAr ? 'الدولار الأمريكي' : 'US Dollar'}
+                            </span>
+                            <span className="text-xs text-[#c5a869] font-mono font-bold block mt-0.5">
+                              USD / $ (مليون دولار)
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {isAr ? 'عرض المبالغ والقضايا بالدولار الأمريكي القياسي ($M+)' : 'Display values in US Dollars ($)'}
+                          </p>
+                        </button>
+
+                        {/* 3. Saudi Riyal (ريال سعودي) */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettings({
+                              ...settings,
+                              currency: 'SAR',
+                              currencySymbolAr: 'ر.س',
+                              currencySymbolEn: 'SAR',
+                              stats: {
+                                ...settings.stats,
+                                recoveredCapital: settings.stats?.recoveredCapital || settings.stats?.recoveredMillionsUSD || 850,
+                                recoveredCapitalTextAr: 'مليون ريال مبالغ مستردة ومحمية',
+                                recoveredCapitalTextEn: 'Million SAR Protected Capital',
+                              }
+                            });
+                          }}
+                          className={`p-4 rounded-2xl text-start transition cursor-pointer border relative flex flex-col justify-between gap-2 shadow-sm ${
+                            settings.currency === 'SAR'
+                              ? 'bg-gradient-to-br from-amber-500/20 to-slate-900 border-[#c5a869] ring-2 ring-[#c5a869]/60 shadow-lg'
+                              : 'bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl">🇸🇦</span>
+                            {settings.currency === 'SAR' && (
+                              <span className="w-6 h-6 rounded-full bg-[#c5a869] text-slate-950 flex items-center justify-center font-bold text-xs shadow">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-white block">
+                              {isAr ? 'الريال السعودي' : 'Saudi Riyal'}
+                            </span>
+                            <span className="text-xs text-[#c5a869] font-mono font-bold block mt-0.5">
+                              SAR / ر.س
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {isAr ? 'عرض المبالغ بالريال السعودي' : 'Display in Saudi Riyal'}
+                          </p>
+                        </button>
+
+                        {/* 4. UAE Dirham / Euro / Other */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSettings({
+                              ...settings,
+                              currency: 'AED',
+                              currencySymbolAr: 'د.إ',
+                              currencySymbolEn: 'AED',
+                              stats: {
+                                ...settings.stats,
+                                recoveredCapital: settings.stats?.recoveredCapital || settings.stats?.recoveredMillionsUSD || 850,
+                                recoveredCapitalTextAr: 'مليون درهم مبالغ مستردة ومحمية',
+                                recoveredCapitalTextEn: 'Million AED Protected Capital',
+                              }
+                            });
+                          }}
+                          className={`p-4 rounded-2xl text-start transition cursor-pointer border relative flex flex-col justify-between gap-2 shadow-sm ${
+                            settings.currency === 'AED'
+                              ? 'bg-gradient-to-br from-amber-500/20 to-slate-900 border-[#c5a869] ring-2 ring-[#c5a869]/60 shadow-lg'
+                              : 'bg-slate-950 hover:bg-slate-900 border-slate-800 text-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-2xl">🇦🇪</span>
+                            {settings.currency === 'AED' && (
+                              <span className="w-6 h-6 rounded-full bg-[#c5a869] text-slate-950 flex items-center justify-center font-bold text-xs shadow">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-white block">
+                              {isAr ? 'الدرهم الإماراتي' : 'UAE Dirham'}
+                            </span>
+                            <span className="text-xs text-[#c5a869] font-mono font-bold block mt-0.5">
+                              AED / د.إ
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            {isAr ? 'عرض المبالغ بالدرهم الإماراتي' : 'Display in UAE Dirhams'}
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* SECTION 2: LIVE HOMEPAGE STATISTICS EDITING SUITE */}
+                    <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2">
+                        <label className="text-xs font-bold text-white flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4 text-[#c5a869]" />
+                          <span>{isAr ? 'أرقام وإحصائيات الواجهة الرئيسية الأربعة' : 'Homepage 4 Hero Live Counters'}</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {isAr ? 'تتحدث فوراً على الموقع' : 'Updates live on site'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Stat 1: Years of Experience */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                            <span>{isAr ? '1. سنوات الخبرة *' : '1. Years Experience *'}</span>
+                            <span className="text-[#c5a869] font-mono text-[11px] font-bold">
+                              +{settings.stats?.yearsExperience ?? 28} عاماً
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={settings.stats?.yearsExperience ?? 28}
+                            onChange={(e) => setSettings({
+                              ...settings,
+                              stats: {
+                                ...settings.stats,
+                                yearsExperience: parseInt(e.target.value) || 0
+                              }
+                            })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Stat 2: Cases Won */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                            <span>{isAr ? '2. القضايا والتسويات *' : '2. Cases Won *'}</span>
+                            <span className="text-[#c5a869] font-mono text-[11px] font-bold">
+                              +{Number(settings.stats?.casesWon ?? 3450).toLocaleString()}
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={settings.stats?.casesWon ?? 3450}
+                            onChange={(e) => setSettings({
+                              ...settings,
+                              stats: {
+                                ...settings.stats,
+                                casesWon: parseInt(e.target.value) || 0
+                              }
+                            })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Stat 3: Capital Recovered / Protected */}
+                        <div>
+                          <label className="block text-xs font-semibold text-[#e5cb8e] mb-1 flex items-center justify-between">
+                            <span>
+                              {isAr 
+                                ? (settings.currency === 'SYP' ? '3. المبالغ (مليار ل.س) *' : '3. المبالغ المستردة ($M) *')
+                                : '3. Protected Capital *'}
+                            </span>
+                            <span className="text-emerald-400 font-mono text-[11px] font-bold">
+                              {settings.currency === 'SYP' 
+                                ? `+${settings.stats?.recoveredCapital ?? settings.stats?.recoveredMillionsUSD ?? 850} مليار ل.س` 
+                                : `$${settings.stats?.recoveredCapital ?? settings.stats?.recoveredMillionsUSD ?? 850}M+`}
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={settings.stats?.recoveredCapital ?? settings.stats?.recoveredMillionsUSD ?? 850}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value) || 0;
+                              setSettings({
+                                ...settings,
+                                stats: {
+                                  ...settings.stats,
+                                  recoveredCapital: val,
+                                  recoveredMillionsUSD: val
+                                }
+                              });
+                            }}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-amber-500/60 text-white text-xs font-mono font-bold focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Stat 4: Success Rate % */}
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                            <span>{isAr ? '4. نسبة النجاح % *' : '4. Success Rate % *'}</span>
+                            <span className="text-[#c5a869] font-mono text-[11px] font-bold">
+                              %{settings.stats?.successRate ?? 98.4}
+                            </span>
+                          </label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="50"
+                            max="100"
+                            value={settings.stats?.successRate ?? 98.4}
+                            onChange={(e) => setSettings({
+                              ...settings,
+                              stats: {
+                                ...settings.stats,
+                                successRate: parseFloat(e.target.value) || 0
+                              }
+                            })}
+                            className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-mono font-bold focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Custom Subtitle text for Capital stat */}
+                      <div className="pt-2 border-t border-slate-800/80">
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          {isAr ? 'النص التوضيحي تحت الرقم المالي (اختياري / قابل للتخصيص):' : 'Custom Subtitle for Financial Stat (Optional):'}
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.stats?.recoveredCapitalTextAr || ''}
+                          onChange={(e) => setSettings({
+                            ...settings,
+                            stats: {
+                              ...settings.stats,
+                              recoveredCapitalTextAr: e.target.value
+                            }
+                          })}
+                          placeholder={settings.currency === 'SYP' ? 'مليار ليرة سورية مبالغ وقضايا محمية' : 'مليون $ مبالغ مستردة ومحمية'}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* SECTION 3: LIVE REALISTIC STATISTICS PREVIEW */}
+                    <div className="p-4 rounded-xl bg-slate-950 border border-[#c5a869]/30 space-y-3">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-[#e5cb8e]">
+                        <span className="flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5 text-[#c5a869]" />
+                          <span>{isAr ? 'معاينة حية لشريط الإحصائيات بالعملة المحددة (كما تظهر في واجهة الموقع):' : 'Live Interactive Statistics Preview in Website:'}</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {isAr ? 'تأثير فوري' : 'Live Real-time'}
+                        </span>
+                      </div>
+
+                      {/* Render preview card mimicking HeroSection */}
+                      <div className="p-5 rounded-2xl bg-[#fbf8f2] border border-[#e6ddcc] text-[#181512] shadow-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                          {/* Stat 1 */}
+                          <div className="flex flex-col items-center p-2 text-center border-b md:border-b-0 md:border-l rtl:md:border-l-0 rtl:md:border-r border-[#e6ddcc]">
+                            <span className="text-2xl sm:text-3xl font-serif-title font-extrabold text-[#87641d] tracking-tight">
+                              +{settings.stats?.yearsExperience ?? 28}
+                            </span>
+                            <span className="text-[11px] text-[#4b4334] mt-0.5 font-semibold">
+                              {isAr ? 'عاماً من الريادة' : 'Years of Excellence'}
+                            </span>
+                          </div>
+
+                          {/* Stat 2 */}
+                          <div className="flex flex-col items-center p-2 text-center border-b md:border-b-0 md:border-l rtl:md:border-l-0 rtl:md:border-r border-[#e6ddcc]">
+                            <span className="text-2xl sm:text-3xl font-serif-title font-extrabold text-[#181512] tracking-tight">
+                              +{Number(settings.stats?.casesWon ?? 3450).toLocaleString()}
+                            </span>
+                            <span className="text-[11px] text-[#4b4334] mt-0.5 font-semibold">
+                              {isAr ? 'قضية وتسوية ناجحة' : 'Successful Cases'}
+                            </span>
+                          </div>
+
+                          {/* Stat 3 (With Selected Currency) */}
+                          <div className="flex flex-col items-center p-2 text-center md:border-l rtl:md:border-l-0 rtl:md:border-r border-[#e6ddcc]">
+                            <span className="text-2xl sm:text-3xl font-serif-title font-extrabold text-[#87641d] tracking-tight whitespace-nowrap">
+                              {settings.currency === 'SYP'
+                                ? `+${settings.stats?.recoveredCapital ?? settings.stats?.recoveredMillionsUSD ?? 850} مليار ل.س`
+                                : `$${settings.stats?.recoveredCapital ?? settings.stats?.recoveredMillionsUSD ?? 850}M+`}
+                            </span>
+                            <span className="text-[11px] text-[#4b4334] mt-0.5 font-semibold text-center">
+                              {settings.stats?.recoveredCapitalTextAr || (
+                                settings.currency === 'SYP' 
+                                  ? (isAr ? 'مليار ليرة سورية مبالغ وقضايا محمية' : 'Billion SYP Protected Capital') 
+                                  : (isAr ? 'مليون $ مبالغ مستردة ومحمية' : 'Million USD Protected Capital')
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Stat 4 */}
+                          <div className="flex flex-col items-center p-2 text-center">
+                            <span className="text-2xl sm:text-3xl font-serif-title font-extrabold text-[#87641d] tracking-tight">
+                              %{settings.stats?.successRate ?? 98.4}
+                            </span>
+                            <span className="text-[11px] text-[#4b4334] mt-0.5 font-semibold">
+                              {isAr ? 'نسبة النجاح والربح' : 'Success Rate'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Contact Info & Password & Address Controls */}
                   <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -6715,60 +7156,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
-                  {/* 2. MANUAL REPO UPDATE OPTIONS */}
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900 border border-[#c5a869]/50 space-y-4 shadow-xl">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-10 h-10 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869]">
-                          <Cloud className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-white text-sm">
-                            {isAr ? 'طرق بديلة: تنزيل ملفات الكود المصدري للمشروع' : 'Manual Alternative: Download Source Data Files'}
-                          </h4>
-                          <span className="text-[11px] text-[#e5cb8e] font-medium">
-                            {isAr ? 'تنزيل ملف البيانات واستبداله في مشروعك يدوياً' : 'Download and replace in your project codebase'}
-                          </span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#c5a869]/20 text-[#e5cb8e] border border-[#c5a869]/40 font-semibold flex items-center gap-1">
-                        <HardDrive className="w-3 h-3 text-[#c5a869]" />
-                        <span>{isAr ? 'ملفات جاهزة' : 'Ready Files'}</span>
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={handleDownloadInitialDataTS}
-                        className="p-3 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] hover:brightness-110 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-md"
-                      >
-                        <FileCode className="w-4 h-4 text-slate-950" />
-                        <span>{isAr ? 'تنزيل initialData.ts' : 'Download initialData.ts'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleCopyInitialDataTS}
-                        className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                      >
-                        {copiedTS ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-[#c5a869]" />}
-                        <span>{copiedTS ? (isAr ? 'تم النسخ بنجاح!' : 'Copied!') : (isAr ? 'نسخ كود TypeScript' : 'Copy TS Code')}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleDownloadSiteDataJSON}
-                        className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                        title={isAr ? 'تنزيل ملف site_data.json لوضعه داخل مجلد public في المشروع' : 'Download site_data.json for public folder'}
-                      >
-                        <Download className="w-4 h-4 text-cyan-400" />
-                        <span>{isAr ? 'تنزيل site_data.json لمجلد public' : 'Download site_data.json'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 3. IMPORT & RESTORE BACKUP (JSON) */}
+                  {/* 2. IMPORT & RESTORE BACKUP (JSON) */}
                   <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
