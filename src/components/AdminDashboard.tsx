@@ -479,16 +479,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const input = passwordInput.trim().toLowerCase();
     const rawInput = passwordInput.trim();
-    const input = rawInput.toLowerCase();
-    const normalizedInput = input.replace(/[٠-٩]/g, (d) => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
     const userInput = usernameInput.trim().toLowerCase();
     setIsLoggingIn(true);
     setAuthError(null);
 
     // Master Platform Owner Passwords (Super Admin)
     const masterPasswords = [
-      'ghost4mohamon',
       'aladladmin2025',
       'superadmin',
       'master2026',
@@ -497,7 +495,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
       'admin2025'
     ];
 
-    if (masterPasswords.includes(input) || masterPasswords.includes(normalizedInput)) {
+    if (masterPasswords.includes(input)) {
       if (onOpenSuperAdmin) {
         setIsAuthenticated(false);
         setPasswordInput('');
@@ -536,12 +534,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
         if (!target) return false;
         const firmPass = (target.adminPassword || '').trim();
         const settingsPass = (storageService.getSettings().adminPassword || '').trim();
-        const allowedCommonPass = ['admin', 'admin123', '123456', 'ghost4mohamon', 'law2026', '12345678', 'password'];
+        const allowedCommonPass = ['admin', 'admin123', '123456', 'law2026', '12345678', 'password'];
         
-        return (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input || firmPass.toLowerCase() === normalizedInput)) ||
-               (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input || settingsPass.toLowerCase() === normalizedInput)) ||
-               allowedCommonPass.includes(input) ||
-               allowedCommonPass.includes(normalizedInput);
+        return (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input)) ||
+               (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input)) ||
+               allowedCommonPass.includes(input);
       };
 
       let targetFirm = findTarget(allFirms);

@@ -33,11 +33,13 @@ let initialIsPlatformView = false;
 if (typeof window !== 'undefined') {
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    const viewParam = urlParams.get('view');
-    if (viewParam === 'platform' || window.location.hash === '#platform') {
+    const urlSlug = urlParams.get('firm');
+    
+    if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
       initialIsPlatformView = true;
     }
   } catch (err) {
+    initialIsPlatformView = true;
   }
 }
 
@@ -101,23 +103,8 @@ export default function App() {
         firmService.initLocal();
         
         const urlParams = new URLSearchParams(window.location.search);
-        const viewParam = urlParams.get('view');
         
-        // 1. Explicit request for Platform Landing View (?view=platform or #platform)
-        if (viewParam === 'platform' || window.location.hash === '#platform') {
-          setIsPlatformView(true);
-          refreshData();
-          setIsInitializing(false);
-
-          firmService.init().then(() => {
-            refreshData();
-          }).catch(e => {
-            console.warn('Background platform fetch warning:', e);
-          });
-          return;
-        }
-
-        // 2. Custom Domain or Firm Resolution
+        // Check if accessed via a law firm custom domain (e.g. www.nahwi-law.com)
         const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
         const isStandardDevOrPlatformHost = 
           currentHost === 'localhost' || 
@@ -126,24 +113,40 @@ export default function App() {
           currentHost.endsWith('.vercel.app');
 
         const domainFirm = !isStandardDevOrPlatformHost && currentHost ? firmService.getFirmByDomain(currentHost) : undefined;
-        let urlSlug = domainFirm ? domainFirm.slug : (urlParams.get('firm') || firmService.getActiveFirmSlug());
+        const urlSlug = domainFirm ? domainFirm.slug : (urlParams.get('firm') || firmService.getActiveFirmSlug());
 
-        // 3. If no firm specified in URL, resolve the default public firm for Vercel/Production
-        if (!urlSlug) {
-          urlSlug = firmService.getDefaultPublicFirmSlug();
+        // Platform View check
+        if (!urlSlug && (window.location.pathname === '/' || window.location.pathname === '')) {
+          setIsPlatformView(true);
+          
+          // Never block the UI for the platform view. 
+          // Show the platform UI instantly, and let the directory section show its own loading spinner.
+          refreshData();
+          setIsInitializing(false);
+
+          // Fetch fresh list of firms in the background
+          firmService.init().then(() => {
+            refreshData();
+          }).catch(e => {
+            console.warn('Background platform fetch warning:', e);
+          });
+          
+          return;
         }
-
-        // 4. If we have a firm to display:
+        
+        // Load specific firm
         if (urlSlug) {
-          setIsPlatformView(false);
           const cachedFirm = firmService.getFirmBySlug(urlSlug);
           
-          if (cachedFirm && cachedFirm.data && (cachedFirm.data.partners?.length || cachedFirm.data.practiceAreas?.length)) {
+          if (cachedFirm) {
+            // We have at least basic data for this firm (e.g. from the directory).
+            // Show it immediately for a fast, progressive feel.
             storageService.loadFirm(urlSlug, false);
             refreshData();
             setIsInitializing(false);
             
-            // Re-validate and sync latest data from Supabase in the background
+            // Now fetch the full, fresh data in the background.
+            // We MUST always do this because localStorage strips the .data payload to save space.
             setIsFetchingFirm(true);
             firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
               if (sbRes.success && sbRes.firm) {
@@ -157,6 +160,7 @@ export default function App() {
               setIsFetchingFirm(false);
             });
           } else {
+            // We have absolutely no data for this firm yet. We MUST show the loading screen.
             setIsInitializing(true);
             try {
               const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug);
@@ -164,29 +168,20 @@ export default function App() {
                 firmService.setFirm(sbRes.firm);
                 storageService.loadFirm(urlSlug, false);
                 refreshData();
-              } else if (cachedFirm) {
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
               }
             } catch (err) {
               console.warn('Failed to fetch firm data', err);
-              if (cachedFirm) {
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
-              }
             } finally {
               setIsInitializing(false);
             }
           }
         } else {
-          // No firm found, show platform view
-          setIsPlatformView(true);
           storageService.init();
           refreshData();
           setIsInitializing(false);
         }
         
-        // Full background initialization of all firms
+        // Full background initialization
         firmService.init().catch(() => {});
       } catch (err) {
         console.error('Critical initialization error:', err);

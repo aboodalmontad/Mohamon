@@ -10,7 +10,6 @@ import { motion } from 'motion/react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { firmService } from '../services/firmService';
-import { storageService } from '../services/storageService';
 import { LawFirm } from '../types';
 import { SupabaseFirmsTab } from './SupabaseFirmsTab';
 import { FirmSubscriptionsTab } from './FirmSubscriptionsTab';
@@ -75,24 +74,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanInput = passwordInput.trim().toLowerCase();
-    const normalizedInput = cleanInput.replace(/[٠-٩]/g, (d) => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
-    const allowedSuperPasswords = [
-      'admin',
-      'ghost4mohamon',
-      '123456',
-      'admin123',
-      'aladladmin2025',
-      'superadmin',
-      'master2026',
-      'law2026',
-      'password',
-      (storageService.getSettings().adminPassword || '').trim().toLowerCase()
-    ].filter(Boolean);
-
-    if (allowedSuperPasswords.includes(cleanInput) || allowedSuperPasswords.includes(normalizedInput)) {
+    if (passwordInput === 'ghost4mohamon') {
       setIsAuthenticated(true);
-      setAuthError(false);
     } else {
       setAuthError(true);
     }
