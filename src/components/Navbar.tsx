@@ -86,7 +86,6 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
     : (settings.navbarSubtitleEn || 'Attorneys, Legal Counsel & Arbitrators');
 
   const currentLangObj = languagesList.find(l => l.code === lang) || languagesList[0];
-  const officialDomain = firmService.getFirmDisplayDomain();
 
   return (
     <>
@@ -97,13 +96,6 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             <span className="flex items-center gap-1 text-[#87641d] font-medium">
               <Shield className="w-3.5 h-3.5 text-[#b38a38]" />
               <span>{t.topAccredited}</span>
-            </span>
-            <span className="hidden sm:inline text-[#c8bcab]">|</span>
-            {/* Concise official domain tag in top announcement bar */}
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono font-bold text-[#87641d] bg-white/90 px-2.5 py-0.5 rounded-full border border-[#c5a869]/35 dir-ltr shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <Globe className="w-3 h-3 text-[#b38a38]" />
-              <span>{officialDomain}</span>
             </span>
             <span className="hidden sm:inline text-[#c8bcab]">|</span>
             <span className="hidden sm:flex items-center gap-1.5 text-[#5c5343]">
@@ -288,17 +280,13 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                   );
                 })()}
 
-                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-bold text-[#87641d] bg-[#b38a38]/12 px-2 py-0.5 rounded-full border border-[#b38a38]/25 dir-ltr shadow-2xs">
-                    <Globe className="w-2.5 h-2.5 text-[#b38a38]" />
-                    <span>{officialDomain}</span>
-                  </span>
-                  {settings.showNavbarSubtitle !== false && (
+                {settings.showNavbarSubtitle !== false && (
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span className="font-navbar-brand text-[10px] text-[#87641d]/80 uppercase tracking-wider font-bold">
-                      • {currentSubtitle}
+                      {currentSubtitle}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </a>
           </div>

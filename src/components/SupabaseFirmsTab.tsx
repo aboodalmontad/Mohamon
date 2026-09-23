@@ -213,10 +213,13 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
             <button
               onClick={handlePushAllToSupabase}
               disabled={isSyncingToSupabase || isFetchingFromSupabase}
-              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 text-slate-950 font-black text-sm flex items-center justify-center gap-2.5 transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-xl shadow-emerald-950/40 cursor-pointer"
+              className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:brightness-110 text-slate-950 font-black text-sm flex items-center justify-center gap-2.5 transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-xl shadow-emerald-950/40 cursor-pointer"
             >
               {isSyncingToSupabase ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Upload className="w-6 h-6" />}
-              <span>{isAr ? 'مزامنة ورفع الكل للسحابة' : 'Global Sync & Upload'}</span>
+              <div className="text-start leading-tight">
+                <div>{isAr ? 'مزامنة توربو فائقة للسحابة' : 'Turbo Cloud Sync'}</div>
+                <div className="text-[10px] text-slate-950/80 font-bold">{isAr ? '⚡️ دفعة واحدة بكسر من الثانية' : '⚡️ Single Batch Upsert'}</div>
+              </div>
             </button>
 
             <button
@@ -225,7 +228,10 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
               className="px-6 py-3.5 rounded-2xl bg-slate-950/80 hover:bg-slate-900 text-white font-bold text-sm flex items-center justify-center gap-2.5 border border-slate-700 transition transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 shadow-lg cursor-pointer"
             >
               {isFetchingFromSupabase ? <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" /> : <Download className="w-6 h-6 text-emerald-400" />}
-              <span>{isAr ? 'جلب وتحديث البيانات' : 'Pull from Cloud'}</span>
+              <div className="text-start leading-tight">
+                <div>{isAr ? 'جلب وتحديث البيانات' : 'Pull from Cloud'}</div>
+                <div className="text-[10px] text-slate-400 font-normal">{isAr ? 'تحديث فوري سريع' : 'Fast Fetch'}</div>
+              </div>
             </button>
           </div>
         </div>

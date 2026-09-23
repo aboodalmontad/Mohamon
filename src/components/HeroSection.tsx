@@ -22,7 +22,6 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
   const firmName = getLocalized(settings, 'firmName', lang, settings.firmNameAr);
   const slogan = getLocalized(settings, 'slogan', lang, settings.sloganAr);
   const subSlogan = getLocalized(settings, 'subSlogan', lang, settings.subSloganAr);
-  const officialDomain = firmService.getFirmDisplayDomain();
 
   const heroBannerSrc = settings.customBannerUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920';
   const heroOpacity = typeof settings.heroBannerOpacity === 'number' ? settings.heroBannerOpacity / 100 : 0.18;
@@ -108,22 +107,12 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs font-semibold mt-3 shadow-sm flex-wrap justify-center">
                 <Award className="w-3.5 h-3.5 text-[#b38a38]" />
                 <span className="font-bold">{firmName}</span>
-                <span className="text-[#b38a38]/40">|</span>
-                <span className="font-mono text-[11px] font-bold dir-ltr text-[#6e5113] flex items-center gap-1">
-                  <Globe className="w-3 h-3 text-[#b38a38]" />
-                  <span>{officialDomain}</span>
-                </span>
               </div>
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs sm:text-sm font-semibold mb-6 shadow-sm backdrop-blur-md animate-fade-in flex-wrap justify-center">
               <Award className="w-4 h-4 text-[#b38a38]" />
               <span className="font-bold">{firmName}</span>
-              <span className="text-[#b38a38]/40">|</span>
-              <span className="font-mono text-xs font-bold dir-ltr text-[#6e5113] flex items-center gap-1">
-                <Globe className="w-3.5 h-3.5 text-[#b38a38]" />
-                <span>{officialDomain}</span>
-              </span>
             </div>
           )
         )}

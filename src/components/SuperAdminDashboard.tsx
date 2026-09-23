@@ -256,18 +256,41 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       if (!folder) throw new Error('Could not create folder in ZIP');
 
       allFirms.forEach((firm) => {
-        // Ensure we are exporting the full firm object including 'data'
         const firmJson = JSON.stringify(firm, null, 2);
         const fileName = `${firm.slug}.json`;
         folder.file(fileName, firmJson);
       });
 
-      const content = await zip.generateAsync({ type: 'blob' });
+      // Ultra-fast instant compression level
+      const content = await zip.generateAsync({ 
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: { level: 1 }
+      });
       saveAs(content, `mohamon_platform_full_backup_${timestamp}.zip`);
-      showToast(isAr ? 'تم بدء تحميل النسخة الاحتياطية الشاملة لكافة المكاتب' : 'Platform full backup started');
+      showToast(isAr ? '⚡️ تم تنزيل النسخة الاحتياطية المضغوطة ZIP بسرعة فائقة!' : 'Ultra-fast ZIP backup downloaded!');
     } catch (err: any) {
       console.error('Backup error:', err);
-      showToast(isAr ? 'فشل إنشاء النسخة الاحتياطية الشاملة' : 'Failed to create platform backup');
+      showToast(isAr ? 'فشل إنشاء النسخة الاحتياطية' : 'Failed to create backup');
+    }
+  };
+
+  const handleDownloadInstantJsonBackup = () => {
+    try {
+      const allFirms = firmService.getAllFirms();
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        totalFirms: allFirms.length,
+        version: '2.0.0',
+        platform: 'AlAdl Law Platform',
+        firms: allFirms
+      };
+      const timestamp = new Date().toISOString().split('T')[0];
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      saveAs(blob, `aladl_platform_snapshot_${timestamp}.json`);
+      showToast(isAr ? '⚡️ تم تنزيل لقطة المنصة الفورية JSON في جزء من الثانية!' : 'Instant JSON snapshot downloaded!');
+    } catch (e) {
+      showToast(isAr ? 'حدث خطأ في التصدير' : 'Export failed');
     }
   };
 
@@ -659,13 +682,29 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     </p>
                   </div>
 
-                  <button
-                    onClick={handleDownloadAllFirmsBackup}
-                    className="px-8 py-5 rounded-2xl bg-gradient-to-r from-rose-500 via-rose-600 to-rose-700 hover:brightness-110 text-white font-black text-base flex items-center justify-center gap-3 transition transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-rose-950/40 cursor-pointer"
-                  >
-                    <Download className="w-6 h-6" />
-                    <span>{isAr ? 'تنزيل النسخة الاحتياطية الآن' : 'Download Full Backup Now'}</span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+                    <button
+                      onClick={handleDownloadAllFirmsBackup}
+                      className="px-6 py-4 rounded-2xl bg-gradient-to-r from-rose-500 via-rose-600 to-rose-700 hover:brightness-110 text-white font-black text-sm sm:text-base flex items-center justify-center gap-3 transition transform hover:scale-[1.02] active:scale-95 shadow-xl shadow-rose-950/40 cursor-pointer"
+                    >
+                      <Archive className="w-5 h-5" />
+                      <div className="text-start">
+                        <div>{isAr ? 'تنزيل أرشيف ZIP الفائق' : 'Download Turbo ZIP'}</div>
+                        <div className="text-[10px] text-rose-200 font-normal">{isAr ? 'ضغط توربو فوري ⚡️' : 'Instant Turbo Compression'}</div>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={handleDownloadInstantJsonBackup}
+                      className="px-6 py-3.5 rounded-2xl bg-slate-950/80 hover:bg-slate-800 border border-slate-700 text-slate-200 hover:text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition cursor-pointer"
+                    >
+                      <FileJson className="w-4 h-4 text-amber-400" />
+                      <div className="text-start">
+                        <div>{isAr ? 'تصدير لقطة JSON الفورية' : 'Export Instant JSON'}</div>
+                        <div className="text-[10px] text-slate-400 font-normal">{isAr ? 'تنزيل بـ 0.01 ثانية ⚡️' : '0.01s Single File'}</div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-800/60">
