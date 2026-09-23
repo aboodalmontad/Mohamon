@@ -1,14 +1,13 @@
 import { LawFirm, LawFirmData, SiteSettings, FirmSubscription, SubscriptionPlanTier, SubscriptionStatus } from '../types';
-// import prepackagedFirms from '../../public/firms_data.json';
 import { 
-  // initialPartners, 
-  // initialPracticeAreas, 
-  // initialTestimonials, 
-  // initialBlogPosts, 
-  // initialCaseStudies, 
-  // initialContactMessages, 
+  initialPartners, 
+  initialPracticeAreas, 
+  initialTestimonials, 
+  initialBlogPosts, 
+  initialCaseStudies, 
+  initialContactMessages, 
   initialSiteSettings, 
-  // initialOffices 
+  initialOffices 
 } from '../data/initialData';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID, formatSupabaseError } from '../lib/supabase';
 
@@ -74,7 +73,47 @@ export function ensureFirmSubscription(firm: LawFirm): LawFirm {
 
 // Initial default seed firms for the multi-tenant SaaS platform
 export function createDefaultFirms(): LawFirm[] {
-  return [];
+  const adnanFirm: LawFirm = ensureFirmSubscription({
+    id: toValidUUID('firm-adnan-nahwi'),
+    slug: 'mktb-almhamy-adnan-nhwy',
+    nameAr: 'مكتب المحامي عدنان نحوي',
+    nameEn: 'Adnan Nahwi Law Firm',
+    nameTr: 'El-Nohbe & El-Adl Hukuk ve Uluslararası Tahkim Bürosu',
+    taglineAr: 'تحالف قانوني دولي يضم نخبة من كبار المحامين والمحكّمين المعتمدين لتقديم حلول استراتيجية متكاملة للشركات وكبار الشخصيات الاستثمارية.',
+    taglineEn: 'International Legal Alliance of Elite Attorneys & Arbitrators',
+    cityAr: 'الرياض',
+    cityEn: 'Riyadh',
+    phone: '0958333333',
+    email: 'avocat.nahwi@gmail.com',
+    licenseNumber: '104829',
+    adminPassword: 'admin',
+    isVerified: true,
+    featured: true,
+    isDefaultPublic: true,
+    themeColor: '#c5a869',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    data: {
+      settings: {
+        ...initialSiteSettings,
+        firmNameAr: 'مكتب المحامي عدنان نحوي',
+        firmNameEn: 'Adnan Nahwi Law Firm',
+        phone: '0958333333',
+        email: 'avocat.nahwi@gmail.com',
+        contactEmail: 'avocat.nahwi@gmail.com',
+        contactPhone: '0958333333',
+      },
+      partners: initialPartners,
+      practiceAreas: initialPracticeAreas,
+      testimonials: initialTestimonials,
+      blogPosts: initialBlogPosts,
+      caseStudies: initialCaseStudies,
+      offices: initialOffices,
+      messages: [],
+    },
+  });
+
+  return [adnanFirm];
 }
 
 class FirmService {
@@ -168,16 +207,42 @@ class FirmService {
 
     try {
       const client = getSupabase();
-      const { data, error } = await client
+      const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
+      
+      let { data, error } = await client
         .from(config.tableName || 'law_firms')
         .select('*')
-        .eq('slug', slug)
-        .single();
+        .eq('slug', cleanSlug)
+        .maybeSingle();
+
+      if (!data && cleanSlug !== slug) {
+        const retry = await client
+          .from(config.tableName || 'law_firms')
+          .select('*')
+          .eq('slug', slug)
+          .maybeSingle();
+        data = retry.data;
+        error = retry.error;
+      }
 
       if (error) throw error;
       if (data) {
         const row = data;
         const rawSub = row.subscription || row.data?.subscription;
+        const rawData = row.data || {};
+        
+        const safeData = {
+          ...rawData,
+          settings: rawData.settings || { ...initialSiteSettings, firmNameAr: row.name_ar },
+          partners: (Array.isArray(rawData.partners) && rawData.partners.length > 0) ? rawData.partners : initialPartners,
+          practiceAreas: (Array.isArray(rawData.practiceAreas) && rawData.practiceAreas.length > 0) ? rawData.practiceAreas : initialPracticeAreas,
+          testimonials: (Array.isArray(rawData.testimonials) && rawData.testimonials.length > 0) ? rawData.testimonials : initialTestimonials,
+          blogPosts: (Array.isArray(rawData.blogPosts) && rawData.blogPosts.length > 0) ? rawData.blogPosts : initialBlogPosts,
+          caseStudies: (Array.isArray(rawData.caseStudies) && rawData.caseStudies.length > 0) ? rawData.caseStudies : initialCaseStudies,
+          offices: (Array.isArray(rawData.offices) && rawData.offices.length > 0) ? rawData.offices : initialOffices,
+          messages: Array.isArray(rawData.messages) ? rawData.messages : [],
+        };
+
         const firm: LawFirm = ensureFirmSubscription({
           id: row.id,
           slug: row.slug,
@@ -199,12 +264,12 @@ class FirmService {
           themeColor: row.theme_color || '#c5a869',
           createdAt: row.created_at || new Date().toISOString(),
           updatedAt: row.updated_at || new Date().toISOString(),
-          data: row.data || {},
+          data: safeData,
           subscription: rawSub,
         });
 
         // Update in memory and cache
-        const idx = this.memoryFirms.findIndex(f => f.slug === slug);
+        const idx = this.memoryFirms.findIndex(f => f.slug === firm.slug || f.slug === slug);
         if (idx >= 0) {
           this.memoryFirms[idx] = firm;
         } else {
@@ -250,8 +315,9 @@ class FirmService {
       const res = await fetch('/api/firms');
       if (res.ok) {
         const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          fetchedFirms = json.data;
+        const rawList = json.firms || json.data;
+        if (json.success && Array.isArray(rawList) && rawList.length > 0) {
+          fetchedFirms = rawList;
         }
       }
     } catch (e) {
@@ -1125,82 +1191,11 @@ class FirmService {
 
   public getFirmBySlug(slug: string): LawFirm | null {
     if (!slug) return null;
-    const cleanSlug = slug.trim().toLowerCase();
+    const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
     const found = this.memoryFirms.find((f) => f.slug.toLowerCase() === cleanSlug);
     if (found) return { ...found };
 
-    // If requested slug is not in memory yet, return a graceful fallback firm so URL landing works immediately
-    return {
-      id: toValidUUID(`firm-${cleanSlug}`),
-      slug: cleanSlug,
-      nameAr: `مكتب المحاماة`,
-      nameEn: `Law Firm`,
-      cityAr: 'الرياض',
-      cityEn: 'Riyadh',
-      countryAr: 'المملكة العربية السعودية',
-      countryEn: 'Saudi Arabia',
-      phone: '+966 11 000 0000',
-      email: 'info@lawfirm.com',
-      licenseNumber: '',
-      adminPassword: '123456',
-      isVerified: true,
-      featured: false,
-      taglineAr: 'استشارات قانونية محترفة',
-      taglineEn: 'Professional Legal Consultancy',
-      themeColor: '#c5a869',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      data: {
-        settings: {
-          firmNameAr: `مكتب ${cleanSlug}`,
-          firmNameEn: `${cleanSlug} Law Firm`,
-          sloganAr: 'استشارات قانونية محترفة',
-          sloganEn: 'Professional Legal Consultancy',
-          subSloganAr: 'خدمات قانونية متكاملة',
-          subSloganEn: 'Comprehensive legal services',
-          aboutTextAr: 'نقدم استشارات قانونية متكاملة وموثوقة',
-          aboutTextEn: 'We provide comprehensive and reliable legal consultancy',
-          addressAr: 'الرياض، المملكة العربية السعودية',
-          addressEn: 'Riyadh, Saudi Arabia',
-          phone: '+966 11 000 0000',
-          emergencyPhone: '+966 50 000 0000',
-          email: 'info@lawfirm.com',
-          consultationEmail: 'consult@lawfirm.com',
-          workingHoursAr: 'الأحد - الخميس: 8:00 صباحاً - 5:00 مساءً',
-          workingHoursEn: 'Sun - Thu: 8:00 AM - 5:00 PM',
-          stats: {
-            yearsExperience: 15,
-            casesWon: 500,
-            activeClients: 1200,
-            successRate: 98,
-            recoveredMillionsUSD: 50
-          },
-          socialLinks: {
-            linkedin: 'https://linkedin.com',
-            twitter: 'https://twitter.com',
-            youtube: 'https://youtube.com'
-          }
-        },
-        partners: [],
-        practiceAreas: [],
-        caseStudies: [],
-        testimonials: [],
-        blogPosts: [],
-        offices: [],
-        messages: []
-      },
-      subscription: {
-        planTier: 'professional',
-        planNameAr: 'الباقة السنوية الاحترافية',
-        planNameEn: 'Professional Annual Plan',
-        status: 'active',
-        isSiteActive: true,
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 365*24*60*60*1000).toISOString(),
-        autoRenew: true,
-        paymentStatus: 'paid'
-      }
-    };
+    return null;
   }
 
   public getFirmById(id: string): LawFirm | null {

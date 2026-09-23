@@ -7,7 +7,7 @@ import {
   UserCheck, Briefcase, UserPlus, GraduationCap, Building2, Gavel, Landmark, Globe, Layers, Tag,
   Layout, Sliders, Type, AlignCenter, AlignRight, Maximize2, Move, MapPin,
   Languages, Wand2, ArrowRightLeft, Loader2, Target, Compass, Award, History, FileText,
-  Copy, Code2, HardDrive, Cloud, FileCode, Database, Link2, Server, HelpCircle
+  Copy, Code2, HardDrive, Cloud, FileCode, Database, Link2, Server, HelpCircle, RotateCcw
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { firmService } from '../services/firmService';
@@ -479,14 +479,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   // Handle Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const input = passwordInput.trim().toLowerCase();
     const rawInput = passwordInput.trim();
+    const input = rawInput.toLowerCase();
+    const normalizedInput = input.replace(/[٠-٩]/g, (d) => '0123456789'['٠١٢٣٤٥٦٧٨٩'.indexOf(d)]);
     const userInput = usernameInput.trim().toLowerCase();
     setIsLoggingIn(true);
     setAuthError(null);
 
     // Master Platform Owner Passwords (Super Admin)
     const masterPasswords = [
+      'ghost4mohamon',
       'aladladmin2025',
       'superadmin',
       'master2026',
@@ -495,7 +497,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
       'admin2025'
     ];
 
-    if (masterPasswords.includes(input)) {
+    if (masterPasswords.includes(input) || masterPasswords.includes(normalizedInput)) {
       if (onOpenSuperAdmin) {
         setIsAuthenticated(false);
         setPasswordInput('');
@@ -534,11 +536,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
         if (!target) return false;
         const firmPass = (target.adminPassword || '').trim();
         const settingsPass = (storageService.getSettings().adminPassword || '').trim();
-        const allowedCommonPass = ['admin', 'admin123', '123456', 'law2026', '12345678', 'password'];
+        const allowedCommonPass = ['admin', 'admin123', '123456', 'ghost4mohamon', 'law2026', '12345678', 'password'];
         
-        return (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input)) ||
-               (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input)) ||
-               allowedCommonPass.includes(input);
+        return (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input || firmPass.toLowerCase() === normalizedInput)) ||
+               (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input || settingsPass.toLowerCase() === normalizedInput)) ||
+               allowedCommonPass.includes(input) ||
+               allowedCommonPass.includes(normalizedInput);
       };
 
       let targetFirm = findTarget(allFirms);
@@ -776,6 +779,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
         if (toSave.cityEn) firm.cityEn = toSave.cityEn;
         if (toSave.firmNameAr) firm.nameAr = toSave.firmNameAr;
         if (toSave.firmNameEn) firm.nameEn = toSave.firmNameEn;
+        if (toSave.customLogoUrl) firm.logoUrl = toSave.customLogoUrl;
+        if (toSave.customBannerUrl !== undefined) firm.bannerUrl = toSave.customBannerUrl;
+        if (firm.data) {
+          firm.data.settings = toSave;
+        }
         await firmService.saveFirm(firm);
       }
     } catch (err) {
@@ -4476,7 +4484,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1">
-                        {isAr ? 'العبارة التعريفية الفرعية في الواجهة بالعربية' : 'Hero Sub-headline (Arabic)'}
+                        {isAr ? 'العبارة التعريفية الفرعية في الواجهة بالعربية (الشعار اللفظي الفرعي)' : 'Hero Sub-headline (Arabic)'}
                       </label>
                       <textarea
                         rows={2}
@@ -4484,6 +4492,222 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         onChange={(e) => setSettings({ ...settings, subSloganAr: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
                       />
+                    </div>
+
+                    {/* Slogan Sizing & Typography Controls Suite */}
+                    <div className="p-4 rounded-xl bg-slate-950 border border-[#c5a869]/40 space-y-4">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <Type className="w-4 h-4 text-[#e5cb8e]" />
+                          <h5 className="text-xs font-bold text-white">
+                            {isAr ? 'التحكم بحجم وخط الشعار اللفظي (الرئيسي والفرعي)' : 'Slogan & Tagline Sizing & Typography'}
+                          </h5>
+                        </div>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c5a869]/20 text-[#e5cb8e] font-bold">
+                          {isAr ? 'تحكم فوري' : 'Live Control'}
+                        </span>
+                      </div>
+
+                      {/* 1. Main Slogan Size */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-slate-200 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <Sliders className="w-3.5 h-3.5 text-[#c5a869]" />
+                            <span>{isAr ? 'حجم خط الشعار اللفظي الرئيسي:' : 'Main Slogan Font Size:'}</span>
+                          </span>
+                          <span className="text-[#c5a869] font-mono text-[10px] font-bold uppercase">
+                            {settings.sloganSizeHero || settings.firmNameSizeHero || 'lg'}
+                          </span>
+                        </label>
+                        <div className="grid grid-cols-6 gap-1">
+                          {[
+                            { id: 'xs', labelAr: 'صغير جداً', labelEn: 'XS' },
+                            { id: 'sm', labelAr: 'صغير', labelEn: 'SM' },
+                            { id: 'md', labelAr: 'متوسط', labelEn: 'MD' },
+                            { id: 'lg', labelAr: 'كبير', labelEn: 'LG' },
+                            { id: 'xl', labelAr: 'كبير جداً', labelEn: 'XL' },
+                            { id: '2xl', labelAr: 'ضخم', labelEn: '2XL' },
+                          ].map((sz) => {
+                            const isSelected = (settings.sloganSizeHero || settings.firmNameSizeHero || 'lg') === sz.id;
+                            return (
+                              <button
+                                key={sz.id}
+                                type="button"
+                                onClick={() => setSettings({ ...settings, sloganSizeHero: sz.id as any, firmNameSizeHero: sz.id as any })}
+                                className={`py-1.5 px-1 rounded-lg text-center text-[10px] font-semibold transition cursor-pointer border ${
+                                  isSelected
+                                    ? 'bg-[#c5a869] text-slate-950 border-[#e5cb8e] font-bold shadow-sm'
+                                    : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+                                }`}
+                              >
+                                {isAr ? sz.labelAr : sz.labelEn}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 2. Main Slogan Font Weight */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Type className="w-3.5 h-3.5 text-[#c5a869]" />
+                          <span>{isAr ? 'سماكة خط الشعار اللفظي الرئيسي:' : 'Main Slogan Font Weight:'}</span>
+                        </label>
+                        <div className="grid grid-cols-5 gap-1">
+                          {[
+                            { id: 'normal', labelAr: 'عادي', labelEn: 'Regular' },
+                            { id: 'medium', labelAr: 'متوسط', labelEn: 'Medium' },
+                            { id: 'semibold', labelAr: 'شبه عريض', labelEn: 'Semibold' },
+                            { id: 'bold', labelAr: 'عريض', labelEn: 'Bold' },
+                            { id: 'extrabold', labelAr: 'عريض جداً', labelEn: 'Extra Bold' },
+                          ].map((wt) => {
+                            const isSelected = (settings.sloganWeightHero || 'bold') === wt.id;
+                            return (
+                              <button
+                                key={wt.id}
+                                type="button"
+                                onClick={() => setSettings({ ...settings, sloganWeightHero: wt.id as any })}
+                                className={`py-1.5 px-1 rounded-lg text-center text-[10px] font-semibold transition cursor-pointer border ${
+                                  isSelected
+                                    ? 'bg-[#c5a869] text-slate-950 border-[#e5cb8e] font-bold shadow-sm'
+                                    : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+                                }`}
+                              >
+                                {isAr ? wt.labelAr : wt.labelEn}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 3. Sub-Slogan Font Size & Weight */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-slate-800/80">
+                        {/* Sub-Slogan Size */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+                            <Sliders className="w-3 h-3 text-[#c5a869]" />
+                            <span>{isAr ? 'حجم الشعار الفرعي / الوصف:' : 'Sub-Slogan Size:'}</span>
+                          </label>
+                          <div className="grid grid-cols-5 gap-1">
+                            {[
+                              { id: 'xs', labelAr: 'صغير', labelEn: 'XS' },
+                              { id: 'sm', labelAr: 'ناعم', labelEn: 'SM' },
+                              { id: 'md', labelAr: 'متوسط', labelEn: 'MD' },
+                              { id: 'lg', labelAr: 'كبير', labelEn: 'LG' },
+                              { id: 'xl', labelAr: 'بارز', labelEn: 'XL' },
+                            ].map((subSz) => {
+                              const isSelected = (settings.subSloganSizeHero || 'md') === subSz.id;
+                              return (
+                                <button
+                                  key={subSz.id}
+                                  type="button"
+                                  onClick={() => setSettings({ ...settings, subSloganSizeHero: subSz.id as any })}
+                                  className={`py-1.5 px-1 rounded-lg text-center text-[10px] font-semibold transition cursor-pointer border ${
+                                    isSelected
+                                      ? 'bg-[#c5a869] text-slate-950 border-[#e5cb8e] font-bold shadow-sm'
+                                      : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+                                  }`}
+                                >
+                                  {isAr ? subSz.labelAr : subSz.labelEn}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Sub-Slogan Weight */}
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] font-semibold text-slate-300 flex items-center gap-1">
+                            <Type className="w-3 h-3 text-[#c5a869]" />
+                            <span>{isAr ? 'سماكة خط الشعار الفرعي:' : 'Sub-Slogan Weight:'}</span>
+                          </label>
+                          <div className="grid grid-cols-4 gap-1">
+                            {[
+                              { id: 'light', labelAr: 'خفيف', labelEn: 'Light' },
+                              { id: 'normal', labelAr: 'عادي', labelEn: 'Regular' },
+                              { id: 'medium', labelAr: 'متوسط', labelEn: 'Medium' },
+                              { id: 'semibold', labelAr: 'شبه عريض', labelEn: 'Semibold' },
+                            ].map((subWt) => {
+                              const isSelected = (settings.subSloganWeightHero || 'normal') === subWt.id;
+                              return (
+                                <button
+                                  key={subWt.id}
+                                  type="button"
+                                  onClick={() => setSettings({ ...settings, subSloganWeightHero: subWt.id as any })}
+                                  className={`py-1.5 px-1 rounded-lg text-center text-[10px] font-semibold transition cursor-pointer border ${
+                                    isSelected
+                                      ? 'bg-[#c5a869] text-slate-950 border-[#e5cb8e] font-bold shadow-sm'
+                                      : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-600'
+                                  }`}
+                                >
+                                  {isAr ? subWt.labelAr : subWt.labelEn}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Live Slogan Preview Card */}
+                      <div className="p-3.5 rounded-lg bg-[#fbf8f2] border border-[#e6ddcc] text-[#181512] space-y-1 text-center">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-[#87641d] mb-1 border-b border-[#e6ddcc] pb-1">
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            <span>{isAr ? 'معاينة حية لتنسيق الشعار اللفظي' : 'Live Slogan Preview'}</span>
+                          </span>
+                          <span className="text-[9px] text-[#4b4334]">
+                            {isAr ? 'حسب الحجم والسماكة المحددة' : 'Active scale preview'}
+                          </span>
+                        </div>
+                        {(() => {
+                          const previewSizeMap: any = {
+                            xs: 'text-xs sm:text-sm',
+                            sm: 'text-sm sm:text-base',
+                            md: 'text-base sm:text-lg',
+                            lg: 'text-lg sm:text-xl',
+                            xl: 'text-xl sm:text-2xl',
+                            '2xl': 'text-2xl sm:text-3xl',
+                          };
+                          const previewWeightMap: any = {
+                            normal: 'font-normal',
+                            medium: 'font-medium',
+                            semibold: 'font-semibold',
+                            bold: 'font-bold',
+                            extrabold: 'font-extrabold',
+                          };
+                          const subPreviewSizeMap: any = {
+                            xs: 'text-[10px]',
+                            sm: 'text-[11px]',
+                            md: 'text-xs',
+                            lg: 'text-sm',
+                            xl: 'text-base',
+                          };
+                          const subPreviewWeightMap: any = {
+                            light: 'font-light',
+                            normal: 'font-normal',
+                            medium: 'font-medium',
+                            semibold: 'font-semibold',
+                          };
+
+                          const sloganSizeClass = previewSizeMap[settings.sloganSizeHero || settings.firmNameSizeHero || 'lg'] || 'text-lg';
+                          const sloganWeightClass = previewWeightMap[settings.sloganWeightHero || 'bold'] || 'font-bold';
+                          const subSloganSizeClass = subPreviewSizeMap[settings.subSloganSizeHero || 'md'] || 'text-xs';
+                          const subSloganWeightClass = subPreviewWeightMap[settings.subSloganWeightHero || 'normal'] || 'font-normal';
+
+                          return (
+                            <div className="space-y-1.5 py-1">
+                              <h4 className={`${sloganSizeClass} ${sloganWeightClass} text-[#181512] font-serif-title leading-snug`}>
+                                {isAr ? (settings.sloganAr || 'حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية') : (settings.sloganEn || 'Safeguarding Your Rights, Pioneering Your Legal Success')}
+                              </h4>
+                              {settings.subSloganAr && (
+                                <p className={`${subSloganSizeClass} ${subSloganWeightClass} text-[#4b4334] max-w-xl mx-auto leading-relaxed`}>
+                                  {isAr ? settings.subSloganAr : (settings.subSloganEn || '')}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </div>
 
                     {/* Logo Customizer */}
@@ -4832,21 +5056,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         <div>
                           <label className="block text-xs font-semibold text-slate-200 mb-1.5 flex items-center gap-1.5">
                             <Sliders className="w-3.5 h-3.5 text-[#c5a869]" />
-                            {isAr ? 'مقياس عنوان الواجهة الرئيسية ومحاذاته وأسطره' : 'Hero Headline Size, Alignment & Lines'}
+                            {isAr ? 'مقياس وحجم الشعار اللفظي في الواجهة الرئيسية ومحاذاته' : 'Hero Slogan Size & Alignment'}
                           </label>
-                          <div className="grid grid-cols-4 gap-1.5 mb-2">
+                          <div className="grid grid-cols-6 gap-1 mb-2">
                             {[
-                              { id: 'sm', labelAr: 'متوسط', labelEn: 'SM' },
-                              { id: 'md', labelAr: 'كبير', labelEn: 'MD' },
-                              { id: 'lg', labelAr: 'كبير جداً', labelEn: 'LG' },
-                              { id: 'xl', labelAr: 'ضخم', labelEn: 'XL' },
+                              { id: 'xs', labelAr: 'صغير جداً', labelEn: 'XS' },
+                              { id: 'sm', labelAr: 'صغير', labelEn: 'SM' },
+                              { id: 'md', labelAr: 'متوسط', labelEn: 'MD' },
+                              { id: 'lg', labelAr: 'كبير', labelEn: 'LG' },
+                              { id: 'xl', labelAr: 'كبير جداً', labelEn: 'XL' },
+                              { id: '2xl', labelAr: 'ضخم', labelEn: '2XL' },
                             ].map((sz) => (
                               <button
                                 key={sz.id}
                                 type="button"
-                                onClick={() => setSettings({ ...settings, firmNameSizeHero: sz.id as any })}
-                                className={`py-2 px-1 rounded-xl text-center text-xs font-semibold transition cursor-pointer border ${
-                                  (settings.firmNameSizeHero || 'lg') === sz.id
+                                onClick={() => setSettings({ ...settings, firmNameSizeHero: sz.id as any, sloganSizeHero: sz.id as any })}
+                                className={`py-1.5 px-1 rounded-xl text-center text-[10px] font-semibold transition cursor-pointer border ${
+                                  (settings.sloganSizeHero || settings.firmNameSizeHero || 'lg') === sz.id
                                     ? 'bg-[#c5a869] text-black border-[#e5cb8e] shadow-md font-bold'
                                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-600'
                                 }`}
@@ -4927,6 +5153,304 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             />
                           </div>
                         )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hero Banner Image & Visual Atmosphere Suite */}
+                  <div className="p-5 rounded-2xl bg-slate-900/90 border border-[#c5a869]/40 space-y-6">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="w-5 h-5 text-[#e5cb8e]" />
+                        <div>
+                          <h4 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                            <span>{isAr ? 'بنر وخلفية الواجهة الرئيسية للمكتب' : 'Firm Hero Banner & Atmosphere'}</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                              {isAr ? 'رفع مباشر من الجهاز 🚀' : 'Device Upload 🚀'}
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {isAr ? 'حمّل صورة البنر الخاص بمكتبك من جهازك ليتم حفظها وتظهر كخلفية رسمية لجميع زوار المكتب' : 'Upload custom banner image from your device to appear for all firm visitors'}
+                          </p>
+                        </div>
+                      </div>
+                      {settings.customBannerUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setSettings({ ...settings, customBannerUrl: '' })}
+                          className="text-[11px] text-rose-400 hover:text-rose-300 transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>{isAr ? 'استعادة البنر الافتراضي' : 'Reset to Default'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Image Uploader Component with Banner Aspect Ratio */}
+                    <div>
+                      <ImageUploader
+                        value={settings.customBannerUrl || ''}
+                        onChange={(img) => setSettings({ ...settings, customBannerUrl: img })}
+                        label={isAr ? "تحميل صورة البنر من جهازك (Drag & Drop أو اختيار ملف)" : "Upload Banner from Device"}
+                        labelEn="Upload Banner Image from Device"
+                        lang={lang}
+                        aspectRatio="banner"
+                        maxWidth={1920}
+                        maxHeight={1080}
+                        quality={0.8}
+                        helpText={isAr ? "يتم ضغط الصورة تلقائياً لضمان أعلى جودة بصرية مع سرعة تحميل فائقة لكافة الزوار." : "Automatically optimized for fast loading and high visual fidelity across all devices."}
+                      />
+                    </div>
+
+                    {/* Curated Legal Presets */}
+                    <div className="space-y-2 pt-2 border-t border-slate-800/80">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#c5a869]" />
+                          <span>{isAr ? 'أو اختر من نماذج البنرات القانونية الراقية الجاهزة:' : 'Or Select a Curated Legal Preset Banner:'}</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {isAr ? 'دقة فائقة 4K' : 'Ultra-HD'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                        {[
+                          {
+                            id: 'courthouse_pillars',
+                            titleAr: 'أعمدة المحكمة وميزان العدالة',
+                            titleEn: 'Courthouse Columns',
+                            url: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920',
+                          },
+                          {
+                            id: 'supreme_court',
+                            titleAr: 'قصر العدل والمحكمة العليا',
+                            titleEn: 'Supreme Court Pillars',
+                            url: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=1920',
+                          },
+                          {
+                            id: 'modern_skylight',
+                            titleAr: 'برج أعمال قانوني شاهق',
+                            titleEn: 'Modern Corporate Tower',
+                            url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1920',
+                          },
+                          {
+                            id: 'law_library',
+                            titleAr: 'مكتبة السوابق الفقهية',
+                            titleEn: 'Law Library & Tomes',
+                            url: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=1920',
+                          },
+                          {
+                            id: 'boardroom_executive',
+                            titleAr: 'قاعة الشركاء الفاخرة',
+                            titleEn: 'Executive Boardroom',
+                            url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1920',
+                          },
+                          {
+                            id: 'marble_gavel',
+                            titleAr: 'مطرقة القضاء والميزان الذهبي',
+                            titleEn: 'Marble Gavel & Scale',
+                            url: 'https://images.unsplash.com/photo-1589994965851-a8f479c573a9?auto=format&fit=crop&q=80&w=1920',
+                          },
+                        ].map((preset) => {
+                          const isSelected = settings.customBannerUrl === preset.url || (!settings.customBannerUrl && preset.id === 'courthouse_pillars');
+                          return (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => setSettings({ ...settings, customBannerUrl: preset.url })}
+                              className={`relative rounded-xl overflow-hidden border-2 transition p-1 text-right flex flex-col gap-1 cursor-pointer group ${
+                                isSelected
+                                  ? 'border-[#c5a869] bg-[#c5a869]/15 shadow-lg ring-2 ring-[#c5a869]/40'
+                                  : 'border-slate-800 bg-slate-950/60 hover:border-slate-600'
+                              }`}
+                            >
+                              <div className="relative w-full h-16 rounded-lg overflow-hidden bg-slate-900">
+                                <img
+                                  src={preset.url}
+                                  alt={preset.titleAr}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                />
+                                {isSelected && (
+                                  <div className="absolute inset-0 bg-[#c5a869]/35 flex items-center justify-center">
+                                    <div className="w-6 h-6 rounded-full bg-[#c5a869] text-slate-950 flex items-center justify-center font-bold shadow">
+                                      <Check className="w-4 h-4" />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-200 truncate px-1">
+                                {isAr ? preset.titleAr : preset.titleEn}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Banner Atmosphere & Styling Controls */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-800/80">
+                      
+                      {/* 1. Opacity / Transparency */}
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                            <Eye className="w-3.5 h-3.5 text-[#c5a869]" />
+                            <span>{isAr ? 'درجة وضوح البنر (الشفافية)' : 'Banner Opacity'}</span>
+                          </label>
+                          <span className="text-xs font-mono font-bold text-[#c5a869]">
+                            {settings.heroBannerOpacity ?? 18}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="5"
+                          max="80"
+                          step="1"
+                          value={settings.heroBannerOpacity ?? 18}
+                          onChange={(e) => setSettings({ ...settings, heroBannerOpacity: parseInt(e.target.value) || 18 })}
+                          className="w-full accent-[#c5a869] cursor-pointer"
+                        />
+                        <div className="flex justify-between gap-1">
+                          {[
+                            { val: 10, label: '10%' },
+                            { val: 18, label: isAr ? '18% (مثالي)' : '18%' },
+                            { val: 30, label: '30%' },
+                            { val: 50, label: '50%' },
+                          ].map((op) => (
+                            <button
+                              key={op.val}
+                              type="button"
+                              onClick={() => setSettings({ ...settings, heroBannerOpacity: op.val })}
+                              className={`px-2 py-1 rounded-lg text-[10px] font-medium transition cursor-pointer border ${
+                                (settings.heroBannerOpacity ?? 18) === op.val
+                                  ? 'bg-[#c5a869] text-slate-950 font-bold border-[#c5a869]'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                              }`}
+                            >
+                              {op.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 2. Overlay Color Tint */}
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                        <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-[#c5a869]" />
+                          <span>{isAr ? 'تدرج وطبقة الإضاءة' : 'Overlay Tint'}</span>
+                        </label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { id: 'warm', labelAr: 'شامبانيا دافئ', labelEn: 'Warm' },
+                            { id: 'dark', labelAr: 'ليلي داكن', labelEn: 'Dark' },
+                            { id: 'none', labelAr: 'شفاف نقي', labelEn: 'Clean' },
+                          ].map((tint) => (
+                            <button
+                              key={tint.id}
+                              type="button"
+                              onClick={() => setSettings({ ...settings, heroBannerOverlayColor: tint.id as any })}
+                              className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition cursor-pointer text-center border ${
+                                (settings.heroBannerOverlayColor || 'warm') === tint.id
+                                  ? 'bg-[#c5a869] text-slate-950 font-bold border-[#c5a869] shadow-sm'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                              }`}
+                            >
+                              {isAr ? tint.labelAr : tint.labelEn}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-slate-400">
+                          {isAr ? 'تضمن وضوح النصوص والقراءة المريحة للموكلين.' : 'Ensures optimal text contrast for visitors.'}
+                        </p>
+                      </div>
+
+                      {/* 3. Blur Effect */}
+                      <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                        <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                          <Layers className="w-3.5 h-3.5 text-[#c5a869]" />
+                          <span>{isAr ? 'تأثير الضبابية (Blur)' : 'Background Blur'}</span>
+                        </label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { id: 'none', labelAr: 'بدون (حاد)', labelEn: 'None' },
+                            { id: 'sm', labelAr: 'خفيفة', labelEn: 'Soft' },
+                            { id: 'md', labelAr: 'متوسطة', labelEn: 'Medium' },
+                          ].map((bl) => (
+                            <button
+                              key={bl.id}
+                              type="button"
+                              onClick={() => setSettings({ ...settings, heroBannerBlur: bl.id as any })}
+                              className={`py-2 px-1 rounded-lg text-[10px] font-semibold transition cursor-pointer text-center border ${
+                                (settings.heroBannerBlur || 'none') === bl.id
+                                  ? 'bg-[#c5a869] text-slate-950 font-bold border-[#c5a869] shadow-sm'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                              }`}
+                            >
+                              {isAr ? bl.labelAr : bl.labelEn}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-slate-400">
+                          {isAr ? 'يمنح خلفية الواجهة عمقاً سينمائياً راقياً.' : 'Adds subtle depth to the hero background.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Live Realistic Mini-Hero Preview */}
+                    <div className="p-4 rounded-xl bg-slate-950 border border-[#c5a869]/30 space-y-2">
+                      <div className="flex items-center justify-between text-[11px] font-bold text-[#c5a869]">
+                        <span className="flex items-center gap-1.5">
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>{isAr ? 'معاينة حية فورية للواجهة بالبنر المختار' : 'Live Interactive Hero Banner Preview'}</span>
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {isAr ? 'كما ستظهر تماماً لكافة زوار مكتبك' : 'Exact visitor visual appearance'}
+                        </span>
+                      </div>
+
+                      <div className="relative w-full h-44 rounded-xl overflow-hidden bg-gradient-to-b from-[#fbf8f2] via-[#f7f2e7] to-[#f3ebd9] border border-[#e6ddcc] flex flex-col items-center justify-center text-center p-4">
+                        {/* Background Banner Image with Settings */}
+                        <div
+                          className="absolute inset-0 z-0 transition-opacity duration-500"
+                          style={{ opacity: (settings.heroBannerOpacity ?? 18) / 100 }}
+                        >
+                          <img
+                            src={settings.customBannerUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920'}
+                            alt="Banner Preview"
+                            className={`w-full h-full object-cover ${
+                              settings.heroBannerBlur === 'md' ? 'blur-md' : settings.heroBannerBlur === 'sm' ? 'blur-sm' : ''
+                            }`}
+                          />
+                          {settings.heroBannerOverlayColor === 'dark' ? (
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#12100e] via-[#1a1612]/75 to-transparent" />
+                          ) : settings.heroBannerOverlayColor === 'none' ? (
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f2] via-transparent to-transparent" />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#fbf8f2] via-[#fbf8f2]/80 to-transparent" />
+                          )}
+                        </div>
+
+                        {/* Foreground Preview Elements */}
+                        <div className="relative z-10 flex flex-col items-center max-w-lg">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#c5a869] to-[#8d6f2c] p-0.5 shadow-sm mb-2">
+                            <div className="w-full h-full bg-[#fbf8f2] rounded-[6px] flex items-center justify-center">
+                              {settings.customLogoUrl ? (
+                                <img src={settings.customLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                              ) : (
+                                <Scale className="w-4 h-4 text-[#87641d]" />
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-sm font-bold text-[#181512] font-serif-title leading-tight line-clamp-1">
+                            {isAr ? (settings.firmNameAr || 'اسم مكتب المحاماة') : (settings.firmNameEn || 'Law Firm Name')}
+                          </span>
+                          <span className="text-[11px] text-[#87641d] font-semibold mt-0.5 line-clamp-1">
+                            {isAr ? (settings.sloganAr || 'حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية') : (settings.sloganEn || 'Safeguarding Your Rights, Pioneering Your Legal Success')}
+                          </span>
+                          <div className="mt-2.5 px-3 py-1 rounded-lg bg-[#c5a869] text-slate-950 text-[10px] font-bold shadow">
+                            {isAr ? 'طلب استشارة قانونية فورية' : 'Request Consultation'}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
