@@ -3,7 +3,6 @@ import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
-import { firmService } from '../services/firmService';
 
 interface NavbarProps {
   settings: SiteSettings;
@@ -281,8 +280,8 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                 })()}
 
                 {settings.showNavbarSubtitle !== false && (
-                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                    <span className="font-navbar-brand text-[10px] text-[#87641d]/80 uppercase tracking-wider font-bold">
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="font-navbar-brand text-[10px] sm:text-[11px] text-[#87641d]/80 uppercase tracking-wider font-semibold">
                       {currentSubtitle}
                     </span>
                   </div>

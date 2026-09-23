@@ -157,6 +157,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [editingOffice, setEditingOffice] = useState<OfficeLocation | null>(null);
 
+  // Firm Data Saving State for Manager
+  const [isSavingFirmData, setIsSavingFirmData] = useState(false);
+  const [saveSuccessTick, setSaveSuccessTick] = useState(false);
+
   // Auto Translation & Multi-Language Sync States
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -460,10 +464,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
   };
 
-  const handleSaveAboutSettings = (e?: React.FormEvent) => {
+  const handleSaveAboutSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    storageService.saveSettings(settings);
-    showToast(isAr ? '💾 تم حفظ وتحديث نصوص «عن المكتب والمسيرة» فوراً على الموقع!' : 'About & Journey content saved successfully!');
+    setIsSavingFirmData(true);
+    try {
+      storageService.saveSettings(settings);
+      const activeSlug = firmService.getActiveFirmSlug();
+      const firm = firmService.getFirmBySlug(activeSlug);
+      if (firm) {
+        if (firm.data) {
+          firm.data.settings = settings;
+          firm.data.savedAt = new Date().toISOString();
+        }
+        await firmService.saveFirm(firm);
+      }
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 2500);
+      showToast(isAr ? '💾 تم حفظ وتحديث نصوص «عن المكتب والمسيرة» فوراً على الموقع!' : 'About & Journey content saved successfully!');
+    } catch (err) {
+      console.warn('Error saving about settings:', err);
+      showToast(isAr ? 'تم حفظ التعديلات محلياً' : 'Saved locally');
+    } finally {
+      setIsSavingFirmData(false);
+    }
   };
 
   // Handle Login
@@ -747,16 +770,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   };
 
   // ---------------- SETTINGS SAVE ----------------
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    let toSave = { ...settings };
-    if (autoSyncEnabled) {
-      toSave = await autoTranslateSettings(toSave);
-      setSettings(toSave);
-    }
-    storageService.saveSettings(toSave);
-
+  const handleSaveSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSavingFirmData(true);
     try {
+      let toSave = { ...settings };
+      if (autoSyncEnabled) {
+        toSave = await autoTranslateSettings(toSave);
+        setSettings(toSave);
+      }
+      storageService.saveSettings(toSave);
+
       const activeSlug = firmService.getActiveFirmSlug();
       const firm = firmService.getFirmBySlug(activeSlug);
       if (firm) {
@@ -768,16 +792,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
         if (toSave.firmNameEn) firm.nameEn = toSave.firmNameEn;
         if (toSave.customLogoUrl) firm.logoUrl = toSave.customLogoUrl;
         if (toSave.customBannerUrl !== undefined) firm.bannerUrl = toSave.customBannerUrl;
+        if (toSave.sloganAr) firm.taglineAr = toSave.sloganAr;
+        if (toSave.sloganEn) firm.taglineEn = toSave.sloganEn;
+        if (toSave.phone) firm.phone = toSave.phone;
+        if (toSave.email) firm.email = toSave.email;
+        if (toSave.adminPassword) firm.adminPassword = toSave.adminPassword;
         if (firm.data) {
           firm.data.settings = toSave;
+          firm.data.savedAt = new Date().toISOString();
         }
         await firmService.saveFirm(firm);
       }
+
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3000);
+      showToast(isAr ? 'تم حفظ وتطبيق كافة تعديلات بيانات المكتب بنجاح ✅' : 'Firm data & settings saved successfully ✅');
     } catch (err) {
       console.warn('Firm entity update sync note:', err);
+      showToast(isAr ? 'تم حفظ التعديلات محلياً بنجاح' : 'Settings saved locally');
+    } finally {
+      setIsSavingFirmData(false);
     }
-
-    showToast(isAr ? 'تم حفظ وتطبيق كافة إعدادات الموقع والدولة والمدينة بنجاح' : 'Site settings, country and city updated in all languages');
   };
 
   // ---------------- BACKUP EXPORT & IMPORT & SUPABASE PERSISTENCE ----------------
@@ -884,6 +919,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => handleSaveSettings()}
+                disabled={isSavingFirmData}
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-[#d4af37] to-[#c5a869] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-amber-950/40 transition cursor-pointer disabled:opacity-50"
+                title={isAr ? 'حفظ كافة تعديلات وبيانات المكتب وتطبيقها فوراً على الموقع للزوار' : 'Save all firm changes and update live website'}
+              >
+                {isSavingFirmData ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                  </>
+                ) : saveSuccessTick ? (
+                  <>
+                    <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                    <span>{isAr ? 'تم حفظ التعديلات!' : 'Changes Saved!'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 text-slate-950" />
+                    <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                  </>
+                )}
+              </button>
+            )}
+
             {isAuthenticated && (
               <button
                 type="button"
@@ -1296,7 +1358,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 }`}
               >
                 <Settings className="w-4 h-4" />
-                <span>{isAr ? 'الهوية والإحصائيات' : 'Identity & Stats'}</span>
+                <span>{isAr ? 'بيانات المكتب والهوية' : 'Firm Data & Identity'}</span>
               </button>
 
               {/* Custom Domain Management */}
@@ -1560,10 +1622,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       <button
                         type="button"
                         onClick={() => handleSaveAboutSettings()}
-                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#c5a869] via-[#d4af37] to-[#aa8022] text-slate-950 font-bold text-xs flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg"
+                        disabled={isSavingFirmData}
+                        className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg disabled:opacity-50"
                       >
-                        <Save className="w-4 h-4 text-slate-950" />
-                        <span>{isAr ? 'حفظ وتطبيق التغييرات' : 'Save Changes'}</span>
+                        {isSavingFirmData ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                            <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                          </>
+                        ) : saveSuccessTick ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                            <span>{isAr ? 'تم الحفظ!' : 'Saved!'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 text-slate-950" />
+                            <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -2035,6 +2112,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Sticky Floating Save Bar for About Journey Content */}
+                  <div className="sticky bottom-3 z-30 flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-md border-2 border-[#c5a869] shadow-2xl shadow-black/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869] flex-shrink-0">
+                        <Save className="w-5 h-5 text-[#c5a869]" />
+                      </div>
+                      <div>
+                        <span className="block text-xs sm:text-sm font-bold text-white">
+                          {isAr ? 'حفظ نصوص وبيانات المسيرة والرؤية' : 'Save Journey & Vision Content'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 hidden sm:inline">
+                          {isAr ? 'اضغط لحفظ التعديلات وتطبيقها فوراً على موقع مكتبك' : 'Click to save modifications live to your firm website'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveAboutSettings()}
+                      disabled={isSavingFirmData}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingFirmData ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                          <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                        </>
+                      ) : saveSuccessTick ? (
+                        <>
+                          <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                          <span>{isAr ? 'تم حفظ التعديلات!' : 'Changes Saved!'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 text-slate-950" />
+                          <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
@@ -4237,16 +4354,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 </div>
               )}
 
-              {/* TAB 8: IDENTITY & SITE SETTINGS */}
+              {/* TAB 8: FIRM DATA, IDENTITY & SITE SETTINGS */}
               {activeTab === 'settings' && (
                 <form onSubmit={handleSaveSettings} className="space-y-6 max-w-4xl">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <h3 className="text-xl font-bold font-serif-title text-white">
-                        {isAr ? 'تسمية المكتب، الهوية الرسمية، والإحصائيات' : 'Law Firm Name, Official Branding & Statistics'}
+                        {isAr ? 'بيانات المكتب، الهوية الرسمية، والإحصائيات' : 'Firm Information, Identity & Statistics'}
                       </h3>
                       <p className="text-xs text-slate-400">
-                        {isAr ? 'خصص اسم مكتبك القانوني، الشعار، الرمز الرسمي، والنبذة التعريفية' : 'Customize your law firm name, logos, slogans, and metadata'}
+                        {isAr ? 'تعديل اسم المكتب، الشعار، بيانات التواصل، الدولة والمدينة، والإعدادات العامة' : 'Customize your law firm name, logos, contacts, slogans, and metadata'}
                       </p>
                     </div>
 
@@ -4254,20 +4371,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       <button
                         type="button"
                         onClick={handleTranslateCurrentSettings}
-                        disabled={isTranslating}
+                        disabled={isTranslating || isSavingFirmData}
                         className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-[#e5cb8e] border border-amber-500/50 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shadow-sm"
                         title={isAr ? 'ترجمة فورية وتلقائية لكافة نصوص وإعدادات وهوية الموقع' : 'Auto-translate all settings text'}
                       >
                         {isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 text-[#c5a869]" />}
-                        <span>{isAr ? '✨ ترجمة إعدادات الموقع (EN & TR)' : '✨ Translate Settings'}</span>
+                        <span>{isAr ? '✨ ترجمة الإعدادات' : '✨ Translate Settings'}</span>
                       </button>
 
                       <button
                         type="submit"
-                        className="px-5 py-1.5 rounded-xl bg-gradient-to-r from-[#c5a869] to-[#d4af37] text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition cursor-pointer shadow-md"
+                        disabled={isSavingFirmData}
+                        className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg disabled:opacity-50"
                       >
-                        <Save className="w-4 h-4" />
-                        <span>{isAr ? 'حفظ وتطبيق' : 'Save'}</span>
+                        {isSavingFirmData ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                            <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                          </>
+                        ) : saveSuccessTick ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                            <span>{isAr ? 'تم الحفظ!' : 'Saved!'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 text-slate-950" />
+                            <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -6382,12 +6514,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
+                  {/* Sticky Floating Save Bar for Firm Manager */}
+                  <div className="sticky bottom-3 z-30 flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-md border-2 border-[#c5a869] shadow-2xl shadow-black/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869] flex-shrink-0">
+                        <Save className="w-5 h-5 text-[#c5a869]" />
+                      </div>
+                      <div>
+                        <span className="block text-xs sm:text-sm font-bold text-white">
+                          {isAr ? 'حفظ تعديلات بيانات المكتب' : 'Save Firm Data Modifications'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 hidden sm:inline">
+                          {isAr ? 'احفظ التعديلات لتطبيقها فوراً على موقع مكتبك للزوار والعملاء' : 'Save changes to update live on your website'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSavingFirmData}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingFirmData ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                          <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                        </>
+                      ) : saveSuccessTick ? (
+                        <>
+                          <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                          <span>{isAr ? 'تم حفظ التعديلات!' : 'Changes Saved!'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 text-slate-950" />
+                          <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
                   <button
                     type="submit"
-                    className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-bold text-sm hover:brightness-110 transition flex items-center gap-2 cursor-pointer shadow-xl"
+                    disabled={isSavingFirmData}
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-sm hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer shadow-xl disabled:opacity-50"
                   >
-                    <Save className="w-4 h-4 text-slate-950" />
-                    <span>{isAr ? 'حفظ وتطبيق كافة التغييرات على الموقع فوراً' : 'Apply & Save All Changes'}</span>
+                    {isSavingFirmData ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                        <span>{isAr ? 'جاري حفظ بيانات وتعديلات المكتب...' : 'Saving Firm Data...'}</span>
+                      </>
+                    ) : saveSuccessTick ? (
+                      <>
+                        <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                        <span>{isAr ? 'تم حفظ التعديلات بنجاح!' : 'Changes Saved Successfully!'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 text-slate-950" />
+                        <span>{isAr ? 'حفظ وتطبيق كافة تعديلات بيانات المكتب' : 'Save & Publish All Firm Changes'}</span>
+                      </>
+                    )}
                   </button>
                 </form>
               )}

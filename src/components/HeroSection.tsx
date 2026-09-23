@@ -1,8 +1,7 @@
 import React from 'react';
-import { ShieldCheck, Scale, Award, ArrowLeft, ArrowRight, Building, Landmark, ChevronDown, Globe } from 'lucide-react';
+import { ShieldCheck, Scale, Award, ArrowLeft, ArrowRight, Building, Landmark, ChevronDown } from 'lucide-react';
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
-import { firmService } from '../services/firmService';
 
 interface HeroSectionProps {
   settings: SiteSettings;
@@ -104,13 +103,13 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
                   </div>
                 );
               })()}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs font-semibold mt-3 shadow-sm flex-wrap justify-center">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs font-semibold mt-3 shadow-sm">
                 <Award className="w-3.5 h-3.5 text-[#b38a38]" />
                 <span className="font-bold">{firmName}</span>
               </div>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs sm:text-sm font-semibold mb-6 shadow-sm backdrop-blur-md animate-fade-in flex-wrap justify-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs sm:text-sm font-semibold mb-6 shadow-sm backdrop-blur-md animate-fade-in">
               <Award className="w-4 h-4 text-[#b38a38]" />
               <span className="font-bold">{firmName}</span>
             </div>

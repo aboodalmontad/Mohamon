@@ -1,9 +1,8 @@
 import React from 'react';
-import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck, Globe } from 'lucide-react';
+import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck } from 'lucide-react';
 import { SiteSettings, PracticeArea, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
-import { firmService } from '../services/firmService';
 
 interface FooterProps {
   settings: SiteSettings;
@@ -122,9 +121,11 @@ export const Footer: React.FC<FooterProps> = React.memo(({
                 <span className="font-firm-name font-bold text-base text-white block">
                   {firmName}
                 </span>
-                <span className="text-[10px] text-[#c5a869] font-medium font-navbar-brand block">
-                  {slogan}
-                </span>
+                {slogan && (
+                  <span className="text-[11px] text-[#c5a869] font-medium font-navbar-brand block">
+                    {slogan}
+                  </span>
+                )}
               </div>
             </div>
 
