@@ -87,98 +87,105 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   const currentLangObj = languagesList.find(l => l.code === lang) || languagesList[0];
 
   return (
-    <>
-      {/* Top emergency announcement bar */}
-      <div className="bg-[#ede4d4] border-b border-[#c5a869]/30 text-xs text-[#4b4334] py-1.5 px-4 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-[#87641d] font-medium">
-              <Shield className="w-3.5 h-3.5 text-[#b38a38]" />
-              <span>{t.topAccredited}</span>
-            </span>
-            <span className="hidden sm:inline text-[#c8bcab]">|</span>
-            <span className="hidden sm:flex items-center gap-1.5 text-[#5c5343]">
-              <Phone className="w-3 h-3 text-[#b38a38]" />
-              <span>{t.topHotline}</span>
-              <a href={`tel:${settings.emergencyPhone}`} className="text-[#181512] hover:text-[#87641d] font-bold font-mono ltr">
-                {settings.emergencyPhone}
-              </a>
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Language Selector Dropdown (AR / EN / TR) */}
-            <div className="relative" ref={langDropdownRef}>
-              <button
-                type="button"
-                onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/90 hover:bg-white text-[#4b4334] hover:text-[#87641d] border border-[#d8ceb8] shadow-xs text-xs font-bold transition cursor-pointer"
-                title="Select Language / اختيار اللغة / Dil Seçimi"
-                aria-expanded={langDropdownOpen}
-              >
-                <Globe className="w-3.5 h-3.5 text-[#87641d]" />
-                <span className="text-sm leading-none">{currentLangObj.flag}</span>
-                <span>{currentLangObj.nativeName}</span>
-                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${langDropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {langDropdownOpen && (
-                <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-1.5 w-36 bg-white rounded-xl shadow-xl border border-[#c5a869]/30 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#87641d] border-b border-[#f0eae0] mb-1">
-                    {lang === 'ar' ? 'اختر اللغة' : lang === 'tr' ? 'Dil Seçin' : 'Select Language'}
-                  </div>
-                  {languagesList.map((item) => (
-                    <button
-                      key={item.code}
-                      onClick={() => handleSelectLanguage(item.code)}
-                      className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-left rtl:text-right transition cursor-pointer hover:bg-[#f7f2e8] ${
-                        lang === item.code ? 'font-bold text-[#87641d] bg-[#b38a38]/10' : 'text-[#3b352b]'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-sm">{item.flag}</span>
-                        <span>{item.label}</span>
-                      </span>
-                      {lang === item.code && <Check className="w-3.5 h-3.5 text-[#87641d]" />}
-                    </button>
-                  ))}
-                </div>
+    /* Pinned Top Fixed Container */
+    <div className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        {/* Top pinned bar with Language, App Update/Refresh, and Admin Dashboard */}
+        <div className="bg-[#ede4d4]/95 backdrop-blur-md border-b border-[#c5a869]/30 text-xs text-[#4b4334] py-1.5 px-3 sm:px-4 shadow-xs">
+          <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="flex items-center gap-1 text-[#87641d] font-semibold text-[11px] sm:text-xs">
+                <Shield className="w-3.5 h-3.5 text-[#b38a38]" />
+                <span className="hidden xs:inline">{t.topAccredited}</span>
+                <span className="xs:hidden">{lang === 'ar' ? 'معتمد' : 'Verified'}</span>
+              </span>
+              {settings.emergencyPhone && (
+                <>
+                  <span className="hidden md:inline text-[#c8bcab]">|</span>
+                  <span className="hidden md:flex items-center gap-1 text-[#5c5343]">
+                    <Phone className="w-3 h-3 text-[#b38a38]" />
+                    <span>{t.topHotline}</span>
+                    <a href={`tel:${settings.emergencyPhone}`} className="text-[#181512] hover:text-[#87641d] font-bold font-mono ltr">
+                      {settings.emergencyPhone}
+                    </a>
+                  </span>
+                </>
               )}
             </div>
 
-            {/* Quick reload cache button */}
-            <button
-              onClick={() => {
-                storageService.clearCacheAndRefreshApp();
-              }}
-              className="text-xs text-[#5c5343] hover:text-[#181512] flex items-center gap-1 transition px-2 py-1 rounded-lg bg-white/80 border border-[#d8ceb8] cursor-pointer"
-              title={t.refreshApp}
-            >
-              <RefreshCw className="w-3 h-3 text-[#87641d]" />
-              <span className="font-medium hidden sm:inline">{t.refreshApp}</span>
-            </button>
+            {/* Pinned Controls: Language Switcher, Update App, Admin Dashboard */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* 1. Language Selector Dropdown (AR / EN / TR) */}
+              <div className="relative" ref={langDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-white/95 hover:bg-white text-[#4b4334] hover:text-[#87641d] border border-[#d8ceb8] hover:border-[#b38a38]/40 shadow-xs text-xs font-bold transition cursor-pointer"
+                  title="Select Language / اختيار اللغة / Dil Seçimi"
+                  aria-expanded={langDropdownOpen}
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#87641d]" />
+                  <span className="text-sm leading-none">{currentLangObj.flag}</span>
+                  <span className="font-bold text-[11px] sm:text-xs">{currentLangObj.nativeName}</span>
+                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${langDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-            {/* Admin Panel Trigger */}
-            <button
-              onClick={onOpenAdmin}
-              className="text-xs text-[#5c5343] hover:text-[#181512] flex items-center gap-1 transition px-2.5 py-1 rounded-lg bg-white/80 border border-[#d8ceb8] cursor-pointer hover:bg-[#b38a38]/15"
-              title={t.adminPanel}
-            >
-              <UserCheck className="w-3 h-3 text-[#87641d]" />
-              <span className="font-medium">{t.adminPanel}</span>
-            </button>
+                {langDropdownOpen && (
+                  <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-1.5 w-36 bg-white rounded-xl shadow-xl border border-[#c5a869]/30 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#87641d] border-b border-[#f0eae0] mb-1">
+                      {lang === 'ar' ? 'اختر اللغة' : lang === 'tr' ? 'Dil Seçin' : 'Select Language'}
+                    </div>
+                    {languagesList.map((item) => (
+                      <button
+                        key={item.code}
+                        onClick={() => handleSelectLanguage(item.code)}
+                        className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-left rtl:text-right transition cursor-pointer hover:bg-[#f7f2e8] ${
+                          lang === item.code ? 'font-bold text-[#87641d] bg-[#b38a38]/10' : 'text-[#3b352b]'
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm">{item.flag}</span>
+                          <span>{item.label}</span>
+                        </span>
+                        {lang === item.code && <Check className="w-3.5 h-3.5 text-[#87641d]" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Quick reload cache & update app button */}
+              <button
+                onClick={() => {
+                  storageService.clearCacheAndRefreshApp();
+                }}
+                className="text-xs text-[#5c5343] hover:text-[#181512] flex items-center gap-1 sm:gap-1.5 transition px-2 sm:px-2.5 py-1 rounded-lg bg-white/95 hover:bg-white border border-[#d8ceb8] hover:border-[#b38a38]/40 shadow-xs cursor-pointer active:scale-95 group"
+                title={t.refreshApp}
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#87641d] group-hover:rotate-180 transition-transform duration-500" />
+                <span className="font-bold text-[11px] sm:text-xs text-[#4b4334] group-hover:text-[#87641d]">{t.refreshApp}</span>
+              </button>
+
+              {/* 3. Admin Panel / Dashboard Trigger */}
+              <button
+                onClick={onOpenAdmin}
+                className="text-xs text-[#87641d] hover:text-[#684b12] flex items-center gap-1 sm:gap-1.5 transition px-2.5 sm:px-3 py-1 rounded-lg bg-[#b38a38]/15 hover:bg-[#b38a38]/25 border border-[#c5a869]/50 hover:border-[#b38a38] shadow-xs cursor-pointer active:scale-95 font-bold"
+                title={t.adminPanel}
+              >
+                <UserCheck className="w-3.5 h-3.5 text-[#87641d]" />
+                <span className="font-bold text-[11px] sm:text-xs">{t.adminPanel}</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Sticky Navbar */}
-      <header
-        className={`fixed top-[31px] left-0 right-0 z-40 transition-all duration-300 ${
-          isScrolled
-            ? 'bg-[#fbf8f2]/95 backdrop-blur-md shadow-lg py-2.5 border-b border-[#e6ddcc]'
-            : 'bg-[#fbf8f2]/90 backdrop-blur-sm py-3.5 border-b border-[#e6ddcc]/60'
-        }`}
-      >
+        {/* Main Navigation Header */}
+        <header
+          className={`w-full transition-all duration-300 ${
+            isScrolled
+              ? 'bg-[#fbf8f2]/95 backdrop-blur-md shadow-lg py-2 border-b border-[#e6ddcc]'
+              : 'bg-[#fbf8f2]/92 backdrop-blur-sm py-3 border-b border-[#e6ddcc]/60'
+          }`}
+        >
         <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center ${
           settings.brandingPositionNavbar === 'center' ? 'justify-between lg:justify-center lg:relative' : 'justify-between'
         }`}>
@@ -383,6 +390,6 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
           </div>
         )}
       </header>
-    </>
+    </div>
   );
 });

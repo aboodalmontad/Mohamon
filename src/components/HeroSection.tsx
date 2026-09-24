@@ -1,7 +1,8 @@
 import React from 'react';
-import { ShieldCheck, Scale, Award, ArrowLeft, ArrowRight, Building, Landmark, ChevronDown } from 'lucide-react';
+import { ShieldCheck, Scale, Award, ArrowLeft, ArrowRight, Building, Landmark, ChevronDown, Globe } from 'lucide-react';
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
+import { firmService } from '../services/firmService';
 
 interface HeroSectionProps {
   settings: SiteSettings;
@@ -21,13 +22,14 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
   const firmName = getLocalized(settings, 'firmName', lang, settings.firmNameAr);
   const slogan = getLocalized(settings, 'slogan', lang, settings.sloganAr);
   const subSlogan = getLocalized(settings, 'subSlogan', lang, settings.subSloganAr);
+  const officialDomain = firmService.getFirmDisplayDomain();
 
   const heroBannerSrc = settings.customBannerUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920';
   const heroOpacity = typeof settings.heroBannerOpacity === 'number' ? settings.heroBannerOpacity / 100 : 0.18;
   const heroBlurClass = settings.heroBannerBlur === 'md' ? 'blur-md' : settings.heroBannerBlur === 'sm' ? 'blur-sm' : '';
 
   return (
-    <section id="hero" className="relative min-h-[92vh] flex items-center justify-center pt-28 pb-16 overflow-hidden bg-gradient-to-b from-[#fbf8f2] via-[#f7f2e7] to-[#f3ebd9]">
+    <section id="hero" className="relative min-h-[92vh] flex items-center justify-center pt-36 sm:pt-40 pb-16 overflow-hidden bg-gradient-to-b from-[#fbf8f2] via-[#f7f2e7] to-[#f3ebd9]">
       {/* Background Image with Dynamic Custom Banner & Tint */}
       <div 
         className="absolute inset-0 z-0 transition-opacity duration-700" 
@@ -103,13 +105,13 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
                   </div>
                 );
               })()}
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs font-semibold mt-3 shadow-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs font-semibold mt-3 shadow-sm flex-wrap justify-center">
                 <Award className="w-3.5 h-3.5 text-[#b38a38]" />
                 <span className="font-bold">{firmName}</span>
               </div>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs sm:text-sm font-semibold mb-6 shadow-sm backdrop-blur-md animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#b38a38]/12 border border-[#b38a38]/35 text-[#87641d] text-xs sm:text-sm font-semibold mb-6 shadow-sm backdrop-blur-md animate-fade-in flex-wrap justify-center">
               <Award className="w-4 h-4 text-[#b38a38]" />
               <span className="font-bold">{firmName}</span>
             </div>

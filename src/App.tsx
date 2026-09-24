@@ -364,7 +364,7 @@ export default function App() {
       ) : (
         <>
           {/* 1. Header / Navbar */}
-          <div className="fixed top-0 left-0 w-full z-50 h-1 bg-[#e6ddcc]/30 pointer-events-none">
+          <div className="fixed top-0 left-0 w-full z-[60] h-1 bg-[#e6ddcc]/30 pointer-events-none">
             <div id="scroll-progress" className="h-full bg-gradient-to-r from-[#b38a38] to-[#c5a869] w-0 transition-all duration-150 shadow-[0_0_10px_rgba(197,168,105,0.5)]"></div>
           </div>
           

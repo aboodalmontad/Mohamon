@@ -15,7 +15,7 @@ export const UI_TRANSLATIONS = {
     topAccredited: 'مكتب مرخص ومعتمد دولياً',
     topHotline: 'خط الطوارئ والاستجابة الفورية:',
     bookConsultation: 'احجز استشارة',
-    adminPanel: 'لوحة الإدارة',
+    adminPanel: 'لوحة التحكم',
     refreshApp: 'تحديث التطبيق',
     refreshConfirm: '🔄 هل تريد مسح الكاش وتحميل أحدث نسخة من التطبيق؟',
 
