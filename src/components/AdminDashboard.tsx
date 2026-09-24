@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { firmService } from '../services/firmService';
-import { supabaseConfigService, testSupabaseConnection, SupabaseConfig, SUPABASE_QUICK_RLS_FIX_SQL, SUPABASE_SQL_SCHEMA } from '../lib/supabase';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, OfficeLocation, Language, LawFirm } from '../types';
 import { COUNTRIES_LIST } from '../data/countries';
 import { ImageUploader } from './ImageUploader';
@@ -158,6 +157,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [editingOffice, setEditingOffice] = useState<OfficeLocation | null>(null);
 
+  // Firm Data Saving State for Manager
+  const [isSavingFirmData, setIsSavingFirmData] = useState(false);
+  const [saveSuccessTick, setSaveSuccessTick] = useState(false);
+
   // Auto Translation & Multi-Language Sync States
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -184,15 +187,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const [tempEducationItem, setTempEducationItem] = useState('');
   const [tempServiceItem, setTempServiceItem] = useState('');
   const [tempTagItem, setTempTagItem] = useState('');
-
-  // Supabase Cloud Sync State
-  const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig>(() => supabaseConfigService.getConfig());
-  const [isSyncingSupabase, setIsSyncingSupabase] = useState(false);
-  const [isFetchingSupabase, setIsFetchingSupabase] = useState(false);
-  const [supabaseSyncResult, setSupabaseSyncResult] = useState<{ success: boolean; message: string } | null>(null);
-  const [showSupabaseConfig, setShowSupabaseConfig] = useState(false);
-  const [copiedRlsFix, setCopiedRlsFix] = useState(false);
-  const [copiedSchema, setCopiedSchema] = useState(false);
 
   // Feedback Notification
   const [feedback, setFeedback] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -470,10 +464,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
   };
 
-  const handleSaveAboutSettings = (e?: React.FormEvent) => {
+  const handleSaveAboutSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    storageService.saveSettings(settings);
-    showToast(isAr ? '💾 تم حفظ وتحديث نصوص «عن المكتب والمسيرة» فوراً على الموقع!' : 'About & Journey content saved successfully!');
+    setIsSavingFirmData(true);
+    try {
+      storageService.saveSettings(settings);
+      const activeSlug = firmService.getActiveFirmSlug();
+      const firm = firmService.getFirmBySlug(activeSlug);
+      if (firm) {
+        if (firm.data) {
+          firm.data.settings = settings;
+          firm.data.savedAt = new Date().toISOString();
+        }
+        await firmService.saveFirm(firm);
+      }
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 2500);
+      showToast(isAr ? '💾 تم حفظ وتحديث نصوص «عن المكتب والمسيرة» فوراً على الموقع!' : 'About & Journey content saved successfully!');
+    } catch (err) {
+      console.warn('Error saving about settings:', err);
+      showToast(isAr ? 'تم حفظ التعديلات محلياً' : 'Saved locally');
+    } finally {
+      setIsSavingFirmData(false);
+    }
   };
 
   // Handle Login
@@ -757,16 +770,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   };
 
   // ---------------- SETTINGS SAVE ----------------
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    let toSave = { ...settings };
-    if (autoSyncEnabled) {
-      toSave = await autoTranslateSettings(toSave);
-      setSettings(toSave);
-    }
-    storageService.saveSettings(toSave);
-
+  const handleSaveSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSavingFirmData(true);
     try {
+      let toSave = { ...settings };
+      if (autoSyncEnabled) {
+        toSave = await autoTranslateSettings(toSave);
+        setSettings(toSave);
+      }
+      storageService.saveSettings(toSave);
+
       const activeSlug = firmService.getActiveFirmSlug();
       const firm = firmService.getFirmBySlug(activeSlug);
       if (firm) {
@@ -778,16 +792,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
         if (toSave.firmNameEn) firm.nameEn = toSave.firmNameEn;
         if (toSave.customLogoUrl) firm.logoUrl = toSave.customLogoUrl;
         if (toSave.customBannerUrl !== undefined) firm.bannerUrl = toSave.customBannerUrl;
+        if (toSave.sloganAr) firm.taglineAr = toSave.sloganAr;
+        if (toSave.sloganEn) firm.taglineEn = toSave.sloganEn;
+        if (toSave.phone) firm.phone = toSave.phone;
+        if (toSave.email) firm.email = toSave.email;
+        if (toSave.adminPassword) firm.adminPassword = toSave.adminPassword;
         if (firm.data) {
           firm.data.settings = toSave;
+          firm.data.savedAt = new Date().toISOString();
         }
         await firmService.saveFirm(firm);
       }
+
+      setSaveSuccessTick(true);
+      setTimeout(() => setSaveSuccessTick(false), 3000);
+      showToast(isAr ? 'تم حفظ وتطبيق كافة تعديلات بيانات المكتب بنجاح ✅' : 'Firm data & settings saved successfully ✅');
     } catch (err) {
       console.warn('Firm entity update sync note:', err);
+      showToast(isAr ? 'تم حفظ التعديلات محلياً بنجاح' : 'Settings saved locally');
+    } finally {
+      setIsSavingFirmData(false);
     }
-
-    showToast(isAr ? 'تم حفظ وتطبيق كافة إعدادات الموقع والدولة والمدينة بنجاح' : 'Site settings, country and city updated in all languages');
   };
 
   // ---------------- BACKUP EXPORT & IMPORT & SUPABASE PERSISTENCE ----------------
@@ -823,74 +848,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
       e.target.value = '';
     };
     reader.readAsText(file);
-  };
-
-  // Supabase Cloud Database Sync Handlers
-  const handleSyncToSupabase = async () => {
-    setIsSyncingSupabase(true);
-    setSupabaseSyncResult(null);
-
-    try {
-      if (supabaseConfig.url || supabaseConfig.anonKey) {
-        supabaseConfigService.saveConfig(supabaseConfig);
-      }
-      const res = await storageService.syncActiveFirmToSupabase();
-      setSupabaseSyncResult(res);
-      if (res.success) {
-        showToast(
-          isAr 
-            ? '✅ تمت مزامنة كافة بيانات ومحتويات الموقع مع Supabase بنجاح تام!' 
-            : '✅ All site data synced with Supabase cloud database successfully!'
-        );
-      } else {
-        if (!supabaseConfigService.isConfigured() || res.message?.includes('مفاتيح')) {
-          setShowSupabaseConfig(true);
-        }
-        showToast(res.message, 'error');
-      }
-    } catch (err: any) {
-      const msg = err?.message || (isAr ? 'فشل الاتصال بقاعدة بيانات Supabase' : 'Supabase sync failed');
-      setSupabaseSyncResult({ success: false, message: msg });
-      showToast(msg, 'error');
-    } finally {
-      setIsSyncingSupabase(false);
-    }
-  };
-
-  const handleFetchFromSupabase = async () => {
-    setIsFetchingSupabase(true);
-    setSupabaseSyncResult(null);
-
-    try {
-      const res = await storageService.fetchActiveFirmFromSupabase();
-      setSupabaseSyncResult(res);
-      if (res.success) {
-        loadData();
-        showToast(
-          isAr 
-            ? '✅ تم جلب وتحديث كافة بيانات الموقع من قاعدة البيانات السحابية!' 
-            : '✅ Refreshed all site data from Supabase cloud database!'
-        );
-      } else {
-        showToast(res.message, 'error');
-      }
-    } catch (err: any) {
-      const msg = err?.message || (isAr ? 'فشل جلب البيانات من Supabase' : 'Failed to fetch from Supabase');
-      setSupabaseSyncResult({ success: false, message: msg });
-      showToast(msg, 'error');
-    } finally {
-      setIsFetchingSupabase(false);
-    }
-  };
-
-  const handleSaveSupabaseConfig = async () => {
-    supabaseConfigService.saveConfig(supabaseConfig);
-    const test = await testSupabaseConnection(supabaseConfig);
-    if (test.success) {
-      showToast(isAr ? '✅ تم حفظ إعدادات Supabase والاتصال بنجاح!' : '✅ Connected to Supabase successfully!');
-    } else {
-      showToast(test.message, 'error');
-    }
   };
 
   const handleResetDefaults = () => {
@@ -963,29 +920,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
           <div className="flex items-center gap-2.5 sm:gap-3">
             {isAuthenticated && (
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs">
-              </div>
-            )}
-
-            {isAuthenticated && (
               <button
                 type="button"
-                onClick={handleSyncToSupabase}
-                disabled={isSyncingSupabase}
-                className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600/40 via-emerald-500/50 to-teal-600/40 hover:from-emerald-600/60 hover:to-teal-600/60 border border-emerald-400/60 text-emerald-100 font-bold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer disabled:opacity-50"
-                title={isAr ? 'مزامنة كافة بيانات الموقع فورياً مع قاعدة البيانات على السحابة في Supabase' : 'Sync site data with Supabase cloud database'}
+                onClick={() => handleSaveSettings()}
+                disabled={isSavingFirmData}
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-gradient-to-r from-emerald-500 via-[#d4af37] to-[#c5a869] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-amber-950/40 transition cursor-pointer disabled:opacity-50"
+                title={isAr ? 'حفظ كافة تعديلات وبيانات المكتب وتطبيقها فوراً على الموقع للزوار' : 'Save all firm changes and update live website'}
               >
-                {isSyncingSupabase ? (
+                {isSavingFirmData ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 text-emerald-300 animate-spin" />
-                    <span className="hidden sm:inline">{isAr ? 'جاري المزامنة...' : 'Syncing...'}</span>
-                    <span className="sm:hidden">{isAr ? 'مزامنة...' : 'Sync...'}</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                    <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                  </>
+                ) : saveSuccessTick ? (
+                  <>
+                    <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                    <span>{isAr ? 'تم حفظ التعديلات!' : 'Changes Saved!'}</span>
                   </>
                 ) : (
                   <>
-                    <Database className="w-3.5 h-3.5 text-emerald-300" />
-                    <span className="hidden sm:inline">{isAr ? 'مزامنة مع Supabase' : 'Sync with Supabase'}</span>
-                    <span className="sm:hidden">{isAr ? 'Supabase' : 'Sync'}</span>
+                    <Save className="w-4 h-4 text-slate-950" />
+                    <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
                   </>
                 )}
               </button>
@@ -1403,7 +1358,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 }`}
               >
                 <Settings className="w-4 h-4" />
-                <span>{isAr ? 'الهوية والإحصائيات' : 'Identity & Stats'}</span>
+                <span>{isAr ? 'بيانات المكتب والهوية' : 'Firm Data & Identity'}</span>
               </button>
 
               {/* Custom Domain Management */}
@@ -1667,10 +1622,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       <button
                         type="button"
                         onClick={() => handleSaveAboutSettings()}
-                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#c5a869] via-[#d4af37] to-[#aa8022] text-slate-950 font-bold text-xs flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg"
+                        disabled={isSavingFirmData}
+                        className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg disabled:opacity-50"
                       >
-                        <Save className="w-4 h-4 text-slate-950" />
-                        <span>{isAr ? 'حفظ وتطبيق التغييرات' : 'Save Changes'}</span>
+                        {isSavingFirmData ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                            <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                          </>
+                        ) : saveSuccessTick ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                            <span>{isAr ? 'تم الحفظ!' : 'Saved!'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 text-slate-950" />
+                            <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -2142,6 +2112,46 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Sticky Floating Save Bar for About Journey Content */}
+                  <div className="sticky bottom-3 z-30 flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-md border-2 border-[#c5a869] shadow-2xl shadow-black/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869] flex-shrink-0">
+                        <Save className="w-5 h-5 text-[#c5a869]" />
+                      </div>
+                      <div>
+                        <span className="block text-xs sm:text-sm font-bold text-white">
+                          {isAr ? 'حفظ نصوص وبيانات المسيرة والرؤية' : 'Save Journey & Vision Content'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 hidden sm:inline">
+                          {isAr ? 'اضغط لحفظ التعديلات وتطبيقها فوراً على موقع مكتبك' : 'Click to save modifications live to your firm website'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveAboutSettings()}
+                      disabled={isSavingFirmData}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingFirmData ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                          <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                        </>
+                      ) : saveSuccessTick ? (
+                        <>
+                          <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                          <span>{isAr ? 'تم حفظ التعديلات!' : 'Changes Saved!'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 text-slate-950" />
+                          <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               )}
@@ -4344,16 +4354,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 </div>
               )}
 
-              {/* TAB 8: IDENTITY & SITE SETTINGS */}
+              {/* TAB 8: FIRM DATA, IDENTITY & SITE SETTINGS */}
               {activeTab === 'settings' && (
                 <form onSubmit={handleSaveSettings} className="space-y-6 max-w-4xl">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <h3 className="text-xl font-bold font-serif-title text-white">
-                        {isAr ? 'تسمية المكتب، الهوية الرسمية، والإحصائيات' : 'Law Firm Name, Official Branding & Statistics'}
+                        {isAr ? 'بيانات المكتب، الهوية الرسمية، والإحصائيات' : 'Firm Information, Identity & Statistics'}
                       </h3>
                       <p className="text-xs text-slate-400">
-                        {isAr ? 'خصص اسم مكتبك القانوني، الشعار، الرمز الرسمي، والنبذة التعريفية' : 'Customize your law firm name, logos, slogans, and metadata'}
+                        {isAr ? 'تعديل اسم المكتب، الشعار، بيانات التواصل، الدولة والمدينة، والإعدادات العامة' : 'Customize your law firm name, logos, contacts, slogans, and metadata'}
                       </p>
                     </div>
 
@@ -4361,20 +4371,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       <button
                         type="button"
                         onClick={handleTranslateCurrentSettings}
-                        disabled={isTranslating}
+                        disabled={isTranslating || isSavingFirmData}
                         className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-[#e5cb8e] border border-amber-500/50 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50 shadow-sm"
                         title={isAr ? 'ترجمة فورية وتلقائية لكافة نصوص وإعدادات وهوية الموقع' : 'Auto-translate all settings text'}
                       >
                         {isTranslating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5 text-[#c5a869]" />}
-                        <span>{isAr ? '✨ ترجمة إعدادات الموقع (EN & TR)' : '✨ Translate Settings'}</span>
+                        <span>{isAr ? '✨ ترجمة الإعدادات' : '✨ Translate Settings'}</span>
                       </button>
 
                       <button
                         type="submit"
-                        className="px-5 py-1.5 rounded-xl bg-gradient-to-r from-[#c5a869] to-[#d4af37] text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition cursor-pointer shadow-md"
+                        disabled={isSavingFirmData}
+                        className="px-6 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg disabled:opacity-50"
                       >
-                        <Save className="w-4 h-4" />
-                        <span>{isAr ? 'حفظ وتطبيق' : 'Save'}</span>
+                        {isSavingFirmData ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                            <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                          </>
+                        ) : saveSuccessTick ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                            <span>{isAr ? 'تم الحفظ!' : 'Saved!'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 text-slate-950" />
+                            <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -6489,12 +6514,66 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
+                  {/* Sticky Floating Save Bar for Firm Manager */}
+                  <div className="sticky bottom-3 z-30 flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-md border-2 border-[#c5a869] shadow-2xl shadow-black/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869] flex-shrink-0">
+                        <Save className="w-5 h-5 text-[#c5a869]" />
+                      </div>
+                      <div>
+                        <span className="block text-xs sm:text-sm font-bold text-white">
+                          {isAr ? 'حفظ تعديلات بيانات المكتب' : 'Save Firm Data Modifications'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 hidden sm:inline">
+                          {isAr ? 'احفظ التعديلات لتطبيقها فوراً على موقع مكتبك للزوار والعملاء' : 'Save changes to update live on your website'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSavingFirmData}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingFirmData ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                          <span>{isAr ? 'جاري الحفظ...' : 'Saving...'}</span>
+                        </>
+                      ) : saveSuccessTick ? (
+                        <>
+                          <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                          <span>{isAr ? 'تم حفظ التعديلات!' : 'Changes Saved!'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 text-slate-950" />
+                          <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
                   <button
                     type="submit"
-                    className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-bold text-sm hover:brightness-110 transition flex items-center gap-2 cursor-pointer shadow-xl"
+                    disabled={isSavingFirmData}
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-sm hover:brightness-110 transition flex items-center justify-center gap-2 cursor-pointer shadow-xl disabled:opacity-50"
                   >
-                    <Save className="w-4 h-4 text-slate-950" />
-                    <span>{isAr ? 'حفظ وتطبيق كافة التغييرات على الموقع فوراً' : 'Apply & Save All Changes'}</span>
+                    {isSavingFirmData ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                        <span>{isAr ? 'جاري حفظ بيانات وتعديلات المكتب...' : 'Saving Firm Data...'}</span>
+                      </>
+                    ) : saveSuccessTick ? (
+                      <>
+                        <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                        <span>{isAr ? 'تم حفظ التعديلات بنجاح!' : 'Changes Saved Successfully!'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 text-slate-950" />
+                        <span>{isAr ? 'حفظ وتطبيق كافة تعديلات بيانات المكتب' : 'Save & Publish All Firm Changes'}</span>
+                      </>
+                    )}
                   </button>
                 </form>
               )}
@@ -6895,265 +6974,42 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 </div>
               )}
 
-              {/* TAB 9: BACKUP & SUPABASE CLOUD DATABASE SYNC */}
+              {/* TAB 9: FIRM BACKUP & DATA MANAGEMENT */}
               {activeTab === 'backup' && (
                 <div className="space-y-6 max-w-3xl">
                   <div>
                     <h3 className="text-xl font-bold font-serif-title text-white">
-                      {isAr ? 'النسخ الاحتياطي والمزامنة السحابية مع Supabase' : 'Backup & Supabase Cloud Sync'}
+                      {isAr ? 'النسخ الاحتياطي وإدارة بيانات المكتب' : 'Firm Backup & Data Management'}
                     </h3>
                     <p className="text-xs text-slate-400">
                       {isAr 
-                        ? 'مزامنة وحفظ كافة بيانات ومحتويات الموقع فورياً مع قاعدة البيانات السحابية Supabase مع إمكانية استيراد وتصدير النسخ الاحتياطية' 
-                        : 'Sync and persist all site data in real-time with Supabase cloud database, plus backup export/import tools'}
+                        ? 'إدارة وحفظ وتصدير لقطة شاملة لكافة بيانات ومحتويات هذا المكتب بصيغة JSON، واستعادتها وصيانة الذاكرة بأمان تام.' 
+                        : 'Manage, export and restore firm data snapshots in JSON format, maintenance, and storage tools.'}
                     </p>
                   </div>
 
-                  {/* 1. PRIMARY: SUPABASE CLOUD DATABASE SYNC */}
-                  <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-950 border-2 border-emerald-500/60 shadow-2xl space-y-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                    
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 shadow-lg shadow-emerald-900/40">
-                          <Database className="w-6 h-6 animate-pulse" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-white text-base">
-                              {isAr ? 'المزامنة مع قاعدة البيانات على السحابة (Supabase)' : 'Cloud Database Sync (Supabase)'}
-                            </h4>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                              supabaseConfigService.isConfigured()
-                                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                            }`}>
-                              {supabaseConfigService.isConfigured() 
-                                ? (isAr ? 'متصل بالسحابة ✅' : 'Connected ✅') 
-                                : (isAr ? 'يحتاج إعداد المفاتيح ⚠️' : 'Setup Required ⚠️')}
-                            </span>
-                          </div>
-                          <p className="text-xs text-emerald-200/80">
-                            {isAr 
-                              ? 'حفظ وتحديث فوري لكافة بيانات المكتب (الشركاء، الخدمات، المقالات، الإعدادات) في قاعدة البيانات السحابية ليراها زوار موقعك مباشرة' 
-                              : 'Real-time sync of all firm data (team, practices, articles, identity) to your cloud database for public visitors.'}
-                          </p>
-                        </div>
+                  {/* 1. EXPORT BACKUP (JSON) */}
+                  <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869]">
+                        <Download className="w-4 h-4" />
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setShowSupabaseConfig(!showSupabaseConfig)}
-                        className="px-3.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition self-start sm:self-auto cursor-pointer"
-                      >
-                        <Settings className="w-3.5 h-3.5 text-[#c5a869]" />
-                        <span>{showSupabaseConfig ? (isAr ? 'إخفاء الإعدادات' : 'Hide Settings') : (isAr ? 'إعدادات الاتصال' : 'Connection Settings')}</span>
-                      </button>
+                      <div>
+                        <h4 className="font-bold text-white text-sm">{isAr ? 'تصدير نسخة احتياطية كاملة للمكتب (Export JSON)' : 'Export Full Firm JSON Backup'}</h4>
+                        <span className="text-[11px] text-slate-400">{isAr ? 'حفظ لقطة كاملة لجميع بيانات هذا المكتب للاحتفاظ بها أو نقلها بأمان' : 'Download a JSON snapshot containing all firm partners, practices, cases, blogs, and settings'}</span>
+                      </div>
                     </div>
-
-                    {/* Quick Supabase Credentials Form (Collapsible) */}
-                    {showSupabaseConfig && (
-                      <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-4 animate-fade-in text-xs">
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                          <span className="font-bold text-white flex items-center gap-1.5">
-                            <Database className="w-4 h-4 text-[#c5a869]" />
-                            {isAr ? 'بيانات ربط مشروع Supabase:' : 'Supabase Project Credentials:'}
-                          </span>
-                          <span className="text-[11px] text-slate-400">
-                            {isAr ? '(يتم حفظها بأمان في التخزين السحابي والمحلي)' : '(Saved securely)'}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-slate-300 mb-1 font-medium">
-                              {isAr ? 'رابط مشروع Supabase (Project URL):' : 'Project URL:'}
-                            </label>
-                            <input
-                              type="url"
-                              value={supabaseConfig.url}
-                              onChange={(e) => setSupabaseConfig({ ...supabaseConfig, url: e.target.value })}
-                              placeholder="https://xyzcompany.supabase.co"
-                              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-emerald-500 focus:outline-none"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-slate-300 mb-1 font-medium">
-                              {isAr ? 'مفتاح الوصول العام (Anon Public Key):' : 'Anon Public Key:'}
-                            </label>
-                            <input
-                              type="password"
-                              value={supabaseConfig.anonKey}
-                              onChange={(e) => setSupabaseConfig({ ...supabaseConfig, anonKey: e.target.value })}
-                              placeholder="eyJhbGciOiJIUzI1NiIsIn..."
-                              className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white focus:border-emerald-500 focus:outline-none"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <button
-                            type="button"
-                            onClick={handleSaveSupabaseConfig}
-                            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-emerald-500/40 font-bold flex items-center gap-1.5 transition cursor-pointer"
-                          >
-                            <Save className="w-3.5 h-3.5" />
-                            <span>{isAr ? 'فحص وحفظ إعدادات الاتصال' : 'Test & Save Credentials'}</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Status Banner */}
-                    {isSyncingSupabase && (
-                      <div className="p-4 rounded-2xl bg-emerald-950/80 border border-emerald-500/50 flex items-center gap-3 animate-fade-in text-xs text-emerald-200">
-                        <Loader2 className="w-5 h-5 text-emerald-400 animate-spin flex-shrink-0" />
-                        <div>
-                          <strong className="block text-white font-bold mb-0.5">
-                            {isAr ? 'جاري مزامنة بيانات ومحتويات الموقع مع قاعدة البيانات على السحابة في Supabase...' : 'Syncing data with Supabase...'}
-                          </strong>
-                          <span>{isAr ? 'يتم رفع الجداول وسجلات المحامين والمقالات والإعدادات' : 'Uploading tables and snapshot...'}</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {isFetchingSupabase && (
-                      <div className="p-4 rounded-2xl bg-teal-950/80 border border-teal-500/50 flex items-center gap-3 animate-fade-in text-xs text-teal-200">
-                        <Loader2 className="w-5 h-5 text-teal-400 animate-spin flex-shrink-0" />
-                        <div>
-                          <strong className="block text-white font-bold mb-0.5">
-                            {isAr ? 'جاري جلب وتحديث البيانات من Supabase...' : 'Fetching data from Supabase...'}
-                          </strong>
-                        </div>
-                      </div>
-                    )}
-
-                    {supabaseSyncResult && !isSyncingSupabase && !isFetchingSupabase && (
-                      <div className="space-y-3">
-                        <div className={`p-4 rounded-2xl border flex items-start gap-3 animate-fade-in text-xs leading-relaxed ${
-                          supabaseSyncResult.success 
-                            ? 'bg-emerald-950/60 border-emerald-500/50 text-emerald-200' 
-                            : 'bg-rose-950/60 border-rose-500/50 text-rose-200'
-                        }`}>
-                          {supabaseSyncResult.success ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                          ) : (
-                            <AlertCircle className="w-5 h-5 text-rose-400 flex-shrink-0 mt-0.5" />
-                          )}
-                          <div className="flex-1">
-                            <strong className="block text-white font-bold mb-1">
-                              {supabaseSyncResult.success 
-                                ? (isAr ? '✅ تمت المزامنة السحابية بنجاح!' : '✅ Cloud Sync Successful!')
-                                : (isAr ? '⚠️ تنبيه في المزامنة السحابية' : '⚠️ Cloud Sync Notice')}
-                            </strong>
-                            <span>{supabaseSyncResult.message}</span>
-                          </div>
-                        </div>
-
-                        {/* RLS Quick Fix Box */}
-                        {!supabaseSyncResult.success && (supabaseSyncResult.message.includes('RLS') || supabaseSyncResult.message.includes('سياسة الأمان') || supabaseSyncResult.message.includes('row-level security')) && (
-                          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-2.5 shadow-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 font-bold text-amber-300">
-                                <Shield className="w-4 h-4 flex-shrink-0" />
-                                <span>{isAr ? 'حل مشكلة تصريح الكتابة (RLS Fix):' : 'Fix RLS Write Permissions:'}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(SUPABASE_QUICK_RLS_FIX_SQL);
-                                  setCopiedRlsFix(true);
-                                  setTimeout(() => setCopiedRlsFix(false), 2500);
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                              >
-                                {copiedRlsFix ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                                <span>{copiedRlsFix ? (isAr ? 'تم النسخ!' : 'Copied!') : (isAr ? 'نسخ أمر فك القفل' : 'Copy RLS Disable')}</span>
-                              </button>
-                            </div>
-                            <p className="text-[11px] text-slate-300">
-                              {isAr 
-                                ? 'يمنع نظام الحماية في Supabase كتابة البيانات بالمفتاح العام (anon). الصق هذا الأمر في SQL Editor داخل لوحة Supabase لتجاوز الحظر فوراً:'
-                                : 'Row Level Security is blocking anon writes. Run this in Supabase SQL Editor to enable writes:'}
-                            </p>
-                            <pre className="p-2 bg-slate-950 rounded text-[11px] font-mono text-amber-300 border border-amber-500/20 overflow-x-auto" dir="ltr">
-                              ALTER TABLE IF EXISTS public.law_firms DISABLE ROW LEVEL SECURITY;
-                            </pre>
-                          </div>
-                        )}
-
-                        {/* Missing Table Quick Schema Box */}
-                        {!supabaseSyncResult.success && (supabaseSyncResult.message.includes('غير موجود') || supabaseSyncResult.message.includes('does not exist') || supabaseSyncResult.message.includes('42P01')) && (
-                          <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-200 text-xs space-y-2.5 shadow-sm">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 font-bold text-blue-300">
-                                <Code2 className="w-4 h-4 flex-shrink-0" />
-                                <span>{isAr ? 'إنشاء جداول Supabase:' : 'Create Supabase Tables:'}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(SUPABASE_SQL_SCHEMA);
-                                  setCopiedSchema(true);
-                                  setTimeout(() => setCopiedSchema(false), 2500);
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/40 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-                              >
-                                {copiedSchema ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                                <span>{copiedSchema ? (isAr ? 'تم نسخ كود SQL!' : 'Copied!') : (isAr ? 'نسخ كود إنشاء الجداول' : 'Copy SQL Schema')}</span>
-                              </button>
-                            </div>
-                            <p className="text-[11px] text-slate-300">
-                              {isAr 
-                                ? 'جدول law_firms غير موجود بعد في مشروعك. توجه إلى Supabase SQL Editor والصق الكود واضغط Run.'
-                                : 'Table law_firms does not exist. Run the schema in Supabase SQL Editor.'}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ACTION BUTTONS: SYNC TO SUPABASE & FETCH FROM SUPABASE */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={handleSyncToSupabase}
-                        disabled={isSyncingSupabase || isFetchingSupabase}
-                        className="py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:brightness-110 text-slate-950 font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 transition cursor-pointer shadow-xl shadow-emerald-950/60 disabled:opacity-50"
-                      >
-                        {isSyncingSupabase ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin text-slate-950" />
-                            <span>{isAr ? 'جاري المزامنة مع Supabase...' : 'Syncing to Supabase...'}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Database className="w-5 h-5 text-slate-950" />
-                            <span>{isAr ? '🚀 مزامنة مع قاعدة البيانات على السحابة في Supabase' : '🚀 Sync to Supabase Cloud'}</span>
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={handleFetchFromSupabase}
-                        disabled={isSyncingSupabase || isFetchingSupabase}
-                        className="py-4 px-6 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm flex items-center justify-center gap-2.5 border border-slate-700 transition cursor-pointer disabled:opacity-50 shadow-md"
-                      >
-                        {isFetchingSupabase ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin text-[#c5a869]" />
-                            <span>{isAr ? 'جاري الجلب...' : 'Fetching...'}</span>
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-5 h-5 text-[#c5a869]" />
-                            <span>{isAr ? '📥 جلب وتحديث البيانات من Supabase' : '📥 Pull & Refresh from Supabase'}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <p className="text-xs text-slate-300">
+                      {isAr ? 'تنزيل ملف JSON يحتوي على كافة بيانات الشركاء، الاختصاصات، الإنجازات، المقالات، رسائل العملاء، وإعدادات الهوية الخاصة بمكتبك.' : 'Download a JSON snapshot containing all partners, practices, case studies, blogs, and settings for your firm.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleExportBackup}
+                      className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-[#e5cb8e] border border-[#c5a869]/30 text-xs font-semibold flex items-center gap-2 transition cursor-pointer shadow-md"
+                    >
+                      <Download className="w-4 h-4 text-[#c5a869]" />
+                      <span>{isAr ? 'تنزيل ملف النسخة الاحتياطية (JSON)' : 'Download Backup File (.json)'}</span>
+                    </button>
                   </div>
 
                   {/* 2. IMPORT & RESTORE BACKUP (JSON) */}

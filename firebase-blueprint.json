@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "LawFirm": {
+      "title": "Law Firm",
+      "description": "Information about a law firm",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["slug", "nameAr", "nameEn"]
+    },
+    "FirmSettings": {
+      "title": "Firm Settings",
+      "description": "Configuration settings for a law firm",
+      "type": "object",
+      "properties": {
+        "firmNameAr": { "type": "string" },
+        "firmNameEn": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" }
+      }
+    },
+    "Partner": {
+      "title": "Partner",
+      "description": "A partner/attorney at the firm",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "title": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    }
+  },
+  "firestore": {
+    "/firms/{firmSlug}": {
+      "schema": "LawFirm",
+      "description": "The root document for a firm"
+    },
+    "/firms/{firmSlug}/settings/data": {
+      "schema": "FirmSettings",
+      "description": "Settings for the firm"
+    },
+    "/firms/{firmSlug}/partners/{partnerId}": {
+      "schema": "Partner",
+      "description": "Partners of the firm"
+    }
+  }
+}

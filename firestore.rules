@@ -1,0 +1,41 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Admin check: In a real scenario, this would be a lookup in a dedicated collection.
+    // For now, we allow the user with the specified email to be an admin.
+    function isAdmin() {
+      return isSignedIn() && 
+             request.auth.token.email == "avocat.nahwi@gmail.com";
+    }
+
+    // --- Collections ---
+    
+    // Root: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    match /firms/{firmSlug} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(firmSlug);
+      allow update: if isAdmin() && incoming().slug == existing().slug;
+      
+      match /settings/data {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+      
+      match /partners/{partnerId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+    }
+  }
+}

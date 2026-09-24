@@ -1,9 +1,8 @@
 import React from 'react';
-import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck, Globe } from 'lucide-react';
+import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck } from 'lucide-react';
 import { SiteSettings, PracticeArea, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
-import { firmService } from '../services/firmService';
 
 interface FooterProps {
   settings: SiteSettings;
@@ -32,7 +31,6 @@ export const Footer: React.FC<FooterProps> = React.memo(({
   const slogan = getLocalized(settings, 'slogan', lang, settings.sloganAr);
   const subSlogan = getLocalized(settings, 'subSlogan', lang, settings.subSloganAr || settings.aboutTextAr);
   const address = getLocalized(settings, 'address', lang, settings.addressAr);
-  const officialDomain = firmService.getFirmDisplayDomain();
 
   return (
     <footer className="bg-[#181512] text-[#d8ceb8] text-xs border-t border-[#b38a38]/30 relative">
@@ -123,13 +121,11 @@ export const Footer: React.FC<FooterProps> = React.memo(({
                 <span className="font-firm-name font-bold text-base text-white block">
                   {firmName}
                 </span>
-                <span className="text-[10px] text-[#c5a869] font-medium font-navbar-brand block mb-1">
-                  {slogan}
-                </span>
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-[#e5cb8e] bg-[#221d19] px-2.5 py-0.5 rounded-full border border-[#c5a869]/30 dir-ltr shadow-xs">
-                  <Globe className="w-3 h-3 text-[#c5a869]" />
-                  <span>{officialDomain}</span>
-                </div>
+                {slogan && (
+                  <span className="text-[11px] text-[#c5a869] font-medium font-navbar-brand block">
+                    {slogan}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -257,9 +253,6 @@ export const Footer: React.FC<FooterProps> = React.memo(({
         <div className="mt-8 pt-6 border-t border-[#2c261e] flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#d8ceb8]/80">
           <div className="flex items-center gap-2 flex-wrap">
             <span>© {new Date().getFullYear()} {firmName}</span>
-            <span className="text-[#c5a869] font-mono text-[10px] bg-[#221d19] px-2 py-0.5 rounded-md border border-[#c5a869]/25 dir-ltr">
-              {officialDomain}
-            </span>
             <span>• {t.allRightsReserved}</span>
             <span className="bg-[#2c261e] text-[#c5a869] px-2 py-0.5 rounded text-[10px] font-mono border border-[#c5a869]/20" title="رقم الإصدار">
               الإصدار: 11-9-2026

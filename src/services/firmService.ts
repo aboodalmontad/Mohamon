@@ -120,7 +120,10 @@ class FirmService {
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            this.memoryFirms = parsed.map((f: LawFirm) => ensureFirmSubscription(f));
+            this.memoryFirms = parsed.map((f: LawFirm) => {
+              f.customDomain = '';
+              return ensureFirmSubscription(f);
+            });
           }
         }
       }
@@ -224,21 +227,34 @@ class FirmService {
     
     if ((this as any)._saveTimeout) clearTimeout((this as any)._saveTimeout);
     
-    (this as any)._saveTimeout = setTimeout(() => {
+    (this as any)._saveTimeout = setTimeout(async () => {
       try {
         const firmsForStorage = this.memoryFirms.map(firm => {
+          firm.customDomain = '';
           const { data, ...rest } = firm;
           return { 
             ...rest,
+            customDomain: '',
             hasFullData: !!(data && (data.partners?.length || data.blogPosts?.length))
           };
         });
         localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(firmsForStorage));
         window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+
+        // Fast Sync to Firebase
+        const { doc, setDoc } = await import('firebase/firestore');
+        const { db } = await import('../lib/firebase');
+        for (const firm of this.memoryFirms) {
+          firm.customDomain = '';
+          await setDoc(doc(db, 'firms', firm.slug), firm, { merge: true });
+        }
+
+        // Fast Sync to Supabase
+        this.syncAllToSupabase().catch(e => console.warn('Supabase sync failed', e));
       } catch (e) {
-        console.warn('Failed to save firms to local cache', e);
+        console.warn('Failed to save firms to local cache, Firebase, or Supabase', e);
       }
-    }, 1000); // Batched save every 1 second
+    }, 500); // Batched save every 0.5 second for faster reactivity
   }
 
   // Fetch all firms from the Express backend or static asset fallback
