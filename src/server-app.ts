@@ -172,12 +172,35 @@ app.post('/api/consultation', (req, res) => {
   }
 });
 
-app.get('/api/firms', (_req, res) => {
+let serverFirmsMemoryCache: any[] | null = null;
+
+function getServerFirms(): any[] {
+  if (serverFirmsMemoryCache !== null) {
+    return serverFirmsMemoryCache;
+  }
   try {
     if (fs.existsSync(FIRMS_DATA_PATH)) {
-      return res.json({ success: true, data: JSON.parse(fs.readFileSync(FIRMS_DATA_PATH, 'utf-8')) });
+      serverFirmsMemoryCache = JSON.parse(fs.readFileSync(FIRMS_DATA_PATH, 'utf-8'));
+      return serverFirmsMemoryCache || [];
     }
-    return res.json({ success: true, data: [] });
+  } catch (e) {
+    console.warn('Error reading FIRMS_DATA_PATH into cache:', e);
+  }
+  return [];
+}
+
+function setServerFirms(firms: any[]) {
+  serverFirmsMemoryCache = firms;
+  try {
+    fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(firms, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Could not write FIRMS_DATA_PATH:', e);
+  }
+}
+
+app.get('/api/firms', (_req, res) => {
+  try {
+    return res.json({ success: true, data: getServerFirms() });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -186,12 +209,7 @@ app.get('/api/firms', (_req, res) => {
 app.get('/api/firms/:slug', async (req, res) => {
   try {
     const slug = req.params.slug.toLowerCase().trim();
-    let firms = [];
-    if (fs.existsSync(FIRMS_DATA_PATH)) {
-      try {
-        firms = JSON.parse(fs.readFileSync(FIRMS_DATA_PATH, 'utf-8'));
-      } catch {}
-    }
+    const firms = getServerFirms();
     const found = firms.find((f: any) => f.slug?.toLowerCase() === slug);
     if (found) return res.json({ success: true, data: found });
 
@@ -241,8 +259,8 @@ app.get('/api/firms/:slug', async (req, res) => {
             data: row.data || {},
             subscription: rawSub,
           };
-          firms.push(firm);
-          fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(firms, null, 2), 'utf-8');
+          const updated = [...firms, firm];
+          setServerFirms(updated);
           return res.json({ success: true, data: firm });
         }
       } catch (err) {
@@ -259,11 +277,11 @@ app.get('/api/firms/:slug', async (req, res) => {
 app.post('/api/firms/save', (req, res) => {
   try {
     const firm = req.body;
-    let firms = fs.existsSync(FIRMS_DATA_PATH) ? JSON.parse(fs.readFileSync(FIRMS_DATA_PATH, 'utf-8')) : [];
+    const firms = [...getServerFirms()];
     const index = firms.findIndex((f: any) => f.slug === firm.slug);
     if (index >= 0) firms[index] = { ...firm, updatedAt: new Date().toISOString() };
     else firms.push({ ...firm, updatedAt: new Date().toISOString() });
-    fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(firms, null, 2), 'utf-8');
+    setServerFirms(firms);
     return res.json({ success: true, data: firm });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -274,7 +292,7 @@ app.post('/api/firms/sync-all', (req, res) => {
   try {
     const { firms } = req.body;
     if (!Array.isArray(firms)) return res.status(400).json({ success: false, error: 'Invalid data' });
-    fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(firms, null, 2), 'utf-8');
+    setServerFirms(firms);
     return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -285,9 +303,9 @@ app.post('/api/firms/delete', (req, res) => {
   try {
     const { slug } = req.body;
     if (!slug) return res.status(400).json({ success: false, error: 'Slug missing' });
-    let firms = fs.existsSync(FIRMS_DATA_PATH) ? JSON.parse(fs.readFileSync(FIRMS_DATA_PATH, 'utf-8')) : [];
+    const firms = getServerFirms();
     const filtered = firms.filter((f: any) => f.slug !== slug);
-    fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(filtered, null, 2), 'utf-8');
+    setServerFirms(filtered);
     return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

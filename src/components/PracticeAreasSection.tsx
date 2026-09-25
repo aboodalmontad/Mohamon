@@ -97,6 +97,8 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
     return practice.keyServices || [];
   };
 
+  if (!practiceAreas || practiceAreas.length === 0) return null;
+
   return (
     <section id="practice-areas" className="py-24 bg-[#fbf8f2] relative border-t border-[#e6ddcc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

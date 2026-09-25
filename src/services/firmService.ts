@@ -1,20 +1,91 @@
 import { LawFirm, LawFirmData, SiteSettings, FirmSubscription, SubscriptionPlanTier, SubscriptionStatus } from '../types';
-// import prepackagedFirms from '../../public/firms_data.json';
+import prepackagedFirms from '../../public/firms_data.json';
 import { 
-  // initialPartners, 
-  // initialPracticeAreas, 
-  // initialTestimonials, 
-  // initialBlogPosts, 
-  // initialCaseStudies, 
-  // initialContactMessages, 
   initialSiteSettings, 
-  // initialOffices 
 } from '../data/initialData';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID, formatSupabaseError } from '../lib/supabase';
 
-const STORAGE_KEY_FIRMS = 'aladl_multi_firms_v1';
+const STORAGE_KEY_FIRMS = 'aladl_multi_firms_v2';
 const STORAGE_KEY_ACTIVE_SLUG = 'aladl_active_firm_slug_v1';
 const STORAGE_KEY_DEFAULT_PUBLIC_SLUG = 'aladl_default_public_firm_slug_v1';
+
+// IndexedDB for ultra-fast full firm caching (including high-res base64 images)
+const FIRMS_IDB_NAME = 'aladl_firms_full_cache_v2';
+const FIRMS_IDB_STORE = 'firms_list';
+
+function openFirmsIDB(): Promise<IDBDatabase | null> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      resolve(null);
+      return;
+    }
+    try {
+      const req = indexedDB.open(FIRMS_IDB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(FIRMS_IDB_STORE)) {
+          db.createObjectStore(FIRMS_IDB_STORE, { keyPath: 'key' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function saveFirmsToIDB(firms: LawFirm[]): Promise<void> {
+  try {
+    const db = await openFirmsIDB();
+    if (!db) return;
+    const tx = db.transaction(FIRMS_IDB_STORE, 'readwrite');
+    tx.objectStore(FIRMS_IDB_STORE).put({ key: 'all_firms', firms, updatedAt: Date.now() });
+  } catch {}
+}
+
+async function getFirmsFromIDB(): Promise<LawFirm[] | null> {
+  try {
+    const db = await openFirmsIDB();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      const tx = db.transaction(FIRMS_IDB_STORE, 'readonly');
+      const req = tx.objectStore(FIRMS_IDB_STORE).get('all_firms');
+      req.onsuccess = () => {
+        if (req.result && Array.isArray(req.result.firms) && req.result.firms.length > 0) {
+          resolve(req.result.firms);
+        } else {
+          resolve(null);
+        }
+      };
+      req.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}
+
+// Strip only huge base64 strings (>120KB) for localStorage so all compressed firm images & data fit in localStorage for 0ms synchronous startup
+function stripLargeBase64ForLocalStorage(obj: any): any {
+  if (!obj) return obj;
+  if (typeof obj === 'string') {
+    if (obj.length > 120000 && obj.startsWith('data:')) {
+      return '';
+    }
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(stripLargeBase64ForLocalStorage);
+  }
+  if (typeof obj === 'object') {
+    const copy: Record<string, any> = {};
+    for (const k of Object.keys(obj)) {
+      copy[k] = stripLargeBase64ForLocalStorage(obj[k]);
+    }
+    return copy;
+  }
+  return obj;
+}
 
 export function ensureFirmSubscription(firm: LawFirm): LawFirm {
   if (!firm.status) {
@@ -72,8 +143,11 @@ export function ensureFirmSubscription(firm: LawFirm): LawFirm {
   return firm;
 }
 
-// Initial default seed firms for the multi-tenant SaaS platform
+// Initial default seed firms for the multi-tenant SaaS platform (0ms instant load)
 export function createDefaultFirms(): LawFirm[] {
+  if (Array.isArray(prepackagedFirms) && prepackagedFirms.length > 0) {
+    return (prepackagedFirms as unknown as LawFirm[]).map((f) => ensureFirmSubscription({ ...f }));
+  }
   return [];
 }
 
@@ -81,20 +155,109 @@ class FirmService {
   private memoryFirms: LawFirm[] = [];
   private isInitialized = false;
   private initPromise: Promise<void> | null = null;
+  private realtimeSetup = false;
+  private lastSupabaseFetchBySlug: Map<string, number> = new Map();
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.initLocal();
-      // Only trigger configuration fetch, don't fetch ALL firms yet
       this.initMinimal().catch(() => {});
+      this.initRealtimeSubscription();
 
       window.addEventListener('aladl_supabase_config_changed', () => {
         this.isInitialized = false;
+        this.realtimeSetup = false;
+        this.initRealtimeSubscription();
         this.init().then(() => {
           window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
         });
       });
     }
+  }
+
+  private initRealtimeSubscription(): void {
+    if (typeof window === 'undefined' || this.realtimeSetup) return;
+    const config = getStoredSupabaseConfig();
+    if (!config.url || !config.anonKey) return;
+
+    try {
+      this.realtimeSetup = true;
+      const client = getSupabase();
+      const tableName = config.tableName || 'law_firms';
+      client
+        .channel('public:law_firms_global_sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, () => {
+          this.fetchFromSupabase().catch(() => {});
+        })
+        .subscribe();
+    } catch {
+      this.realtimeSetup = false;
+    }
+  }
+
+  private mapSupabaseRowToFirm(row: any): LawFirm {
+    const rawSub = row.subscription || row.data?.subscription;
+    const rowData = row.data || {};
+    const existingSettings = rowData.settings || {};
+
+    const normalizedSettings: SiteSettings = {
+      ...initialSiteSettings,
+      ...existingSettings,
+      firmNameAr: existingSettings.firmNameAr || row.name_ar || 'مكتب محاماة',
+      firmNameEn: existingSettings.firmNameEn || row.name_en || existingSettings.firmNameAr || row.name_ar || 'Law Firm',
+      sloganAr: existingSettings.sloganAr || row.tagline_ar || initialSiteSettings.sloganAr,
+      sloganEn: existingSettings.sloganEn || row.tagline_en || initialSiteSettings.sloganEn,
+      phone: existingSettings.phone || row.phone || '',
+      email: existingSettings.email || row.email || '',
+      cityAr: existingSettings.cityAr || row.city_ar || 'الرياض',
+      cityEn: existingSettings.cityEn || row.city_en || 'Riyadh',
+      countryAr: existingSettings.countryAr || row.country_ar || 'المملكة العربية السعودية',
+      countryEn: existingSettings.countryEn || row.country_en || 'Saudi Arabia',
+      primaryColor: existingSettings.primaryColor || row.theme_color || '#c5a869',
+      customLogoUrl: existingSettings.customLogoUrl || existingSettings.logoUrl || row.logo_url || rowData.logoUrl || '',
+      adminPassword: row.admin_password || existingSettings.adminPassword || '123456',
+    };
+
+    const firmObj: LawFirm = {
+      id: row.id,
+      slug: row.slug,
+      nameAr: row.name_ar || normalizedSettings.firmNameAr,
+      nameEn: row.name_en || normalizedSettings.firmNameEn || '',
+      nameTr: row.name_tr || existingSettings.firmNameTr || '',
+      taglineAr: row.tagline_ar || normalizedSettings.sloganAr || '',
+      taglineEn: row.tagline_en || normalizedSettings.sloganEn || '',
+      cityAr: row.city_ar || normalizedSettings.cityAr || '',
+      cityEn: row.city_en || normalizedSettings.cityEn || '',
+      countryAr: row.country_ar || normalizedSettings.countryAr || 'المملكة العربية السعودية',
+      countryEn: row.country_en || normalizedSettings.countryEn || 'Saudi Arabia',
+      phone: row.phone || normalizedSettings.phone || '',
+      email: row.email || normalizedSettings.email || '',
+      logoUrl: normalizedSettings.customLogoUrl || '',
+      licenseNumber: row.license_number || existingSettings.licenseNumber || '',
+      adminPassword: row.admin_password || existingSettings.adminPassword || '123456',
+      status: rawSub?.isSiteActive === false || rawSub?.status === 'suspended' ? 'suspended' : 'active',
+      isVerified: row.is_verified ?? true,
+      featured: row.featured ?? false,
+      isDefaultPublic: row.is_default_public ?? rowData.isDefaultPublic ?? false,
+      customDomain: row.custom_domain || rowData.customDomain || '',
+      themeColor: row.theme_color || normalizedSettings.primaryColor || '#c5a869',
+      createdAt: row.created_at || new Date().toISOString(),
+      updatedAt: row.updated_at || new Date().toISOString(),
+      data: {
+        ...rowData,
+        settings: normalizedSettings,
+        partners: Array.isArray(rowData.partners) ? rowData.partners : [],
+        practiceAreas: Array.isArray(rowData.practiceAreas) ? rowData.practiceAreas : [],
+        caseStudies: Array.isArray(rowData.caseStudies) ? rowData.caseStudies : [],
+        testimonials: Array.isArray(rowData.testimonials) ? rowData.testimonials : [],
+        blogPosts: Array.isArray(rowData.blogPosts) ? rowData.blogPosts : [],
+        offices: Array.isArray(rowData.offices) ? rowData.offices : [],
+        messages: Array.isArray(rowData.messages) ? rowData.messages : [],
+      },
+      subscription: rawSub,
+    };
+
+    return ensureFirmSubscription(firmObj);
   }
 
   public async initMinimal(): Promise<void> {
@@ -114,29 +277,49 @@ class FirmService {
 
   public initLocal(): void {
     if (this.memoryFirms.length > 0) return;
+    // Start with prepackaged firms in 0ms so every firm is immediately available in RAM
+    this.memoryFirms = createDefaultFirms();
+
     try {
       if (typeof window !== 'undefined') {
+        // Remove legacy v1 cache that had stripped images
+        try { localStorage.removeItem('aladl_multi_firms_v1'); } catch {}
+
         const raw = localStorage.getItem(STORAGE_KEY_FIRMS);
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            this.memoryFirms = parsed.map((f: LawFirm) => {
-              f.customDomain = '';
-              return ensureFirmSubscription(f);
-            });
+            this.mergeFirmsIntoMemory(parsed);
           }
         }
       }
     } catch (e) {
       console.warn('Error reading local firms cache', e);
     }
+  }
 
-    if (this.memoryFirms.length === 0) {
-      this.memoryFirms = createDefaultFirms();
-      if (typeof window !== 'undefined') {
-        this.saveToLocalCache();
+  // Merge incoming firms with existing memoryFirms, preserving full data/images if incoming is partial
+  private mergeFirmsIntoMemory(incoming: LawFirm[]): void {
+    const mergedMap = new Map<string, LawFirm>();
+    for (const mf of this.memoryFirms) {
+      mergedMap.set(mf.slug.toLowerCase(), mf);
+    }
+    for (const rawFirm of incoming) {
+      const firm = ensureFirmSubscription(rawFirm);
+      const key = firm.slug.toLowerCase();
+      const existing = mergedMap.get(key);
+      if (existing) {
+        const hasIncomingData = firm.data && (firm.data.partners?.length || firm.data.practiceAreas?.length || firm.data.offices?.length || firm.data.settings);
+        mergedMap.set(key, {
+          ...existing,
+          ...firm,
+          data: hasIncomingData ? firm.data : (existing.data || firm.data || {} as any),
+        });
+      } else {
+        mergedMap.set(key, firm);
       }
     }
+    this.memoryFirms = Array.from(mergedMap.values());
   }
 
   public async init(): Promise<void> {
@@ -144,15 +327,28 @@ class FirmService {
     if (this.initPromise) return this.initPromise;
 
     this.initPromise = (async () => {
-      // 1. Read local cache FIRST for instant UI
+      // 1. Read local cache FIRST for instant 0ms UI
       this.initLocal();
 
-      // 2. Fetch full lists from cloud immediately for platform visitors
+      // 2. Hydrate full firm data + high-res images from IndexedDB (~5ms)
       try {
-        await this.fetchFromSupabase();
-        await this.fetchFromServer();
+        const idbFirms = await getFirmsFromIDB();
+        if (idbFirms && idbFirms.length > 0) {
+          this.mergeFirmsIntoMemory(idbFirms);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+          }
+        }
+      } catch {}
+
+      // 3. Prioritize fetching directly from Supabase so all visitors around the world see the exact live database state
+      try {
+        const supaRes = await this.fetchFromSupabase();
+        if (!supaRes.success || !supaRes.count) {
+          await this.fetchFromServer();
+        }
       } catch (err) {
-        console.warn('Initial cloud sync failed', err);
+        await this.fetchFromServer().catch(() => {});
       }
 
       this.isInitialized = true;
@@ -162,6 +358,77 @@ class FirmService {
     return this.initPromise;
   }
 
+  private isFirmFullyHydrated(firm?: LawFirm | null): boolean {
+    if (!firm || !firm.nameAr) return false;
+    // If firm has custom partners, ensure images weren't stripped by an older cache version
+    if (Array.isArray(firm.data?.partners) && firm.data!.partners.length > 0) {
+      const firstPartner = firm.data!.partners[0] as any;
+      if (firstPartner && firstPartner.image === '') {
+        return false;
+      }
+      return true;
+    }
+    return !!(firm.data && (firm.data.settings || (firm as any).hasFullData !== undefined));
+  }
+
+  // Ultra-fast single firm loader: renders immediately from memory/IDB (0ms) AND refreshes live from Supabase
+  public async fetchSingleFirmFast(slug: string): Promise<{ success: boolean; firm?: LawFirm }> {
+    const cleanSlug = slug.trim().toLowerCase();
+    const now = Date.now();
+    const lastFetch = this.lastSupabaseFetchBySlug.get(cleanSlug) || 0;
+
+    // 1. Check if memory already has full hydrated data (0ms)
+    const memFirm = this.memoryFirms.find(f => f.slug.toLowerCase() === cleanSlug);
+    if (this.isFirmFullyHydrated(memFirm)) {
+      // Refresh live from Supabase in background if not fetched in last 3 seconds
+      if (now - lastFetch > 3000) {
+        this.fetchSingleFirmFromSupabase(cleanSlug).catch(() => {});
+      }
+      return { success: true, firm: memFirm };
+    }
+
+    // 2. Check IndexedDB (~5ms)
+    try {
+      const idbFirms = await getFirmsFromIDB();
+      if (idbFirms) {
+        const idbFirm = idbFirms.find(f => f.slug?.toLowerCase() === cleanSlug);
+        if (this.isFirmFullyHydrated(idbFirm)) {
+          this.mergeFirmsIntoMemory([idbFirm!]);
+          if (now - lastFetch > 3000) {
+            this.fetchSingleFirmFromSupabase(cleanSlug).catch(() => {});
+          }
+          return { success: true, firm: ensureFirmSubscription(idbFirm!) };
+        }
+      }
+    } catch {}
+
+    // 3. Fetch directly from Supabase first so every visitor globally gets the authoritative firm data
+    const supaRes = await this.fetchSingleFirmFromSupabase(cleanSlug);
+    if (supaRes.success && supaRes.firm) {
+      return supaRes;
+    }
+
+    return this.fetchSingleFirmFromServer(cleanSlug);
+  }
+
+  // Fetch a single firm from local Express server (/api/firms/:slug) in ~10ms
+  public async fetchSingleFirmFromServer(slug: string): Promise<{ success: boolean; firm?: LawFirm }> {
+    if (typeof fetch === 'undefined') return { success: false };
+    try {
+      const res = await fetch(`/api/firms/${encodeURIComponent(slug)}`);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const firm = ensureFirmSubscription(json.data);
+          this.mergeFirmsIntoMemory([firm]);
+          this.saveToLocalCache(false);
+          return { success: true, firm };
+        }
+      }
+    } catch {}
+    return { success: false };
+  }
+
   // Fetch a single firm by its slug directly from Supabase
   public async fetchSingleFirmFromSupabase(slug: string): Promise<{ success: boolean; firm?: LawFirm; message?: string }> {
     const config = getStoredSupabaseConfig();
@@ -169,51 +436,34 @@ class FirmService {
       return { success: false, message: 'Supabase غير مهيأ' };
     }
 
+    const cleanSlug = slug.trim();
+    this.lastSupabaseFetchBySlug.set(cleanSlug.toLowerCase(), Date.now());
+
     try {
       const client = getSupabase();
-      const { data, error } = await client
-        .from(config.tableName || 'law_firms')
+      const tableName = config.tableName || 'law_firms';
+      let { data, error } = await client
+        .from(tableName)
         .select('*')
-        .eq('slug', slug)
-        .single();
+        .ilike('slug', cleanSlug)
+        .maybeSingle();
 
       if (error) throw error;
       if (data) {
-        const row = data;
-        const rawSub = row.subscription || row.data?.subscription;
-        const firm: LawFirm = ensureFirmSubscription({
-          id: row.id,
-          slug: row.slug,
-          nameAr: row.name_ar,
-          nameEn: row.name_en || '',
-          nameTr: row.name_tr || '',
-          taglineAr: row.tagline_ar || '',
-          taglineEn: row.tagline_en || '',
-          cityAr: row.city_ar || '',
-          cityEn: row.city_en || '',
-          phone: row.phone || '',
-          email: row.email || '',
-          licenseNumber: row.license_number || '',
-          adminPassword: row.admin_password || '123456',
-          isVerified: row.is_verified ?? true,
-          featured: row.featured ?? false,
-          isDefaultPublic: row.is_default_public ?? false,
-          customDomain: row.custom_domain || row.data?.customDomain || '',
-          themeColor: row.theme_color || '#c5a869',
-          createdAt: row.created_at || new Date().toISOString(),
-          updatedAt: row.updated_at || new Date().toISOString(),
-          data: row.data || {},
-          subscription: rawSub,
-        });
+        const firm = this.mapSupabaseRowToFirm(data);
 
-        // Update in memory and cache
-        const idx = this.memoryFirms.findIndex(f => f.slug === slug);
+        // Replace or insert in memoryFirms
+        const idx = this.memoryFirms.findIndex(f => f.slug.toLowerCase() === firm.slug.toLowerCase());
         if (idx >= 0) {
           this.memoryFirms[idx] = firm;
         } else {
           this.memoryFirms.push(firm);
         }
-        this.saveToLocalCache();
+
+        this.saveToLocalCache(false);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('aladl_firm_data_synced', { detail: { slug: firm.slug, firm } }));
+        }
         return { success: true, firm };
       }
       return { success: false, message: 'المكتب غير موجود سحابياً' };
@@ -222,39 +472,47 @@ class FirmService {
     }
   }
 
-  private saveToLocalCache(): void {
+  private saveToLocalCache(syncToCloud = false): void {
     if (typeof window === 'undefined') return;
     
+    // Immediately notify UI listeners in 0ms
+    window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+
     if ((this as any)._saveTimeout) clearTimeout((this as any)._saveTimeout);
     
     (this as any)._saveTimeout = setTimeout(async () => {
       try {
+        // 1. Save FULL firms (including all base64 images & data) to IndexedDB
+        saveFirmsToIDB(this.memoryFirms).catch(() => {});
+
+        // 2. Save lightweight firms WITH text data (settings, partners, practiceAreas, offices, blogPosts) to localStorage for 0ms synchronous startup
         const firmsForStorage = this.memoryFirms.map(firm => {
           firm.customDomain = '';
-          const { data, ...rest } = firm;
           return { 
-            ...rest,
+            ...firm,
             customDomain: '',
-            hasFullData: !!(data && (data.partners?.length || data.blogPosts?.length))
+            data: stripLargeBase64ForLocalStorage(firm.data),
+            hasFullData: !!(firm.data && (firm.data.partners?.length || firm.data.blogPosts?.length || firm.data.offices?.length))
           };
         });
-        localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(firmsForStorage));
-        window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
-
-        // Fast Sync to Firebase
-        const { doc, setDoc } = await import('firebase/firestore');
-        const { db } = await import('../lib/firebase');
-        for (const firm of this.memoryFirms) {
-          firm.customDomain = '';
-          await setDoc(doc(db, 'firms', firm.slug), firm, { merge: true });
+        try {
+          localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(firmsForStorage));
+        } catch {
+          // Fallback if localStorage is completely full
+          const minimalFirms = this.memoryFirms.map(({ data, ...rest }) => ({ ...rest, customDomain: '' }));
+          try {
+            localStorage.setItem(STORAGE_KEY_FIRMS, JSON.stringify(minimalFirms));
+          } catch {}
         }
 
-        // Fast Sync to Supabase
-        this.syncAllToSupabase().catch(e => console.warn('Supabase sync failed', e));
+        // Only push to cloud if explicitly triggered by an admin edit
+        if (syncToCloud) {
+          this.syncAllToSupabase().catch(e => console.warn('Supabase sync failed', e));
+        }
       } catch (e) {
-        console.warn('Failed to save firms to local cache, Firebase, or Supabase', e);
+        console.warn('Failed to save firms to local cache', e);
       }
-    }, 500); // Batched save every 0.5 second for faster reactivity
+    }, 150);
   }
 
   // Fetch all firms from the Express backend or static asset fallback
@@ -288,27 +546,12 @@ class FirmService {
     }
 
     if (fetchedFirms.length > 0) {
-      const serverFirms = fetchedFirms.map((f: LawFirm) => ensureFirmSubscription(f));
-      // const defaults = createDefaultFirms();
-      const combined = [...serverFirms];
-      /*
-      for (const df of defaults) {
-        if (!combined.some(f => f.slug === df.slug)) {
-          combined.push(df);
-        }
-      }
-      */
-      for (const mf of this.memoryFirms) {
-        if (!combined.some(f => f.slug === mf.slug)) {
-          combined.push(mf);
-        }
-      }
-      this.memoryFirms = combined;
-      this.saveToLocalCache();
+      this.mergeFirmsIntoMemory(fetchedFirms);
+      this.saveToLocalCache(false);
     }
   }
 
-  // Fetch from Supabase if configured
+  // Fetch all firms directly from Supabase (Primary Global Source of Truth)
   public async fetchFromSupabase(): Promise<{ success: boolean; count?: number; message?: string }> {
     const config = getStoredSupabaseConfig();
     if (!config.url || !config.anonKey) {
@@ -328,44 +571,23 @@ class FirmService {
       }
 
       if (Array.isArray(data) && data.length > 0) {
+        const now = Date.now();
         const loadedFirms: LawFirm[] = data.map((row: any) => {
-          const rawSub = row.subscription || row.data?.subscription;
-          const firmObj: LawFirm = {
-            id: row.id,
-            slug: row.slug,
-            nameAr: row.name_ar,
-            nameEn: row.name_en || '',
-            nameTr: row.name_tr || '',
-            taglineAr: row.tagline_ar || '',
-            taglineEn: row.tagline_en || '',
-            cityAr: row.city_ar || '',
-            cityEn: row.city_en || '',
-            phone: row.phone || '',
-            email: row.email || '',
-            licenseNumber: row.license_number || '',
-            adminPassword: row.admin_password || '123456',
-            isVerified: row.is_verified ?? true,
-            featured: row.featured ?? false,
-            isDefaultPublic: row.is_default_public ?? false,
-            themeColor: row.theme_color || '#c5a869',
-            createdAt: row.created_at || new Date().toISOString(),
-            updatedAt: row.updated_at || new Date().toISOString(),
-            data: row.data || {},
-            subscription: rawSub,
-          };
-          return ensureFirmSubscription(firmObj);
+          const mapped = this.mapSupabaseRowToFirm(row);
+          this.lastSupabaseFetchBySlug.set(mapped.slug.toLowerCase(), now);
+          return mapped;
         });
 
-        const combined = [...loadedFirms];
-        for (const mf of this.memoryFirms) {
-          if (!combined.some(f => f.slug === mf.slug)) {
-            combined.push(mf);
-          }
+        // Replace memoryFirms with the authoritative list from Supabase so all visitors globally see the exact same firms and data
+        this.memoryFirms = loadedFirms;
+        this.saveToLocalCache(false);
+        this.pushToServer(loadedFirms).catch(() => {});
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
         }
-        this.memoryFirms = combined;
-        this.saveToLocalCache();
-        this.pushToServer(combined).catch(() => {});
-        return { success: true, count: combined.length, message: `تم جلب ${loadedFirms.length} مكتب من Supabase بنجاح ودمج كافة المكاتب` };
+
+        return { success: true, count: this.memoryFirms.length, message: `تم جلب ${loadedFirms.length} مكتب من Supabase بنجاح` };
       }
 
       return { success: true, count: 0, message: 'لا توجد مكاتب بعد في Supabase' };
@@ -1140,6 +1362,12 @@ class FirmService {
       message: `تم ربط الدومين (${cleaned}) بالمكتب بنجاح وتحديث إعدادات التوجيه!`, 
       domain: cleaned 
     };
+  }
+
+  public hasFirmInMemory(slug: string): boolean {
+    if (!slug) return false;
+    const cleanSlug = slug.trim().toLowerCase();
+    return this.memoryFirms.some((f) => f.slug.toLowerCase() === cleanSlug);
   }
 
   public getFirmBySlug(slug: string): LawFirm | null {

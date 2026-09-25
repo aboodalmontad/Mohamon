@@ -64,10 +64,14 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
     
     setIsSubmitting(true);
     
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 1500));
-    
-    const finalSlug = generateArabicSlug(formData.nameAr);
+    const baseSlug = generateArabicSlug(formData.nameAr);
+    let finalSlug = baseSlug;
+    let counter = 1;
+    const existingFirms = firmService.getAllFirms();
+    while (existingFirms.some(f => f.slug.toLowerCase() === finalSlug.toLowerCase())) {
+      finalSlug = `${baseSlug}-${counter}`;
+      counter++;
+    }
     setGeneratedSlugForView(finalSlug);
 
     // Create new firm object
@@ -79,9 +83,9 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
       email: formData.email,
       phone: formData.phone,
       logoUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=200',
-      adminPassword: formData.adminPassword, // Note: In production this would be hashed
+      adminPassword: formData.adminPassword,
       status: 'active',
-      isVerified: false,
+      isVerified: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       subscription: {
@@ -101,19 +105,59 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ is
           firmNameEn: formData.nameAr,
           email: formData.email,
           phone: formData.phone,
+          emergencyPhone: formData.phone,
+          consultationEmail: formData.email,
           primaryColor: '#c5a869',
+          adminPassword: formData.adminPassword,
         },
-        partners: formData.useTemplateData ? initialPartners : [],
+        partners: formData.useTemplateData ? [
+          {
+            id: `partner-${Date.now()}`,
+            name: formData.nameAr,
+            nameEn: formData.nameAr,
+            title: 'الشريك المؤسس والمدير العام',
+            titleEn: 'Founding & Managing Partner',
+            specialty: 'الاستشارات القانونية والتقاضي والتحكيم',
+            specialtyEn: 'Legal Consultancy, Litigation & Arbitration',
+            experienceYears: 15,
+            education: ['بكالوريوس في الحقوق والشريعة القانونية'],
+            educationEn: ['Bachelor of Laws (LL.B.)'],
+            languages: ['العربية', 'الإنجليزية'],
+            bio: `مؤسس ومدير ${formData.nameAr}، خبرة واسعة في التمثيل القضائي وصياغة العقود والاستشارات القانونية.`,
+            bioEn: `Founder and Managing Partner of ${formData.nameAr}, with extensive experience in litigation and legal consultancy.`,
+            image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
+            email: formData.email,
+            phone: formData.phone,
+            linkedin: 'https://linkedin.com',
+            featured: true,
+            barAdmission: 'نقابة المحامين',
+            isPartner: true,
+          }
+        ] : [],
         practiceAreas: formData.useTemplateData ? initialPracticeAreas : [],
         caseStudies: formData.useTemplateData ? initialCaseStudies : [],
         testimonials: formData.useTemplateData ? initialTestimonials : [],
         blogPosts: formData.useTemplateData ? initialBlogPosts : [],
-        offices: formData.useTemplateData ? initialOffices : [],
+        offices: [
+          {
+            id: `office-${Date.now()}`,
+            cityAr: 'المقر الرئيسي',
+            cityEn: 'Headquarters',
+            countryAr: 'المملكة العربية السعودية',
+            countryEn: 'Saudi Arabia',
+            addressAr: 'المقر الرئيسي للمكتب',
+            addressEn: 'Main Office Headquarters',
+            phone: formData.phone,
+            email: formData.email,
+            mapEmbedUrl: '',
+            isHeadquarter: true,
+          }
+        ],
         messages: []
       }
     };
 
-    // Save to service (and sync to Supabase if configured)
+    // Save to service and sync immediately to Supabase so all visitors worldwide see the new firm
     await firmService.saveFirm(newFirm);
     
     setIsSubmitting(false);

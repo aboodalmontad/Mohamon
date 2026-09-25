@@ -64,9 +64,12 @@ export function getStoredSupabaseConfig(): SupabaseConfig {
     const raw = localStorage.getItem(STORAGE_KEY_SUPABASE);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const candidateUrl = (parsed.url || '').trim();
+      const candidateKey = (parsed.anonKey || '').trim();
+      const isValidSupabaseUrl = candidateUrl.startsWith('https://') && candidateUrl.includes('.supabase.co') && !candidateUrl.includes('placeholder');
       return {
-        url: parsed.url || import.meta.env.VITE_SUPABASE_URL || defaultUrl,
-        anonKey: parsed.anonKey || import.meta.env.VITE_SUPABASE_ANON_KEY || defaultKey,
+        url: isValidSupabaseUrl ? candidateUrl : (import.meta.env.VITE_SUPABASE_URL || defaultUrl),
+        anonKey: (isValidSupabaseUrl && candidateKey.length > 20) ? candidateKey : (import.meta.env.VITE_SUPABASE_ANON_KEY || defaultKey),
         tableName: parsed.tableName || 'law_firms',
         isConnected: parsed.isConnected ?? true,
         lastTestedAt: parsed.lastTestedAt,

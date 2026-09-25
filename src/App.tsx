@@ -28,15 +28,19 @@ import { applyTypographySettings } from './services/typographyService';
 import { ChevronDown } from 'lucide-react';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, Language, LawFirm } from './types';
 
-// Eagerly initialize cache synchronously before React even starts rendering for INSTANT load
+// Eagerly initialize cache synchronously before React even starts rendering for INSTANT 0ms load
 let initialIsPlatformView = true;
 if (typeof window !== 'undefined') {
   try {
+    firmService.initLocal();
     const urlParams = new URLSearchParams(window.location.search);
     const firmParam = urlParams.get('firm') || urlParams.get('slug');
     const viewParam = urlParams.get('view');
     if (firmParam || viewParam === 'firm') {
       initialIsPlatformView = false;
+      if (firmParam) {
+        storageService.loadFirm(firmParam, false);
+      }
     } else {
       initialIsPlatformView = true;
     }
@@ -58,8 +62,8 @@ export default function App() {
     offices: storageService.getOffices()
   }));
 
-  // App Initialization state: Fast path - no loading if cached
-  const [isInitializing, setIsInitializing] = useState(true);
+  // App Initialization state: Instantaneous render without blocking spinner
+  const [isInitializing, setIsInitializing] = useState(false);
   const [isFetchingFirm, setIsFetchingFirm] = useState(false);
 
   // Multi-Firm State
@@ -134,60 +138,37 @@ export default function App() {
         // 3. If NO explicit firm is requested, default to Platform Landing View!
         if (!requestedFirmSlug || viewParam === 'platform' || window.location.hash === '#platform') {
           setIsPlatformView(true);
-          storageService.init();
-          refreshData();
           setIsInitializing(false);
-          firmService.init().then(() => refreshData()).catch(() => {});
+          firmService.init().catch(() => {});
           return;
         }
 
         // 4. A specific firm was requested (via ?firm=... or custom domain):
         const urlSlug = requestedFirmSlug;
         setIsPlatformView(false);
-        const cachedFirm = firmService.getFirmBySlug(urlSlug);
-        
-        if (cachedFirm && cachedFirm.data && (cachedFirm.data.partners?.length || cachedFirm.data.practiceAreas?.length)) {
+        if (urlParams.get('admin') === 'true') {
+          setIsAdminOpen(true);
+        }
+
+        if (firmService.hasFirmInMemory(urlSlug)) {
           storageService.loadFirm(urlSlug, false);
           refreshData();
           setIsInitializing(false);
-          
-          // Re-validate and sync latest data from Supabase in the background
-          setIsFetchingFirm(true);
-          firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
-            if (sbRes.success && sbRes.firm) {
-              firmService.setFirm(sbRes.firm);
-              storageService.loadFirm(urlSlug, false);
-              refreshData();
-            }
-          }).catch(err => {
-            console.warn('Background fetch for firm failed', err);
-          }).finally(() => {
-            setIsFetchingFirm(false);
-          });
         } else {
-          setIsInitializing(true);
-          try {
-            const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug);
-            if (sbRes.success && sbRes.firm) {
-              firmService.setFirm(sbRes.firm);
-              storageService.loadFirm(urlSlug, false);
-              refreshData();
-            } else if (cachedFirm) {
-              storageService.loadFirm(urlSlug, false);
-              refreshData();
-            }
-          } catch (err) {
-            console.warn('Failed to fetch firm data', err);
-            if (cachedFirm) {
-              storageService.loadFirm(urlSlug, false);
-              refreshData();
-            }
-          } finally {
-            setIsInitializing(false);
-          }
+          storageService.loadFirm(urlSlug, false);
+          refreshData();
+          setIsInitializing(false);
         }
+
+        // Always fetch the latest firm data directly from Supabase so visitors worldwide see live data
+        firmService.fetchSingleFirmFromSupabase(urlSlug).then(res => {
+          if (res.success && res.firm) {
+            storageService.loadFirm(urlSlug, false);
+            refreshData();
+          }
+        }).catch(() => {});
         
-        // Full background initialization of all firms
+        // Non-blocking background sync of all platform firms from Supabase
         firmService.init().catch(() => {});
       } catch (err) {
         console.error('Critical initialization error:', err);
@@ -197,8 +178,16 @@ export default function App() {
 
     loadAppData();
 
-    // Listen for live updates from Admin Dashboard and Firm Switcher
+    // Listen for live updates from Admin Dashboard, Firm Switcher, and Supabase sync
     const handleStorageChange = () => {
+      refreshData();
+    };
+
+    const handleFirmsSynced = () => {
+      const currentSlug = firmService.getActiveFirmSlug();
+      if (currentSlug && firmService.hasFirmInMemory(currentSlug)) {
+        storageService.loadFirm(currentSlug, false);
+      }
       refreshData();
     };
 
@@ -212,10 +201,14 @@ export default function App() {
         refreshData();
       } else {
         setIsPlatformView(false);
-        if (urlSlug !== firmService.getActiveFirmSlug()) {
-          storageService.switchFirm(urlSlug);
-          refreshData();
-        }
+        storageService.switchFirm(urlSlug);
+        refreshData();
+        firmService.fetchSingleFirmFromSupabase(urlSlug).then(res => {
+          if (res.success && res.firm) {
+            storageService.loadFirm(urlSlug, false);
+            refreshData();
+          }
+        }).catch(() => {});
       }
     };
 
@@ -228,7 +221,8 @@ export default function App() {
     };
 
     window.addEventListener('aladl_storage_sync', handleStorageChange);
-    window.addEventListener('aladl_firms_updated', handleStorageChange);
+    window.addEventListener('aladl_firms_updated', handleFirmsSynced);
+    window.addEventListener('aladl_firm_data_synced', handleFirmsSynced);
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
 
@@ -259,7 +253,8 @@ export default function App() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('aladl_storage_sync', handleStorageChange);
-      window.removeEventListener('aladl_firms_updated', handleStorageChange);
+      window.removeEventListener('aladl_firms_updated', handleFirmsSynced);
+      window.removeEventListener('aladl_firm_data_synced', handleFirmsSynced);
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -324,11 +319,17 @@ export default function App() {
           lang={lang}
           onSelectFirm={(firmSlug: string) => {
             window.history.pushState({}, '', `/?firm=${firmSlug}`);
-            setIsPlatformView(false);
-            firmService.setActiveFirmSlug(firmSlug);
-            storageService.switchFirm(firmSlug);
+            firmService.setActiveFirmSlug(firmSlug, false);
+            storageService.loadFirm(firmSlug, false);
             refreshData();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setIsPlatformView(false);
+            window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+            firmService.fetchSingleFirmFromSupabase(firmSlug).then(res => {
+              if (res.success && res.firm) {
+                storageService.loadFirm(firmSlug, false);
+                refreshData();
+              }
+            }).catch(() => {});
           }}
         />
         {/* Render SuperAdminDashboard conditionally on top of the landing page */}

@@ -12,6 +12,8 @@ interface AchievementsSectionProps {
 export const AchievementsSection: React.FC<AchievementsSectionProps> = React.memo(({ caseStudies, lang, onOpenConsultation }) => {
   const t = useTranslation(lang);
 
+  if (!caseStudies || caseStudies.length === 0) return null;
+
   return (
     <section id="achievements" className="py-24 bg-[#f7f2e8] relative border-t border-[#e6ddcc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

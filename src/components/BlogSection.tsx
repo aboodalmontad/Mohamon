@@ -14,6 +14,8 @@ export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, 
   const t = useTranslation(lang);
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
+  if (!blogPosts || blogPosts.length === 0) return null;
+
   return (
     <section id="blog" className="py-24 bg-[#f7f2e8] relative border-t border-[#e6ddcc]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

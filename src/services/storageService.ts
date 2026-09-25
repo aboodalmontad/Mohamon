@@ -91,6 +91,7 @@ const notifyChange = () => {
 let mirrorTimeout: any = null;
 const mirrorAllDataToPersistence = () => {
   if (typeof window === 'undefined') return;
+  const targetSlug = firmService.getActiveFirmSlug();
   
   if (mirrorTimeout) clearTimeout(mirrorTimeout);
   
@@ -109,9 +110,8 @@ const mirrorAllDataToPersistence = () => {
       };
       saveSnapshotToIDB(snapshot);
 
-      // Also mirror to active firm inside firmService
-      const activeSlug = firmService.getActiveFirmSlug();
-      const firm = firmService.getFirmBySlug(activeSlug);
+      // Mirror to target firm inside firmService and push to Supabase
+      const firm = firmService.getFirmBySlug(targetSlug);
       if (firm) {
         firm.data = {
           settings: snapshot.settings,
@@ -138,7 +138,7 @@ const mirrorAllDataToPersistence = () => {
     } catch (e) {
       console.warn('Failed to mirror data snapshot', e);
     }
-  }, 1000); // Wait 1 second of inactivity before saving snapshot
+  }, 250);
 };
 
 // Memory cache for active data to ensure synchronous UI access while using async persistence
@@ -153,16 +153,18 @@ const MEMORY_CACHE: Record<string, any> = {
   offices: null,
 };
 
-// Internal helper to get data from cache or localStorage (fallback)
-const getFromCache = (key: keyof typeof MEMORY_CACHE, storageKey: string, defaultValue: any) => {
-  if (MEMORY_CACHE[key]) return MEMORY_CACHE[key];
-  
+// Internal helper to get data from active firm cache
+const getFromCache = (key: keyof typeof MEMORY_CACHE, _storageKey: string, defaultValue: any) => {
+  if (MEMORY_CACHE[key] !== null) return MEMORY_CACHE[key];
+
   try {
-    const localData = localStorage.getItem(storageKey);
-    if (localData) {
-      const parsed = JSON.parse(localData);
-      MEMORY_CACHE[key] = parsed;
-      return parsed;
+    const activeSlug = firmService.getActiveFirmSlug();
+    if (activeSlug && firmService.hasFirmInMemory(activeSlug)) {
+      const firm = firmService.getFirmBySlug(activeSlug);
+      if (firm && firm.data && (firm.data as any)[key] !== undefined) {
+        MEMORY_CACHE[key] = (firm.data as any)[key];
+        return MEMORY_CACHE[key];
+      }
     }
   } catch {}
   
@@ -191,78 +193,96 @@ const safeLocalStorageSet = (key: string, value: string): boolean => {
 };
 
 export const storageService = {
-  // Init and seed if empty, with Multi-firm resolution
+  // Init and seed if empty, with Multi-firm resolution from Supabase
   init: async () => {
     if (typeof window === 'undefined') return;
-
-    // Load from IndexedDB FIRST
-    const snapshot = await getSnapshotFromIDB();
-    if (snapshot) {
-      MEMORY_CACHE.partners = snapshot.partners;
-      MEMORY_CACHE.practiceAreas = snapshot.practiceAreas;
-      MEMORY_CACHE.caseStudies = snapshot.caseStudies;
-      MEMORY_CACHE.testimonials = snapshot.testimonials;
-      MEMORY_CACHE.blogPosts = snapshot.blogPosts;
-      MEMORY_CACHE.messages = snapshot.messages;
-      MEMORY_CACHE.settings = snapshot.settings;
-      MEMORY_CACHE.offices = snapshot.offices;
-      console.log('Successfully hydrated storage cache from IndexedDB');
-    }
 
     await firmService.init();
     const activeSlug = firmService.getActiveFirmSlug();
     const currentFirm = firmService.getFirmBySlug(activeSlug);
 
-    if (currentFirm && currentFirm.data && (currentFirm.data.partners || currentFirm.data.settings)) {
+    if (currentFirm) {
       storageService.loadFirm(currentFirm.slug, false);
-    } else if (!snapshot) {
-      storageService.seedInitialData();
-      mirrorAllDataToPersistence();
     }
 
     notifyChange();
   },
 
-  // Load a specific Law Firm's complete data into active state
+  // Load a specific Law Firm's complete data into active state directly from firmService (Supabase)
   loadFirm: (slug: string, triggerEvent = true) => {
     if (typeof window === 'undefined') return;
     const firm = firmService.getFirmBySlug(slug);
     
     if (!firm) return;
     
-    // Construct a baseline settings object from firm root data 
-    // to prevent ever showing a dummy firm while loading
-    const fallbackSettings = {
+    // Construct a baseline settings object from firm root data
+    const fallbackSettings: SiteSettings = {
       ...initialSiteSettings,
       firmNameAr: firm.nameAr,
-      firmNameEn: firm.nameEn || '',
-      firmNameTr: firm.nameTr || '',
-      sloganAr: firm.taglineAr || '',
-      sloganEn: firm.taglineEn || '',
+      firmNameEn: firm.nameEn || firm.nameAr || '',
+      firmNameTr: firm.nameTr || firm.nameEn || firm.nameAr || '',
+      sloganAr: firm.taglineAr || initialSiteSettings.sloganAr,
+      sloganEn: firm.taglineEn || initialSiteSettings.sloganEn,
       phone: firm.phone || '',
+      emergencyPhone: firm.phone || '',
       email: firm.email || '',
+      consultationEmail: firm.email || '',
       countryAr: firm.countryAr || initialSiteSettings.countryAr,
       countryEn: firm.countryEn || initialSiteSettings.countryEn,
       cityAr: firm.cityAr || initialSiteSettings.cityAr,
       cityEn: firm.cityEn || initialSiteSettings.cityEn,
+      addressAr: firm.data?.settings?.addressAr || `${firm.cityAr || ''}${firm.countryAr ? '، ' + firm.countryAr : ''}`,
+      addressEn: firm.data?.settings?.addressEn || `${firm.cityEn || ''}${firm.countryEn ? ', ' + firm.countryEn : ''}`,
       primaryColor: firm.themeColor || '#c5a869',
-      logoUrl: firm.logoUrl || ''
+      customLogoUrl: firm.logoUrl || (firm.data?.settings as any)?.customLogoUrl || ''
     };
 
-    // If we have firm data, update cache. 
-    if (firm && firm.data) {
-      const data = firm.data;
-      
-      // Update Memory Cache - force override to prevent bleeding from previous firm
-      MEMORY_CACHE.settings = data.settings || fallbackSettings;
-      MEMORY_CACHE.partners = (Array.isArray(data.partners) && data.partners.length > 0) ? data.partners : initialPartners;
-      MEMORY_CACHE.practiceAreas = (Array.isArray(data.practiceAreas) && data.practiceAreas.length > 0) ? data.practiceAreas : initialPracticeAreas;
-      MEMORY_CACHE.caseStudies = (Array.isArray(data.caseStudies) && data.caseStudies.length > 0) ? data.caseStudies : initialCaseStudies;
-      MEMORY_CACHE.testimonials = (Array.isArray(data.testimonials) && data.testimonials.length > 0) ? data.testimonials : initialTestimonials;
-      MEMORY_CACHE.blogPosts = (Array.isArray(data.blogPosts) && data.blogPosts.length > 0) ? data.blogPosts : initialBlogPosts;
-      MEMORY_CACHE.offices = (Array.isArray(data.offices) && data.offices.length > 0) ? data.offices : initialOffices;
-      MEMORY_CACHE.messages = Array.isArray(data.messages) ? data.messages : [];
-  
+    const data = firm.data || ({} as any);
+    const mergedSettings: SiteSettings = {
+      ...fallbackSettings,
+      ...(data.settings || {}),
+      firmNameAr: data.settings?.firmNameAr || firm.nameAr,
+      firmNameEn: data.settings?.firmNameEn || firm.nameEn || data.settings?.firmNameAr || firm.nameAr,
+      phone: data.settings?.phone || firm.phone || '',
+      email: data.settings?.email || firm.email || '',
+      cityAr: data.settings?.cityAr || firm.cityAr || 'الرياض',
+      cityEn: data.settings?.cityEn || firm.cityEn || 'Riyadh',
+    };
+
+    MEMORY_CACHE.settings = mergedSettings;
+    MEMORY_CACHE.partners = Array.isArray(data.partners) ? data.partners : [];
+    MEMORY_CACHE.practiceAreas = Array.isArray(data.practiceAreas) ? data.practiceAreas : [];
+    MEMORY_CACHE.caseStudies = Array.isArray(data.caseStudies) ? data.caseStudies : [];
+    MEMORY_CACHE.testimonials = Array.isArray(data.testimonials) ? data.testimonials : [];
+    MEMORY_CACHE.blogPosts = Array.isArray(data.blogPosts) ? data.blogPosts : [];
+    MEMORY_CACHE.offices = (Array.isArray(data.offices) && data.offices.length > 0)
+      ? data.offices
+      : [{
+          id: `hq-${firm.slug}`,
+          cityAr: mergedSettings.cityAr || firm.cityAr || 'الرياض',
+          cityEn: mergedSettings.cityEn || firm.cityEn || 'Riyadh',
+          countryAr: mergedSettings.countryAr || firm.countryAr || 'المملكة العربية السعودية',
+          countryEn: mergedSettings.countryEn || firm.countryEn || 'Saudi Arabia',
+          addressAr: mergedSettings.addressAr || firm.cityAr || 'المقر الرئيسي',
+          addressEn: mergedSettings.addressEn || firm.cityEn || 'Headquarters',
+          phone: mergedSettings.phone || firm.phone || '',
+          email: mergedSettings.email || firm.email || '',
+          mapEmbedUrl: '',
+          isHeadquarter: true,
+        }];
+    MEMORY_CACHE.messages = Array.isArray(data.messages) ? data.messages : [];
+
+    firmService.setActiveFirmSlug(firm.slug, false);
+
+    if (triggerEvent) {
+      notifyChange();
+    }
+
+    // Defer heavy JSON serialization to localStorage off the critical UI path
+    if ((storageService as any)._persistTimer) {
+      clearTimeout((storageService as any)._persistTimer);
+    }
+    (storageService as any)._persistTimer = setTimeout(() => {
       try {
         safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(MEMORY_CACHE.settings));
         safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(MEMORY_CACHE.partners));
@@ -272,37 +292,8 @@ export const storageService = {
         safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(MEMORY_CACHE.blogPosts));
         safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(MEMORY_CACHE.offices));
         safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(MEMORY_CACHE.messages));
-      } catch (e) {
-        console.error('Failed to load firm data to localStorage due to quota', e);
-      }
-    } else {
-      // Firm has no data yet, populate with safe fallbacks instead of empty arrays
-      MEMORY_CACHE.settings = fallbackSettings;
-      MEMORY_CACHE.partners = initialPartners;
-      MEMORY_CACHE.practiceAreas = initialPracticeAreas;
-      MEMORY_CACHE.caseStudies = initialCaseStudies;
-      MEMORY_CACHE.testimonials = initialTestimonials;
-      MEMORY_CACHE.blogPosts = initialBlogPosts;
-      MEMORY_CACHE.offices = initialOffices;
-      MEMORY_CACHE.messages = [];
-      
-      try {
-        safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(MEMORY_CACHE.settings));
-        safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(MEMORY_CACHE.partners));
-        safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(MEMORY_CACHE.practiceAreas));
-        safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(MEMORY_CACHE.caseStudies));
-        safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(MEMORY_CACHE.testimonials));
-        safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(MEMORY_CACHE.blogPosts));
-        safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(MEMORY_CACHE.offices));
-        safeLocalStorageSet(STORAGE_KEYS.MESSAGES, "[]");
       } catch (e) {}
-    }
-
-    firmService.setActiveFirmSlug(firm.slug, false);
-
-    if (triggerEvent) {
-      notifyChange();
-    }
+    }, 50);
   },
 
   // Switch the active Law Firm

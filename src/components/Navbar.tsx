@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check, Building } from 'lucide-react';
+import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check } from 'lucide-react';
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
@@ -97,22 +97,6 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
         <div className="relative z-30 bg-[#ede4d4]/95 backdrop-blur-md border-b border-[#c5a869]/30 text-xs text-[#4b4334] py-1.5 px-3 sm:px-4 shadow-xs">
           <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
-              <a
-                href="/"
-                onClick={(e) => {
-                  e.preventDefault();
-                  window.history.pushState({}, '', '/');
-                  window.dispatchEvent(new PopStateEvent('popstate'));
-                }}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 hover:bg-[#b38a38]/15 text-[#87641d] hover:text-[#684b12] border border-[#d8ceb8] hover:border-[#b38a38]/60 shadow-xs text-xs font-bold transition cursor-pointer select-none"
-                title={lang === 'ar' ? 'الرجوع إلى صفحة المنصة الرئيسية' : 'Return to Platform'}
-              >
-                <Building className="w-3.5 h-3.5 text-[#b38a38]" />
-                <span className="hidden sm:inline">{lang === 'ar' ? 'المنصة الرئيسية' : 'Platform'}</span>
-              </a>
-
-              <span className="hidden sm:inline text-[#c8bcab]">|</span>
-
               <span className="flex items-center gap-1 text-[#87641d] font-semibold text-[11px] sm:text-xs">
                 <Shield className="w-3.5 h-3.5 text-[#b38a38]" />
                 <span className="hidden xs:inline">{t.topAccredited}</span>

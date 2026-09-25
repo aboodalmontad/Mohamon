@@ -30,8 +30,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
       setIsLoading(false); // We have some data, show it immediately
     }
     
-    // 2. Full async fetch to pull latest server/supabase data
+    // 2. Full async fetch to pull latest Supabase data
     await firmService.init();
+    firmService.fetchFromSupabase().catch(() => {});
     const firms = firmService.getAllFirms();
     if (firms && firms.length > 0) {
       setActiveFirms(firms.filter(f => f.status !== 'suspended'));
@@ -199,6 +200,12 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                   <a 
                     key={firm.id}
                     href={`/?firm=${firm.slug}`}
+                    onMouseEnter={() => {
+                      firmService.fetchSingleFirmFast(firm.slug).catch(() => {});
+                    }}
+                    onTouchStart={() => {
+                      firmService.fetchSingleFirmFast(firm.slug).catch(() => {});
+                    }}
                     onClick={(e) => {
                       if (onSelectFirm) {
                         e.preventDefault();
