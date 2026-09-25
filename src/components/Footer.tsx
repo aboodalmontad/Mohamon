@@ -1,5 +1,5 @@
 import React from 'react';
-import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, ShieldCheck, Building } from 'lucide-react';
 import { SiteSettings, PracticeArea, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
@@ -279,6 +279,20 @@ export const Footer: React.FC<FooterProps> = React.memo(({
               <span>{t.adminPanel}</span>
             </button>
 
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                window.history.pushState({}, '', '/');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }}
+              className="text-[#d8ceb8] hover:text-[#c5a869] flex items-center gap-1 transition cursor-pointer text-xs"
+              title={lang === 'ar' ? 'الرجوع إلى صفحة المنصة الرئيسية' : 'Return to Platform Homepage'}
+            >
+              <Building className="w-3.5 h-3.5 text-[#c5a869]" />
+              <span>{lang === 'ar' ? 'المنصة الرئيسية' : 'Platform'}</span>
+            </a>
+
             {onOpenSuperAdmin && (
               <button
                 onClick={onOpenSuperAdmin}
@@ -286,7 +300,7 @@ export const Footer: React.FC<FooterProps> = React.memo(({
                 title={lang === 'ar' ? 'لوحة تحكم مدير المنصة واشتراكات المكاتب السحابية' : 'Platform Owner Console'}
               >
                 <ShieldCheck className="w-3 h-3 text-amber-400" />
-                <span>{lang === 'ar' ? 'إدارة المنصة' : 'Platform'}</span>
+                <span>{lang === 'ar' ? 'إدارة المنصة' : 'Platform Admin'}</span>
               </button>
             )}
 

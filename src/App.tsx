@@ -29,12 +29,15 @@ import { ChevronDown } from 'lucide-react';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, Language, LawFirm } from './types';
 
 // Eagerly initialize cache synchronously before React even starts rendering for INSTANT load
-let initialIsPlatformView = false;
+let initialIsPlatformView = true;
 if (typeof window !== 'undefined') {
   try {
     const urlParams = new URLSearchParams(window.location.search);
+    const firmParam = urlParams.get('firm') || urlParams.get('slug');
     const viewParam = urlParams.get('view');
-    if (viewParam === 'platform' || window.location.hash === '#platform') {
+    if (firmParam || viewParam === 'firm') {
+      initialIsPlatformView = false;
+    } else {
       initialIsPlatformView = true;
     }
   } catch (err) {
@@ -117,7 +120,7 @@ export default function App() {
           return;
         }
 
-        // 2. Custom Domain or Firm Resolution
+        // 2. Custom Domain or Explicit Firm Resolution
         const currentHost = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
         const isStandardDevOrPlatformHost = 
           currentHost === 'localhost' || 
@@ -126,64 +129,62 @@ export default function App() {
           currentHost.endsWith('.vercel.app');
 
         const domainFirm = !isStandardDevOrPlatformHost && currentHost ? firmService.getFirmByDomain(currentHost) : undefined;
-        let urlSlug = domainFirm ? domainFirm.slug : (urlParams.get('firm') || firmService.getActiveFirmSlug());
+        const requestedFirmSlug = domainFirm ? domainFirm.slug : (urlParams.get('firm') || urlParams.get('slug'));
 
-        // 3. If no firm specified in URL, resolve the default public firm for Vercel/Production
-        if (!urlSlug) {
-          urlSlug = firmService.getDefaultPublicFirmSlug();
-        }
-
-        // 4. If we have a firm to display:
-        if (urlSlug) {
-          setIsPlatformView(false);
-          const cachedFirm = firmService.getFirmBySlug(urlSlug);
-          
-          if (cachedFirm && cachedFirm.data && (cachedFirm.data.partners?.length || cachedFirm.data.practiceAreas?.length)) {
-            storageService.loadFirm(urlSlug, false);
-            refreshData();
-            setIsInitializing(false);
-            
-            // Re-validate and sync latest data from Supabase in the background
-            setIsFetchingFirm(true);
-            firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
-              if (sbRes.success && sbRes.firm) {
-                firmService.setFirm(sbRes.firm);
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
-              }
-            }).catch(err => {
-              console.warn('Background fetch for firm failed', err);
-            }).finally(() => {
-              setIsFetchingFirm(false);
-            });
-          } else {
-            setIsInitializing(true);
-            try {
-              const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug);
-              if (sbRes.success && sbRes.firm) {
-                firmService.setFirm(sbRes.firm);
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
-              } else if (cachedFirm) {
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
-              }
-            } catch (err) {
-              console.warn('Failed to fetch firm data', err);
-              if (cachedFirm) {
-                storageService.loadFirm(urlSlug, false);
-                refreshData();
-              }
-            } finally {
-              setIsInitializing(false);
-            }
-          }
-        } else {
-          // No firm found, show platform view
+        // 3. If NO explicit firm is requested, default to Platform Landing View!
+        if (!requestedFirmSlug || viewParam === 'platform' || window.location.hash === '#platform') {
           setIsPlatformView(true);
           storageService.init();
           refreshData();
           setIsInitializing(false);
+          firmService.init().then(() => refreshData()).catch(() => {});
+          return;
+        }
+
+        // 4. A specific firm was requested (via ?firm=... or custom domain):
+        const urlSlug = requestedFirmSlug;
+        setIsPlatformView(false);
+        const cachedFirm = firmService.getFirmBySlug(urlSlug);
+        
+        if (cachedFirm && cachedFirm.data && (cachedFirm.data.partners?.length || cachedFirm.data.practiceAreas?.length)) {
+          storageService.loadFirm(urlSlug, false);
+          refreshData();
+          setIsInitializing(false);
+          
+          // Re-validate and sync latest data from Supabase in the background
+          setIsFetchingFirm(true);
+          firmService.fetchSingleFirmFromSupabase(urlSlug).then(sbRes => {
+            if (sbRes.success && sbRes.firm) {
+              firmService.setFirm(sbRes.firm);
+              storageService.loadFirm(urlSlug, false);
+              refreshData();
+            }
+          }).catch(err => {
+            console.warn('Background fetch for firm failed', err);
+          }).finally(() => {
+            setIsFetchingFirm(false);
+          });
+        } else {
+          setIsInitializing(true);
+          try {
+            const sbRes = await firmService.fetchSingleFirmFromSupabase(urlSlug);
+            if (sbRes.success && sbRes.firm) {
+              firmService.setFirm(sbRes.firm);
+              storageService.loadFirm(urlSlug, false);
+              refreshData();
+            } else if (cachedFirm) {
+              storageService.loadFirm(urlSlug, false);
+              refreshData();
+            }
+          } catch (err) {
+            console.warn('Failed to fetch firm data', err);
+            if (cachedFirm) {
+              storageService.loadFirm(urlSlug, false);
+              refreshData();
+            }
+          } finally {
+            setIsInitializing(false);
+          }
         }
         
         // Full background initialization of all firms
@@ -203,10 +204,18 @@ export default function App() {
 
     const handlePopState = () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const urlSlug = urlParams.get('firm') || firmService.getDefaultPublicFirmSlug();
-      if (urlSlug !== firmService.getActiveFirmSlug()) {
-        storageService.switchFirm(urlSlug);
+      const urlSlug = urlParams.get('firm') || urlParams.get('slug');
+      const viewParam = urlParams.get('view');
+
+      if (!urlSlug || viewParam === 'platform' || window.location.hash === '#platform') {
+        setIsPlatformView(true);
         refreshData();
+      } else {
+        setIsPlatformView(false);
+        if (urlSlug !== firmService.getActiveFirmSlug()) {
+          storageService.switchFirm(urlSlug);
+          refreshData();
+        }
       }
     };
 
@@ -313,6 +322,14 @@ export default function App() {
         <PlatformLanding 
           onAdminClick={() => setIsSuperAdminOpen(true)}
           lang={lang}
+          onSelectFirm={(firmSlug: string) => {
+            window.history.pushState({}, '', `/?firm=${firmSlug}`);
+            setIsPlatformView(false);
+            firmService.setActiveFirmSlug(firmSlug);
+            storageService.switchFirm(firmSlug);
+            refreshData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
         {/* Render SuperAdminDashboard conditionally on top of the landing page */}
         {isSuperAdminOpen && (
@@ -324,6 +341,7 @@ export default function App() {
               // If super admin switches to a firm from platform view, we need to exit platform view and load the firm
               setIsSuperAdminOpen(false);
               setIsPlatformView(false);
+              window.history.pushState({}, '', `/?firm=${firmSlug}`);
               firmService.setActiveFirmSlug(firmSlug);
               storageService.switchFirm(firmSlug);
               refreshData();

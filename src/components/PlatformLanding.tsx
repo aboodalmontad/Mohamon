@@ -9,14 +9,16 @@ import { PlatformSettings } from '../types';
 interface PlatformLandingProps {
   onAdminClick: () => void;
   lang: Language;
+  onSelectFirm?: (slug: string) => void;
 }
 
-export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, lang }) => {
+export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, lang, onSelectFirm }) => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [activeFirms, setActiveFirms] = useState<LawFirm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
   const isRtl = lang === 'ar';
+  const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
 
   const loadFirms = async () => {
     setIsLoading(true);
@@ -193,13 +195,17 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 const name = firm.nameAr || firm.data?.settings?.firmNameAr || 'مكتب محاماة معتمد';
                 const city = firm.cityAr || (firm.data as any)?.offices?.[0]?.cityAr || 'الرياض';
                 const tagline = firm.taglineAr || firm.data?.settings?.sloganAr || '';
-                const officialDomain = firmService.getFirmDisplayDomain(firm);
-
                 return (
                   <a 
                     key={firm.id}
                     href={`/?firm=${firm.slug}`}
-                    className="group block bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6 hover:bg-white/10 hover:border-[#c5a869]/50 transition-all shadow-lg hover:shadow-2xl hover:shadow-[#c5a869]/10"
+                    onClick={(e) => {
+                      if (onSelectFirm) {
+                        e.preventDefault();
+                        onSelectFirm(firm.slug);
+                      }
+                    }}
+                    className="group block bg-white/5 border border-white/10 rounded-2xl p-5 sm:p-6 hover:bg-white/10 hover:border-[#c5a869]/50 transition-all shadow-lg hover:shadow-2xl hover:shadow-[#c5a869]/10 cursor-pointer"
                   >
                     <div className="flex items-start gap-3.5 sm:gap-4">
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-black/60 shrink-0 border border-white/10 group-hover:border-[#c5a869]/50 transition-colors flex items-center justify-center">
@@ -216,9 +222,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                           <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-[#c5a869] transition-colors leading-snug break-words">
                             {name}
                           </h4>
-                          <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-[#e5cb8e] bg-[#c5a869]/15 px-2.5 py-0.5 rounded-full border border-[#c5a869]/30 dir-ltr shadow-xs">
-                            <Globe className="w-3 h-3 text-[#c5a869]" />
-                            <span>{officialDomain}</span>
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#ebd397] bg-[#c5a869]/15 px-2.5 py-0.5 rounded-full border border-[#c5a869]/30 shadow-xs">
+                            <Shield className="w-3 h-3 text-[#c5a869]" />
+                            <span>{isRtl ? 'مكتب معتمد' : 'Verified'}</span>
                           </span>
                         </div>
                         
@@ -233,9 +239,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                             <MapPin className="w-3.5 h-3.5 text-[#c5a869] shrink-0" />
                             <span className="break-words">{city}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-[#e5cb8e] font-mono dir-ltr font-semibold bg-black/40 px-2 py-0.5 rounded-md border border-white/10 group-hover:border-[#c5a869]/40 transition-colors">
-                            <span className="text-emerald-400 text-[9px] animate-pulse">●</span>
-                            <span>{officialDomain}</span>
+                          <div className="flex items-center gap-1 text-xs text-[#ebd397] font-semibold bg-[#c5a869]/15 px-2.5 py-1 rounded-md border border-[#c5a869]/30 group-hover:bg-[#c5a869] group-hover:text-[#181512] transition-colors">
+                            <span>{isRtl ? 'زيارة الموقع' : 'Visit Site'}</span>
+                            <ArrowIcon className="w-3 h-3" />
                           </div>
                         </div>
                       </div>

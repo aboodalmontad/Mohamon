@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check } from 'lucide-react';
+import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check, Building } from 'lucide-react';
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
@@ -39,15 +39,19 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close language dropdown on outside click
+  // Close language dropdown on outside click (supporting mouse and touch)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
         setLangDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   const languagesList: { code: Language; label: string; flag: string; nativeName: string }[] = [
@@ -90,9 +94,25 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
     /* Pinned Top Fixed Container */
     <div className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         {/* Top pinned bar with Language, App Update/Refresh, and Admin Dashboard */}
-        <div className="bg-[#ede4d4]/95 backdrop-blur-md border-b border-[#c5a869]/30 text-xs text-[#4b4334] py-1.5 px-3 sm:px-4 shadow-xs">
+        <div className="relative z-30 bg-[#ede4d4]/95 backdrop-blur-md border-b border-[#c5a869]/30 text-xs text-[#4b4334] py-1.5 px-3 sm:px-4 shadow-xs">
           <div className="max-w-7xl mx-auto flex justify-between items-center gap-2">
             <div className="flex items-center gap-2 sm:gap-3">
+              <a
+                href="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', '/');
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 hover:bg-[#b38a38]/15 text-[#87641d] hover:text-[#684b12] border border-[#d8ceb8] hover:border-[#b38a38]/60 shadow-xs text-xs font-bold transition cursor-pointer select-none"
+                title={lang === 'ar' ? 'الرجوع إلى صفحة المنصة الرئيسية' : 'Return to Platform'}
+              >
+                <Building className="w-3.5 h-3.5 text-[#b38a38]" />
+                <span className="hidden sm:inline">{lang === 'ar' ? 'المنصة الرئيسية' : 'Platform'}</span>
+              </a>
+
+              <span className="hidden sm:inline text-[#c8bcab]">|</span>
+
               <span className="flex items-center gap-1 text-[#87641d] font-semibold text-[11px] sm:text-xs">
                 <Shield className="w-3.5 h-3.5 text-[#b38a38]" />
                 <span className="hidden xs:inline">{t.topAccredited}</span>
@@ -115,38 +135,53 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             {/* Pinned Controls: Language Switcher, Update App, Admin Dashboard */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* 1. Language Selector Dropdown (AR / EN / TR) */}
-              <div className="relative" ref={langDropdownRef}>
+              <div className="relative z-40" ref={langDropdownRef}>
                 <button
                   type="button"
-                  onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-                  className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg bg-white/95 hover:bg-white text-[#4b4334] hover:text-[#87641d] border border-[#d8ceb8] hover:border-[#b38a38]/40 shadow-xs text-xs font-bold transition cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLangDropdownOpen(prev => !prev);
+                  }}
+                  className="flex items-center gap-1 sm:gap-1.5 px-2.5 py-1 rounded-lg bg-white hover:bg-[#fbf8f2] text-[#4b4334] hover:text-[#87641d] border border-[#d8ceb8] hover:border-[#b38a38]/60 shadow-xs text-xs font-bold transition cursor-pointer select-none"
                   title="Select Language / اختيار اللغة / Dil Seçimi"
                   aria-expanded={langDropdownOpen}
                 >
                   <Globe className="w-3.5 h-3.5 text-[#87641d]" />
                   <span className="text-sm leading-none">{currentLangObj.flag}</span>
                   <span className="font-bold text-[11px] sm:text-xs">{currentLangObj.nativeName}</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${langDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-3 h-3 text-[#87641d] transition-transform duration-200 ${langDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {langDropdownOpen && (
-                  <div className="absolute right-0 rtl:right-auto rtl:left-0 mt-1.5 w-36 bg-white rounded-xl shadow-xl border border-[#c5a869]/30 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
-                    <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#87641d] border-b border-[#f0eae0] mb-1">
-                      {lang === 'ar' ? 'اختر اللغة' : lang === 'tr' ? 'Dil Seçin' : 'Select Language'}
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-full mt-2 ltr:left-0 rtl:right-0 w-44 bg-white rounded-xl shadow-2xl border-2 border-[#c5a869]/40 py-2 z-50 ring-1 ring-black/5"
+                  >
+                    <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#87641d] border-b border-[#f0eae0] mb-1 flex items-center justify-between">
+                      <span>{lang === 'ar' ? 'اختر اللغة' : lang === 'tr' ? 'Dil Seçin' : 'Select Language'}</span>
+                      <Globe className="w-3 h-3 text-[#b38a38]" />
                     </div>
                     {languagesList.map((item) => (
                       <button
                         key={item.code}
-                        onClick={() => handleSelectLanguage(item.code)}
-                        className={`w-full flex items-center justify-between px-3 py-1.5 text-xs text-left rtl:text-right transition cursor-pointer hover:bg-[#f7f2e8] ${
-                          lang === item.code ? 'font-bold text-[#87641d] bg-[#b38a38]/10' : 'text-[#3b352b]'
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSelectLanguage(item.code);
+                        }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs transition cursor-pointer hover:bg-[#f7f2e8] ${
+                          lang === item.code ? 'font-bold text-[#87641d] bg-[#b38a38]/15' : 'text-[#3b352b]'
                         }`}
                       >
-                        <span className="flex items-center gap-2">
-                          <span className="text-sm">{item.flag}</span>
-                          <span>{item.label}</span>
+                        <span className="flex items-center gap-2.5">
+                          <span className="text-base leading-none">{item.flag}</span>
+                          <span className="font-medium text-xs">{item.label}</span>
                         </span>
-                        {lang === item.code && <Check className="w-3.5 h-3.5 text-[#87641d]" />}
+                        {lang === item.code ? (
+                          <Check className="w-3.5 h-3.5 text-[#87641d]" />
+                        ) : (
+                          <span className="text-[10px] text-[#a0907d] font-mono uppercase">{item.code}</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -155,6 +190,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
 
               {/* 2. Quick reload cache & update app button */}
               <button
+                type="button"
                 onClick={() => {
                   storageService.clearCacheAndRefreshApp();
                 }}
@@ -167,6 +203,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
 
               {/* 3. Admin Panel / Dashboard Trigger */}
               <button
+                type="button"
                 onClick={onOpenAdmin}
                 className="text-xs text-[#87641d] hover:text-[#684b12] flex items-center gap-1 sm:gap-1.5 transition px-2.5 sm:px-3 py-1 rounded-lg bg-[#b38a38]/15 hover:bg-[#b38a38]/25 border border-[#c5a869]/50 hover:border-[#b38a38] shadow-xs cursor-pointer active:scale-95 font-bold"
                 title={t.adminPanel}
@@ -180,7 +217,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
 
         {/* Main Navigation Header */}
         <header
-          className={`w-full transition-all duration-300 ${
+          className={`relative z-10 w-full transition-all duration-300 ${
             isScrolled
               ? 'bg-[#fbf8f2]/95 backdrop-blur-md shadow-lg py-2 border-b border-[#e6ddcc]'
               : 'bg-[#fbf8f2]/92 backdrop-blur-sm py-3 border-b border-[#e6ddcc]/60'
