@@ -87,15 +87,12 @@ const notifyChange = () => {
   }
 };
 
-// Debounced version of mirrorAllDataToPersistence to avoid rapid-fire heavy snapshots
-let mirrorTimeout: any = null;
-const mirrorAllDataToPersistence = () => {
+// Non-blocking background persistence for IndexedDB & localStorage backups
+let idbBackupTimeout: any = null;
+const scheduleBackgroundLocalBackup = () => {
   if (typeof window === 'undefined') return;
-  const targetSlug = firmService.getActiveFirmSlug();
-  
-  if (mirrorTimeout) clearTimeout(mirrorTimeout);
-  
-  mirrorTimeout = setTimeout(() => {
+  if (idbBackupTimeout) clearTimeout(idbBackupTimeout);
+  idbBackupTimeout = setTimeout(() => {
     try {
       const snapshot = {
         partners: storageService.getPartners(),
@@ -109,36 +106,68 @@ const mirrorAllDataToPersistence = () => {
         savedAt: new Date().toISOString(),
       };
       saveSnapshotToIDB(snapshot);
+    } catch {}
+  }, 150);
+};
 
-      // Mirror to target firm inside firmService and push to Supabase
-      const firm = firmService.getFirmBySlug(targetSlug);
-      if (firm) {
-        firm.data = {
-          settings: snapshot.settings,
-          partners: snapshot.partners,
-          practiceAreas: snapshot.practiceAreas,
-          caseStudies: snapshot.caseStudies,
-          testimonials: snapshot.testimonials,
-          blogPosts: snapshot.blogPosts,
-          offices: snapshot.offices,
-          messages: snapshot.messages,
-          savedAt: snapshot.savedAt,
-        };
-        firm.nameAr = snapshot.settings.firmNameAr || firm.nameAr;
-        firm.nameEn = snapshot.settings.firmNameEn || firm.nameEn;
-        firm.phone = snapshot.settings.phone || firm.phone;
-        firm.email = snapshot.settings.email || firm.email;
-        firm.themeColor = snapshot.settings.primaryColor || firm.themeColor || '#c5a869';
-        if (snapshot.settings.countryAr) firm.countryAr = snapshot.settings.countryAr;
-        if (snapshot.settings.countryEn) firm.countryEn = snapshot.settings.countryEn;
-        if (snapshot.settings.cityAr) firm.cityAr = snapshot.settings.cityAr;
-        if (snapshot.settings.cityEn) firm.cityEn = snapshot.settings.cityEn;
-        firmService.saveFirm(firm).catch(() => {});
-      }
-    } catch (e) {
-      console.warn('Failed to mirror data snapshot', e);
-    }
-  }, 250);
+// Instant in-memory firm state update + targeted delta sync to Supabase (0ms delay, only modified data sent)
+const syncDeltaImmediately = (
+  delta: Parameters<typeof firmService.syncFirmDeltaToSupabase>[1]
+): Promise<{ success: boolean; durationMs: number }> => {
+  if (typeof window === 'undefined') return Promise.resolve({ success: false, durationMs: 0 });
+  const targetSlug = firmService.getActiveFirmSlug();
+  const firm = firmService.getFirmBySlug(targetSlug);
+
+  if (firm) {
+    const nowIso = new Date().toISOString();
+    firm.data = {
+      settings: storageService.getSettings(),
+      partners: storageService.getPartners(),
+      practiceAreas: storageService.getPracticeAreas(),
+      caseStudies: storageService.getCaseStudies(),
+      testimonials: storageService.getTestimonials(),
+      blogPosts: storageService.getBlogPosts(),
+      offices: storageService.getOffices(),
+      messages: storageService.getMessages(),
+      savedAt: nowIso,
+    };
+    firm.updatedAt = nowIso;
+  }
+
+  scheduleBackgroundLocalBackup();
+  return firmService.syncFirmDeltaToSupabase(targetSlug, delta);
+};
+
+// Legacy full mirror helper (used only on bulk JSON import or full reset)
+const mirrorAllDataToPersistence = () => {
+  if (typeof window === 'undefined') return;
+  const targetSlug = firmService.getActiveFirmSlug();
+  const firm = firmService.getFirmBySlug(targetSlug);
+  if (firm) {
+    const settings = storageService.getSettings();
+    firm.data = {
+      settings,
+      partners: storageService.getPartners(),
+      practiceAreas: storageService.getPracticeAreas(),
+      caseStudies: storageService.getCaseStudies(),
+      testimonials: storageService.getTestimonials(),
+      blogPosts: storageService.getBlogPosts(),
+      offices: storageService.getOffices(),
+      messages: storageService.getMessages(),
+      savedAt: new Date().toISOString(),
+    };
+    firm.nameAr = settings.firmNameAr || firm.nameAr;
+    firm.nameEn = settings.firmNameEn || firm.nameEn;
+    firm.phone = settings.phone || firm.phone;
+    firm.email = settings.email || firm.email;
+    firm.themeColor = settings.primaryColor || firm.themeColor || '#c5a869';
+    if (settings.countryAr) firm.countryAr = settings.countryAr;
+    if (settings.countryEn) firm.countryEn = settings.countryEn;
+    if (settings.cityAr) firm.cityAr = settings.cityAr;
+    if (settings.cityEn) firm.cityEn = settings.cityEn;
+    firmService.saveFirm(firm).catch(() => {});
+  }
+  scheduleBackgroundLocalBackup();
 };
 
 // Memory cache for active data to ensure synchronous UI access while using async persistence
@@ -405,9 +434,13 @@ export const storageService = {
     }
     
     MEMORY_CACHE.partners = updated;
-    safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'partner_upsert',
+      item: partner,
+      sortOrder: index >= 0 ? index : 0,
+    });
     return updated;
   },
 
@@ -418,10 +451,13 @@ export const storageService = {
     const label = isAssociate ? 'المحامي / المستشار' : 'الشريك';
     
     MEMORY_CACHE.partners = list;
-    safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(list));
-    storageService.logAction('DELETE', 'الشركاء والمحامين (Legal Team)', id, `حذف ${label}: ${partner?.name || id}`);
-    mirrorAllDataToPersistence();
     notifyChange();
+    storageService.logAction('DELETE', 'الشركاء والمحامين (Legal Team)', id, `حذف ${label}: ${partner?.name || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'partner_delete',
+      id,
+    });
     return list;
   },
 
@@ -451,9 +487,13 @@ export const storageService = {
     }
     
     MEMORY_CACHE.practiceAreas = updated;
-    safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'practice_upsert',
+      item,
+      sortOrder: index >= 0 ? index : updated.length - 1,
+    });
     return updated;
   },
 
@@ -462,10 +502,13 @@ export const storageService = {
     const list = storageService.getPracticeAreas().filter(p => p.id !== id);
     
     MEMORY_CACHE.practiceAreas = list;
-    safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(list));
-    storageService.logAction('DELETE', 'الاختصاصات (Practice Areas)', id, `حذف الاختصاص: ${item?.title || id}`);
-    mirrorAllDataToPersistence();
     notifyChange();
+    storageService.logAction('DELETE', 'الاختصاصات (Practice Areas)', id, `حذف الاختصاص: ${item?.title || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'practice_delete',
+      id,
+    });
     return list;
   },
 
@@ -488,9 +531,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.caseStudies = updated;
-    safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'caseStudy_upsert',
+      item,
+    });
     return updated;
   },
 
@@ -499,10 +545,13 @@ export const storageService = {
     const list = storageService.getCaseStudies().filter(c => c.id !== id);
     
     MEMORY_CACHE.caseStudies = list;
-    safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(list));
-    storageService.logAction('DELETE', 'الإنجازات والقضايا (Case Studies)', id, `حذف القضية: ${item?.title || id}`);
-    mirrorAllDataToPersistence();
     notifyChange();
+    storageService.logAction('DELETE', 'الإنجازات والقضايا (Case Studies)', id, `حذف القضية: ${item?.title || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'caseStudy_delete',
+      id,
+    });
     return list;
   },
 
@@ -525,9 +574,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.testimonials = updated;
-    safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'testimonial_upsert',
+      item,
+    });
     return updated;
   },
 
@@ -536,10 +588,13 @@ export const storageService = {
     const list = storageService.getTestimonials().filter(t => t.id !== id);
     
     MEMORY_CACHE.testimonials = list;
-    safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(list));
-    storageService.logAction('DELETE', 'آراء العملاء (Testimonials)', id, `حذف شهادة: ${item?.clientName || id}`);
-    mirrorAllDataToPersistence();
     notifyChange();
+    storageService.logAction('DELETE', 'آراء العملاء (Testimonials)', id, `حذف شهادة: ${item?.clientName || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'testimonial_delete',
+      id,
+    });
     return list;
   },
 
@@ -562,9 +617,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.blogPosts = updated;
-    safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'blog_upsert',
+      item: post,
+    });
     return updated;
   },
 
@@ -573,10 +631,13 @@ export const storageService = {
     const list = storageService.getBlogPosts().filter(b => b.id !== id);
     
     MEMORY_CACHE.blogPosts = list;
-    safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(list));
-    storageService.logAction('DELETE', 'المقالات والمدونة (Blog)', id, `حذف المقال: ${item?.title || id}`);
-    mirrorAllDataToPersistence();
     notifyChange();
+    storageService.logAction('DELETE', 'المقالات والمدونة (Blog)', id, `حذف المقال: ${item?.title || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'blog_delete',
+      id,
+    });
     return list;
   },
 
@@ -599,9 +660,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.offices = updated;
-    safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'office_upsert',
+      item: office,
+    });
     return updated;
   },
 
@@ -610,10 +674,13 @@ export const storageService = {
     const list = storageService.getOffices().filter(o => o.id !== id);
     
     MEMORY_CACHE.offices = list;
-    safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(list));
-    storageService.logAction('DELETE', 'المقار والفروع (Offices)', id, `حذف المقر: ${item?.cityAr || id}`);
-    mirrorAllDataToPersistence();
     notifyChange();
+    storageService.logAction('DELETE', 'المقار والفروع (Offices)', id, `حذف المقر: ${item?.cityAr || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'office_delete',
+      id,
+    });
     return list;
   },
 
@@ -641,9 +708,12 @@ export const storageService = {
     const updated = [newMsg, ...list];
     
     MEMORY_CACHE.messages = updated;
-    safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(updated));
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'message_upsert',
+      item: newMsg,
+    });
 
     // Async push to Supabase consultation_inquiries table
     try {
@@ -673,20 +743,28 @@ export const storageService = {
   updateMessageStatus: (id: string, status: ContactMessage['status'], responseNote?: string): ContactMessage[] => {
     const list = storageService.getMessages();
     const updated = list.map(m => m.id === id ? { ...m, status, responseNote: responseNote !== undefined ? responseNote : m.responseNote } : m);
-    safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(updated));
-    storageService.logAction('STATUS_CHANGE', 'رسائل العملاء (Messages)', id, `تحديث حالة الاستشارة إلى: ${status}`);
-    mirrorAllDataToPersistence();
+    MEMORY_CACHE.messages = updated;
     notifyChange();
+    storageService.logAction('STATUS_CHANGE', 'رسائل العملاء (Messages)', id, `تحديث حالة الاستشارة إلى: ${status}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(updated)), 10);
+    syncDeltaImmediately({
+      type: 'message_upsert',
+      id,
+    });
     return updated;
   },
 
   deleteMessage: (id: string): ContactMessage[] => {
     const msg = storageService.getMessages().find(m => m.id === id);
     const list = storageService.getMessages().filter(m => m.id !== id);
-    safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(list));
-    storageService.logAction('DELETE', 'رسائل العملاء (Messages)', id, `حذف استشارة الموكل: ${msg?.fullName || id}`);
-    mirrorAllDataToPersistence();
+    MEMORY_CACHE.messages = list;
     notifyChange();
+    storageService.logAction('DELETE', 'رسائل العملاء (Messages)', id, `حذف استشارة الموكل: ${msg?.fullName || id}`);
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(list)), 10);
+    syncDeltaImmediately({
+      type: 'message_delete',
+      id,
+    });
     return list;
   },
 
@@ -714,17 +792,66 @@ export const storageService = {
   },
 
   saveSettings: (settings: SiteSettings): SiteSettings => {
+    const targetSlug = firmService.getActiveFirmSlug();
+    const firm = firmService.getFirmBySlug(targetSlug);
+    const changedRootCols: Record<string, any> = {};
+
+    if (firm) {
+      if (settings.firmNameAr && settings.firmNameAr !== firm.nameAr) {
+        firm.nameAr = settings.firmNameAr;
+        changedRootCols.name_ar = settings.firmNameAr;
+      }
+      if (settings.firmNameEn && settings.firmNameEn !== firm.nameEn) {
+        firm.nameEn = settings.firmNameEn;
+        changedRootCols.name_en = settings.firmNameEn;
+      }
+      if (settings.cityAr && settings.cityAr !== firm.cityAr) {
+        firm.cityAr = settings.cityAr;
+        changedRootCols.city_ar = settings.cityAr;
+      }
+      if (settings.cityEn && settings.cityEn !== firm.cityEn) {
+        firm.cityEn = settings.cityEn;
+        changedRootCols.city_en = settings.cityEn;
+      }
+      if (settings.countryAr && settings.countryAr !== firm.countryAr) {
+        firm.countryAr = settings.countryAr;
+      }
+      if (settings.countryEn && settings.countryEn !== firm.countryEn) {
+        firm.countryEn = settings.countryEn;
+      }
+      if (settings.phone && settings.phone !== firm.phone) {
+        firm.phone = settings.phone;
+        changedRootCols.phone = settings.phone;
+      }
+      if (settings.email && settings.email !== firm.email) {
+        firm.email = settings.email;
+        changedRootCols.email = settings.email;
+      }
+      if (settings.adminPassword && settings.adminPassword !== firm.adminPassword) {
+        firm.adminPassword = settings.adminPassword;
+        changedRootCols.admin_password = settings.adminPassword;
+      }
+      if (settings.primaryColor && settings.primaryColor !== firm.themeColor) {
+        firm.themeColor = settings.primaryColor;
+        changedRootCols.theme_color = settings.primaryColor;
+      }
+      if (settings.sloganAr && settings.sloganAr !== firm.taglineAr) {
+        firm.taglineAr = settings.sloganAr;
+        changedRootCols.tagline_ar = settings.sloganAr;
+      }
+    }
+
     MEMORY_CACHE.settings = settings;
-    safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     storageService.logAction('UPDATE', 'إعدادات الموقع (Settings)', 'site-settings', `تحديث إعدادات واسم المكتب: ${settings.firmNameAr}`);
     
     // Automatically keep the Headquarters office in sync with settings
+    let updatedHqOffice: OfficeLocation | undefined;
     try {
       const offices = storageService.getOffices();
       if (Array.isArray(offices) && offices.length > 0) {
         const hqIndex = offices.findIndex(o => o.isHeadquarter) !== -1 ? offices.findIndex(o => o.isHeadquarter) : 0;
         if (hqIndex >= 0 && offices[hqIndex]) {
-          offices[hqIndex] = {
+          const nextHq: OfficeLocation = {
             ...offices[hqIndex],
             phone: settings.phone || offices[hqIndex].phone,
             email: settings.email || offices[hqIndex].email,
@@ -738,15 +865,24 @@ export const storageService = {
             cityEn: settings.cityEn || offices[hqIndex].cityEn,
             cityTr: settings.cityTr || offices[hqIndex].cityTr,
           };
-          safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(offices));
+          const updatedOffices = [...offices];
+          updatedOffices[hqIndex] = nextHq;
+          MEMORY_CACHE.offices = updatedOffices;
+          updatedHqOffice = nextHq;
+          setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(updatedOffices)), 15);
         }
       }
     } catch (e) {
       console.warn('Could not auto-sync HQ office with settings', e);
     }
 
-    mirrorAllDataToPersistence();
     notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(settings)), 10);
+    syncDeltaImmediately({
+      type: updatedHqOffice ? 'office_upsert' : 'settings_update',
+      item: updatedHqOffice,
+      changedRootCols,
+    });
     return settings;
   },
 

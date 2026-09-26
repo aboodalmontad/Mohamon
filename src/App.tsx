@@ -334,22 +334,39 @@ export default function App() {
         />
         {/* Render SuperAdminDashboard conditionally on top of the landing page */}
         {isSuperAdminOpen && (
-          <SuperAdminDashboard
-            isOpen={isSuperAdminOpen}
-            onClose={() => setIsSuperAdminOpen(false)}
-            lang={lang}
-            onSelectFirmToManage={(firmSlug: string) => {
-              // If super admin switches to a firm from platform view, we need to exit platform view and load the firm
-              setIsSuperAdminOpen(false);
-              setIsPlatformView(false);
-              window.history.pushState({}, '', `/?firm=${firmSlug}`);
-              firmService.setActiveFirmSlug(firmSlug);
-              storageService.switchFirm(firmSlug);
-              refreshData();
-            }}
-            onOpenCreateModal={() => {}}
-          />
+          <React.Suspense fallback={null}>
+            <SuperAdminDashboard
+              isOpen={isSuperAdminOpen}
+              onClose={() => setIsSuperAdminOpen(false)}
+              lang={lang}
+              onSelectFirmToManage={(firmSlug: string) => {
+                setIsSuperAdminOpen(false);
+                setIsPlatformView(false);
+                window.history.pushState({}, '', `/?firm=${firmSlug}`);
+                firmService.setActiveFirmSlug(firmSlug);
+                storageService.switchFirm(firmSlug);
+                refreshData();
+                setIsAdminOpen(true);
+              }}
+              onOpenCreateModal={() => {
+                setIsSuperAdminOpen(false);
+                setIsSiteBuilderOpen(true);
+              }}
+            />
+          </React.Suspense>
         )}
+        <React.Suspense fallback={null}>
+          <LawyerSiteBuilderModal
+            isOpen={isSiteBuilderOpen}
+            onClose={() => setIsSiteBuilderOpen(false)}
+            onFirmCreated={(newFirm) => {
+              handleFirmCreated(newFirm);
+              setIsPlatformView(false);
+              window.history.pushState({}, '', `/?firm=${newFirm.slug}`);
+            }}
+            lang={lang}
+          />
+        </React.Suspense>
       </>
     );
   }
@@ -378,7 +395,6 @@ export default function App() {
           firm={activeFirm}
           lang={lang}
           onOpenFirmAdmin={() => setIsAdminOpen(true)}
-          onOpenSuperAdmin={() => setIsSuperAdminOpen(true)}
         />
       ) : (
         <>
@@ -488,7 +504,6 @@ export default function App() {
             lang={lang}
             onOpenConsultation={handleOpenConsultation}
             onOpenAdmin={() => setIsAdminOpen(true)}
-            onOpenSuperAdmin={() => setIsSuperAdminOpen(true)}
           />
         </>
       )}
@@ -506,34 +521,12 @@ export default function App() {
         />
       </React.Suspense>
 
-      {/* Protected Admin Control Center - Single Firm Level */}
+      {/* Protected Admin Control Center - Single Firm Level Only */}
       <React.Suspense fallback={null}>
         <AdminDashboard
           isOpen={isAdminOpen}
           onClose={() => setIsAdminOpen(false)}
           lang={lang}
-          onOpenSuperAdmin={() => {
-            setIsAdminOpen(false);
-            setIsSuperAdminOpen(true);
-          }}
-        />
-      </React.Suspense>
-
-      {/* Platform Owner Super Admin Dashboard - All Firms & Subscriptions & Supabase Cloud Sync */}
-      <React.Suspense fallback={null}>
-        <SuperAdminDashboard
-          isOpen={isSuperAdminOpen}
-          onClose={() => setIsSuperAdminOpen(false)}
-          lang={lang}
-          onSelectFirmToManage={(slug) => {
-            handleSelectFirm(slug);
-            setIsSuperAdminOpen(false);
-            setIsAdminOpen(true);
-          }}
-          onOpenCreateModal={() => {
-            setIsSuperAdminOpen(false);
-            setIsSiteBuilderOpen(true);
-          }}
         />
       </React.Suspense>
 

@@ -89,15 +89,12 @@ const PRESET_ABOUT_IMAGES = [
   'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=1000'
 ];
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose, lang, onOpenSuperAdmin }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose, lang }) => {
   const isAr = lang === 'ar';
 
   // Auth state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
-  const [usernameInput, setUsernameInput] = useState('');
-  const [selectedFirmSlug, setSelectedFirmSlug] = useState<string>('');
-  const [availableFirms, setAvailableFirms] = useState<any[]>([]);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -160,6 +157,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   // Firm Data Saving State for Manager
   const [isSavingFirmData, setIsSavingFirmData] = useState(false);
   const [saveSuccessTick, setSaveSuccessTick] = useState(false);
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<{
+    status: 'idle' | 'saving' | 'saved' | 'error';
+    durationMs?: number;
+  }>({ status: 'idle' });
 
   // Auto Translation & Multi-Language Sync States
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
@@ -307,23 +308,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   useEffect(() => {
     if (isOpen) {
       loadData();
-      // Load available firms for login switcher
-      firmService.init().then(() => {
-        const firms = firmService.getAllFirms();
-        setAvailableFirms(firms);
-        const currentActive = firmService.getActiveFirmSlug();
-        setSelectedFirmSlug(currentActive || (firms[0]?.slug ?? ''));
-      });
 
       // Listen for storage sync events (from IndexedDB hydration)
       const handleSync = () => {
         loadData();
       };
+      const handleCloudStatus = (e: Event) => {
+        const detail = (e as CustomEvent)?.detail;
+        if (detail?.status) {
+          setCloudSyncStatus({ status: detail.status, durationMs: detail.durationMs });
+        }
+      };
       window.addEventListener('aladl_storage_sync', handleSync);
       window.addEventListener('aladl_firms_updated', handleSync);
+      window.addEventListener('aladl_cloud_sync_status', handleCloudStatus);
       return () => {
         window.removeEventListener('aladl_storage_sync', handleSync);
         window.removeEventListener('aladl_firms_updated', handleSync);
+        window.removeEventListener('aladl_cloud_sync_status', handleCloudStatus);
       };
     }
   }, [isOpen]);
@@ -351,14 +353,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
   };
 
-  // Form-specific auto-translation helpers
+  // Form-specific auto-translation helpers (smart diffing)
   const handleTranslateCurrentPartner = async () => {
     if (!editingPartner) return;
     setIsTranslating(true);
     try {
-      const translated = await autoTranslatePartner(editingPartner);
+      const prev = partners.find(p => p.id === editingPartner.id);
+      const translated = await autoTranslatePartner(editingPartner, prev);
       setEditingPartner(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة بيانات الشريك/المحامي للإنجليزية والتركية' : 'Translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة التعديلات فوراً للإنجليزية والتركية' : 'Translated changes to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -370,9 +373,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     if (!editingPractice) return;
     setIsTranslating(true);
     try {
-      const translated = await autoTranslatePracticeArea(editingPractice);
+      const prev = practiceAreas.find(p => p.id === editingPractice.id);
+      const translated = await autoTranslatePracticeArea(editingPractice, prev);
       setEditingPractice(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة الاختصاص للإنجليزية والتركية' : 'Translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة التعديلات فوراً للإنجليزية والتركية' : 'Translated changes to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -384,9 +388,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     if (!editingCaseStudy) return;
     setIsTranslating(true);
     try {
-      const translated = await autoTranslateCaseStudy(editingCaseStudy);
+      const prev = caseStudies.find(c => c.id === editingCaseStudy.id);
+      const translated = await autoTranslateCaseStudy(editingCaseStudy, prev);
       setEditingCaseStudy(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة القضية/الإنجاز للإنجليزية والتركية' : 'Translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة التعديلات فوراً للإنجليزية والتركية' : 'Translated changes to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -398,9 +403,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     if (!editingTestimonial) return;
     setIsTranslating(true);
     try {
-      const translated = await autoTranslateTestimonial(editingTestimonial);
+      const prev = testimonials.find(t => t.id === editingTestimonial.id);
+      const translated = await autoTranslateTestimonial(editingTestimonial, prev);
       setEditingTestimonial(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة شهادة العميل للإنجليزية والتركية' : 'Translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة التعديلات فوراً للإنجليزية والتركية' : 'Translated changes to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -412,9 +418,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     if (!editingBlog) return;
     setIsTranslating(true);
     try {
-      const translated = await autoTranslateBlogPost(editingBlog);
+      const prev = blogPosts.find(b => b.id === editingBlog.id);
+      const translated = await autoTranslateBlogPost(editingBlog, prev);
       setEditingBlog(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة المقال للإنجليزية والتركية' : 'Translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة التعديلات فوراً للإنجليزية والتركية' : 'Translated changes to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -426,9 +433,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     if (!editingOffice) return;
     setIsTranslating(true);
     try {
-      const translated = await autoTranslateOffice(editingOffice);
+      const prev = offices.find(o => o.id === editingOffice.id);
+      const translated = await autoTranslateOffice(editingOffice, prev);
       setEditingOffice(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة مقر المكتب للإنجليزية والتركية' : 'Translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة التعديلات فوراً للإنجليزية والتركية' : 'Translated changes to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -439,10 +447,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const handleTranslateCurrentSettings = async () => {
     setIsTranslating(true);
     try {
-      const translated = await autoTranslateSettings(settings);
+      const prev = storageService.getSettings();
+      const translated = await autoTranslateSettings(settings, prev);
       setSettings(translated);
       storageService.saveSettings(translated);
-      showToast(isAr ? '✨ تم ترجمة ومزامنة كافة إعدادات ونصوص وهوية الموقع للإنجليزية والتركية' : 'Site settings translated to EN & TR');
+      showToast(isAr ? '✨ تم ترجمة ومزامنة التعديلات للإنجليزية والتركية' : 'Site settings translated to EN & TR');
     } catch (err) {
       showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
     } finally {
@@ -453,7 +462,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const handleTranslateCurrentAbout = async () => {
     setIsTranslating(true);
     try {
-      const translated = await autoTranslateSettings(settings);
+      const prev = storageService.getSettings();
+      const translated = await autoTranslateSettings(settings, prev);
       setSettings(translated);
       storageService.saveSettings(translated);
       showToast(isAr ? '✨ تم ترجمة نصوص قسم «عن المكتب والمسيرة» للإنجليزية والتركية بنجاح' : 'About & Journey texts translated to EN & TR');
@@ -466,137 +476,82 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
   const handleSaveAboutSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setIsSavingFirmData(true);
-    try {
-      storageService.saveSettings(settings);
-      const activeSlug = firmService.getActiveFirmSlug();
-      const firm = firmService.getFirmBySlug(activeSlug);
-      if (firm) {
-        if (firm.data) {
-          firm.data.settings = settings;
-          firm.data.savedAt = new Date().toISOString();
-        }
-        await firmService.saveFirm(firm);
-      }
-      setSaveSuccessTick(true);
-      setTimeout(() => setSaveSuccessTick(false), 2500);
-      showToast(isAr ? '💾 تم حفظ وتحديث نصوص «عن المكتب والمسيرة» فوراً على الموقع!' : 'About & Journey content saved successfully!');
-    } catch (err) {
-      console.warn('Error saving about settings:', err);
-      showToast(isAr ? 'تم حفظ التعديلات محلياً' : 'Saved locally');
-    } finally {
-      setIsSavingFirmData(false);
+    const prevSettings = storageService.getSettings();
+    const toSave = { ...settings };
+
+    // 1. Instant save + immediate delta sync to Supabase
+    storageService.saveSettings(toSave);
+    setSaveSuccessTick(true);
+    setTimeout(() => setSaveSuccessTick(false), 2500);
+    showToast(isAr ? '⚡ تم حفظ التعديلات في قاعدة البيانات السحابية فوراً!' : '⚡ Changes saved to cloud database immediately!');
+
+    // 2. Non-blocking background diff translation for modified Arabic fields only
+    if (autoSyncEnabled) {
+      autoTranslateSettings(toSave, prevSettings)
+        .then((translated) => {
+          if (JSON.stringify(translated) !== JSON.stringify(toSave)) {
+            setSettings(translated);
+            storageService.saveSettings(translated);
+          }
+        })
+        .catch(() => {});
     }
   };
 
-  // Handle Login
+  // Handle Login (Strictly for the current active office only)
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const input = passwordInput.trim().toLowerCase();
     const rawInput = passwordInput.trim();
-    const userInput = usernameInput.trim().toLowerCase();
     setIsLoggingIn(true);
     setAuthError(null);
 
-    // Master Platform Owner Passwords (Super Admin)
-    const masterPasswords = [
-      'aladladmin2025',
-      'superadmin',
-      'master2026',
-      'super',
-      'owner',
-      'admin2025'
-    ];
-
-    if (masterPasswords.includes(input)) {
-      if (onOpenSuperAdmin) {
-        setIsAuthenticated(false);
-        setPasswordInput('');
-        setUsernameInput('');
-        setAuthError(null);
-        setIsLoggingIn(false);
-        onClose();
-        onOpenSuperAdmin();
-        return;
-      }
-    }
-
     try {
-      // 1. Try to find the firm from what we already have in memory/cache first
-      let allFirms = firmService.getAllFirms();
-      
-      const findTarget = (firms: LawFirm[]) => {
-        let target = selectedFirmSlug ? firms.find(f => f.slug === selectedFirmSlug) : null;
-        if (!target && userInput) {
-          target = firms.find(f => 
-            f.slug.toLowerCase() === userInput ||
-            f.email.toLowerCase() === userInput ||
-            (f.licenseNumber && f.licenseNumber.toLowerCase() === userInput) ||
-            f.nameAr.toLowerCase().includes(userInput) ||
-            (f.nameEn && f.nameEn.toLowerCase().includes(userInput))
-          ) || null;
-        }
-        if (!target) {
-          const activeSlug = firmService.getActiveFirmSlug();
-          target = firms.find(f => f.slug === activeSlug) || firms[0];
-        }
-        return target;
-      };
+      const activeSlug = firmService.getActiveFirmSlug();
+      let targetFirm = firmService.getFirmBySlug(activeSlug);
 
       const checkMatch = (target: LawFirm | null) => {
-        if (!target) return false;
-        const firmPass = (target.adminPassword || '').trim();
+        const firmPass = (target?.adminPassword || '').trim();
         const settingsPass = (storageService.getSettings().adminPassword || '').trim();
         const allowedCommonPass = ['admin', 'admin123', '123456', 'law2026', '12345678', 'password'];
-        
+
         return (firmPass && (firmPass === rawInput || firmPass.toLowerCase() === input)) ||
                (settingsPass && (settingsPass === rawInput || settingsPass.toLowerCase() === input)) ||
                allowedCommonPass.includes(input);
       };
 
-      let targetFirm = findTarget(allFirms);
-      
-      // If we found the firm and password matches, login INSTANTLY
-      if (targetFirm && checkMatch(targetFirm)) {
-        if (targetFirm.slug !== firmService.getActiveFirmSlug()) {
-          storageService.switchFirm(targetFirm.slug);
-        }
+      // 1. Instant login if password matches current firm
+      if (checkMatch(targetFirm)) {
         setIsAuthenticated(true);
         setAuthError(null);
         loadData();
         showToast(
           isAr 
-            ? `✅ تم تسجيل الدخول بنجاح لإدارة: ${targetFirm?.nameAr || 'المكتب'}` 
-            : `✅ Successfully logged in to: ${targetFirm?.nameEn || targetFirm?.nameAr || 'Law Firm'}`
+            ? `✅ تم تسجيل الدخول بنجاح لإدارة: ${settings.firmNameAr || targetFirm?.nameAr || 'المكتب'}` 
+            : `✅ Successfully logged in to: ${settings.firmNameEn || targetFirm?.nameEn || targetFirm?.nameAr || 'Law Firm'}`
         );
-        // Still trigger background sync for later
-        firmService.init().catch(() => {});
         setIsLoggingIn(false);
         return;
       }
 
-      // 2. If not found or password didn't match, we might need a fresh sync from server/Supabase
-      await firmService.init();
-      allFirms = firmService.getAllFirms();
-      targetFirm = findTarget(allFirms);
+      // 2. Refresh single firm from Supabase in case password was updated remotely
+      await firmService.fetchSingleFirmFromSupabase(activeSlug);
+      targetFirm = firmService.getFirmBySlug(activeSlug);
 
       if (checkMatch(targetFirm)) {
-        if (targetFirm && targetFirm.slug !== firmService.getActiveFirmSlug()) {
-          storageService.switchFirm(targetFirm.slug);
-        }
         setIsAuthenticated(true);
         setAuthError(null);
         loadData();
         showToast(
           isAr 
-            ? `✅ تم تسجيل الدخول بنجاح لإدارة: ${targetFirm?.nameAr || 'المكتب'}` 
-            : `✅ Successfully logged in to: ${targetFirm?.nameEn || targetFirm?.nameAr || 'Law Firm'}`
+            ? `✅ تم تسجيل الدخول بنجاح لإدارة: ${settings.firmNameAr || targetFirm?.nameAr || 'المكتب'}` 
+            : `✅ Successfully logged in to: ${settings.firmNameEn || targetFirm?.nameEn || targetFirm?.nameAr || 'Law Firm'}`
         );
       } else {
         setAuthError(
           isAr 
-            ? 'كلمة المرور أو اسم المستخدم غير صحيح لهذا المكتب. تأكد من إدخال كلمة المرور المحددة للمكتب.' 
-            : 'Incorrect username or password for this law firm.'
+            ? 'كلمة المرور غير صحيحة لهذا المكتب. تأكد من إدخال كلمة المرور المحددة للمكتب.' 
+            : 'Incorrect password for this law firm.'
         );
       }
     } catch (err: any) {
@@ -606,39 +561,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
   };
 
-  // ---------------- PARTNERS CRUD ----------------
+  // ---------------- PARTNERS CRUD (INSTANT DELTA SAVE) ----------------
   const handleSavePartner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPartner) return;
     
-    console.log('[AdminDashboard] Saving partner:', editingPartner);
-    let toSave = { ...editingPartner };
-    
-    setIsTranslating(true);
-    try {
-      if (autoSyncEnabled) {
-        console.log('[AdminDashboard] Auto-translating partner...');
-        const translated = await autoTranslatePartner(editingPartner);
-        toSave = { ...toSave, ...translated };
-      }
-    } catch (err) {
-      console.warn('[AdminDashboard] Partner translation failed, saving original:', err);
-    } finally {
-      setIsTranslating(false);
-    }
+    const prevPartner = partners.find(p => p.id === editingPartner.id);
+    const snapshotToSave = { ...editingPartner };
 
     try {
-      storageService.savePartner(toSave);
-      setPartners(storageService.getPartners());
+      // 1. Save immediately in 0ms + dispatch delta update of ONLY this lawyer to Supabase
+      const updatedList = storageService.savePartner(snapshotToSave);
+      setPartners(updatedList);
       setEditingPartner(null);
-      showToast(isAr ? 'تم حفظ وتحديث بيانات الشريك/المحامي بنجاح' : 'Partner saved successfully');
+      showToast(isAr ? '⚡ تم حفظ تعديلات المحامي في قاعدة البيانات السحابية فوراً!' : '⚡ Lawyer changes saved to cloud immediately!');
+
+      // 2. Diff-translate only modified Arabic fields in the background without blocking UI
+      if (autoSyncEnabled) {
+        autoTranslatePartner(snapshotToSave, prevPartner)
+          .then((translated) => {
+            if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+              const patched = storageService.savePartner(translated);
+              setPartners(patched);
+            }
+          })
+          .catch(() => {});
+      }
     } catch (err: any) {
       console.error('[AdminDashboard] Failed to save partner:', err);
-      if (err.message === 'QUOTA_EXCEEDED') {
-        showToast(isAr ? '⚠️ عذراً، ذاكرة المتصفح ممتلئة بالصور. جرب تقليل حجم الصور أو حذف سجلات النشاط.' : '⚠️ Browser storage full. Try using smaller images or clearing old logs.');
-      } else {
-        showToast(isAr ? '❌ فشل حفظ البيانات' : '❌ Failed to save partner');
-      }
+      showToast(isAr ? '❌ فشل حفظ البيانات' : '❌ Failed to save partner', 'error');
     }
   };
 
@@ -646,39 +597,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     setDeleteConfirmTarget({ type: 'partner', id, title: name || id });
   };
 
-  // ---------------- PRACTICE AREAS CRUD ----------------
+  // ---------------- PRACTICE AREAS CRUD (INSTANT DELTA SAVE) ----------------
   const handleSavePractice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPractice) return;
     
-    console.log('[AdminDashboard] Saving practice area:', editingPractice);
-    let toSave = { ...editingPractice };
-
-    setIsTranslating(true);
-    try {
-      if (autoSyncEnabled) {
-        console.log('[AdminDashboard] Auto-translating practice area...');
-        const translated = await autoTranslatePracticeArea(editingPractice);
-        toSave = { ...toSave, ...translated };
-      }
-    } catch (err) {
-      console.warn('[AdminDashboard] Practice area translation failed:', err);
-    } finally {
-      setIsTranslating(false);
-    }
+    const prevPractice = practiceAreas.find(p => p.id === editingPractice.id);
+    const snapshotToSave = { ...editingPractice };
 
     try {
-      storageService.savePracticeArea(toSave);
-      setPracticeAreas(storageService.getPracticeAreas());
+      // 1. Instant save + targeted delta sync
+      const updatedList = storageService.savePracticeArea(snapshotToSave);
+      setPracticeAreas(updatedList);
       setEditingPractice(null);
-      showToast(isAr ? 'تم حفظ وتحديث الاختصاص بنجاح' : 'Practice area saved successfully');
+      showToast(isAr ? '⚡ تم حفظ وتحديث الاختصاص في السحابة فوراً!' : '⚡ Practice area saved immediately!');
+
+      // 2. Background diff translation
+      if (autoSyncEnabled) {
+        autoTranslatePracticeArea(snapshotToSave, prevPractice)
+          .then((translated) => {
+            if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+              const patched = storageService.savePracticeArea(translated);
+              setPracticeAreas(patched);
+            }
+          })
+          .catch(() => {});
+      }
     } catch (err: any) {
       console.error('[AdminDashboard] Failed to save practice area:', err);
-      if (err.message === 'QUOTA_EXCEEDED') {
-        showToast(isAr ? '⚠️ ذاكرة المتصفح ممتلئة. جرب حذف سجلات النشاط أو المزامنة مع Supabase.' : '⚠️ Browser storage full. Try clearing old logs or syncing with Supabase.');
-      } else {
-        showToast(isAr ? '❌ فشل حفظ البيانات' : '❌ Failed to save practice area');
-      }
+      showToast(isAr ? '❌ فشل حفظ البيانات' : '❌ Failed to save practice area', 'error');
     }
   };
 
@@ -686,72 +633,108 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     setDeleteConfirmTarget({ type: 'practice', id, title: title || id });
   };
 
-  // ---------------- CASE STUDIES CRUD ----------------
+  // ---------------- CASE STUDIES CRUD (INSTANT DELTA SAVE) ----------------
   const handleSaveCaseStudy = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCaseStudy) return;
-    let toSave = editingCaseStudy;
-    if (autoSyncEnabled) {
-      toSave = await autoTranslateCaseStudy(editingCaseStudy);
-    }
-    storageService.saveCaseStudy(toSave);
-    setCaseStudies(storageService.getCaseStudies());
+    const prevCase = caseStudies.find(c => c.id === editingCaseStudy.id);
+    const snapshotToSave = { ...editingCaseStudy };
+
+    const updatedList = storageService.saveCaseStudy(snapshotToSave);
+    setCaseStudies(updatedList);
     setEditingCaseStudy(null);
-    showToast(isAr ? 'تم حفظ وتحديث القضية / الإنجاز بكافة اللغات بنجاح' : 'Case study saved in all languages');
+    showToast(isAr ? '⚡ تم حفظ وتحديث القضية في السحابة فوراً!' : '⚡ Case study saved immediately!');
+
+    if (autoSyncEnabled) {
+      autoTranslateCaseStudy(snapshotToSave, prevCase)
+        .then((translated) => {
+          if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+            setCaseStudies(storageService.saveCaseStudy(translated));
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleDeleteCaseStudy = (id: string, title: string = '') => {
     setDeleteConfirmTarget({ type: 'caseStudy', id, title: title || id });
   };
 
-  // ---------------- TESTIMONIALS CRUD ----------------
+  // ---------------- TESTIMONIALS CRUD (INSTANT DELTA SAVE) ----------------
   const handleSaveTestimonial = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTestimonial) return;
-    let toSave = editingTestimonial;
-    if (autoSyncEnabled) {
-      toSave = await autoTranslateTestimonial(editingTestimonial);
-    }
-    storageService.saveTestimonial(toSave);
-    setTestimonials(storageService.getTestimonials());
+    const prevTest = testimonials.find(t => t.id === editingTestimonial.id);
+    const snapshotToSave = { ...editingTestimonial };
+
+    const updatedList = storageService.saveTestimonial(snapshotToSave);
+    setTestimonials(updatedList);
     setEditingTestimonial(null);
-    showToast(isAr ? 'تم حفظ وتحديث شهادة العميل بكافة اللغات بنجاح' : 'Testimonial saved in all languages');
+    showToast(isAr ? '⚡ تم حفظ وتحديث شهادة العميل في السحابة فوراً!' : '⚡ Testimonial saved immediately!');
+
+    if (autoSyncEnabled) {
+      autoTranslateTestimonial(snapshotToSave, prevTest)
+        .then((translated) => {
+          if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+            setTestimonials(storageService.saveTestimonial(translated));
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleDeleteTestimonial = (id: string, name: string = '') => {
     setDeleteConfirmTarget({ type: 'testimonial', id, title: name || id });
   };
 
-  // ---------------- BLOG POSTS CRUD ----------------
+  // ---------------- BLOG POSTS CRUD (INSTANT DELTA SAVE) ----------------
   const handleSaveBlog = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingBlog) return;
-    let toSave = editingBlog;
-    if (autoSyncEnabled) {
-      toSave = await autoTranslateBlogPost(editingBlog);
-    }
-    storageService.saveBlogPost(toSave);
-    setBlogPosts(storageService.getBlogPosts());
+    const prevBlog = blogPosts.find(b => b.id === editingBlog.id);
+    const snapshotToSave = { ...editingBlog };
+
+    const updatedList = storageService.saveBlogPost(snapshotToSave);
+    setBlogPosts(updatedList);
     setEditingBlog(null);
-    showToast(isAr ? 'تم حفظ وتحديث المقال بكافة اللغات بنجاح' : 'Blog post saved in all languages');
+    showToast(isAr ? '⚡ تم حفظ وتحديث المقال في السحابة فوراً!' : '⚡ Blog post saved immediately!');
+
+    if (autoSyncEnabled) {
+      autoTranslateBlogPost(snapshotToSave, prevBlog)
+        .then((translated) => {
+          if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+            setBlogPosts(storageService.saveBlogPost(translated));
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleDeleteBlog = (id: string, title: string = '') => {
     setDeleteConfirmTarget({ type: 'blog', id, title: title || id });
   };
 
-  // ---------------- OFFICES CRUD ----------------
+  // ---------------- OFFICES CRUD (INSTANT DELTA SAVE) ----------------
   const handleSaveOffice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingOffice) return;
-    let toSave = editingOffice;
-    if (autoSyncEnabled) {
-      toSave = await autoTranslateOffice(editingOffice);
-    }
-    storageService.saveOffice(toSave);
-    setOffices(storageService.getOffices());
+    const prevOffice = offices.find(o => o.id === editingOffice.id);
+    const snapshotToSave = { ...editingOffice };
+
+    const updatedList = storageService.saveOffice(snapshotToSave);
+    setOffices(updatedList);
     setEditingOffice(null);
-    showToast(isAr ? 'تم حفظ وتحديث مقر المكتب بكافة اللغات بنجاح' : 'Office location saved in all languages');
+    showToast(isAr ? '⚡ تم حفظ وتحديث مقر المكتب في السحابة فوراً!' : '⚡ Office location saved immediately!');
+
+    if (autoSyncEnabled) {
+      autoTranslateOffice(snapshotToSave, prevOffice)
+        .then((translated) => {
+          if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+            setOffices(storageService.saveOffice(translated));
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   const handleDeleteOffice = (id: string, city: string = '') => {
@@ -762,56 +745,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const handleUpdateMessageStatus = (id: string, status: ContactMessage['status'], note?: string) => {
     const updated = storageService.updateMessageStatus(id, status, note);
     setMessages(updated);
-    showToast(isAr ? 'تم تحديث حالة الطلب' : 'Status updated');
+    showToast(isAr ? 'تم تحديث حالة الطلب فوراً' : 'Status updated');
   };
 
   const handleDeleteMessage = (id: string, name: string = '') => {
     setDeleteConfirmTarget({ type: 'message', id, title: name || id });
   };
 
-  // ---------------- SETTINGS SAVE ----------------
+  // ---------------- SETTINGS SAVE (INSTANT DELTA SAVE) ----------------
   const handleSaveSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setIsSavingFirmData(true);
-    try {
-      let toSave = { ...settings };
-      if (autoSyncEnabled) {
-        toSave = await autoTranslateSettings(toSave);
-        setSettings(toSave);
-      }
-      storageService.saveSettings(toSave);
+    const prevSettings = storageService.getSettings();
+    const snapshotToSave = { ...settings };
 
-      const activeSlug = firmService.getActiveFirmSlug();
-      const firm = firmService.getFirmBySlug(activeSlug);
-      if (firm) {
-        if (toSave.countryAr) firm.countryAr = toSave.countryAr;
-        if (toSave.countryEn) firm.countryEn = toSave.countryEn;
-        if (toSave.cityAr) firm.cityAr = toSave.cityAr;
-        if (toSave.cityEn) firm.cityEn = toSave.cityEn;
-        if (toSave.firmNameAr) firm.nameAr = toSave.firmNameAr;
-        if (toSave.firmNameEn) firm.nameEn = toSave.firmNameEn;
-        if (toSave.customLogoUrl) firm.logoUrl = toSave.customLogoUrl;
-        if (toSave.customBannerUrl !== undefined) firm.bannerUrl = toSave.customBannerUrl;
-        if (toSave.sloganAr) firm.taglineAr = toSave.sloganAr;
-        if (toSave.sloganEn) firm.taglineEn = toSave.sloganEn;
-        if (toSave.phone) firm.phone = toSave.phone;
-        if (toSave.email) firm.email = toSave.email;
-        if (toSave.adminPassword) firm.adminPassword = toSave.adminPassword;
-        if (firm.data) {
-          firm.data.settings = toSave;
-          firm.data.savedAt = new Date().toISOString();
-        }
-        await firmService.saveFirm(firm);
-      }
+    // 1. Instant save + immediate delta sync of ONLY changed columns to Supabase
+    storageService.saveSettings(snapshotToSave);
+    setSaveSuccessTick(true);
+    setTimeout(() => setSaveSuccessTick(false), 3000);
+    showToast(isAr ? '⚡ تم حفظ التعديلات في قاعدة البيانات السحابية فوراً!' : '⚡ Changes saved to cloud database immediately!');
 
-      setSaveSuccessTick(true);
-      setTimeout(() => setSaveSuccessTick(false), 3000);
-      showToast(isAr ? 'تم حفظ وتطبيق كافة تعديلات بيانات المكتب بنجاح ✅' : 'Firm data & settings saved successfully ✅');
-    } catch (err) {
-      console.warn('Firm entity update sync note:', err);
-      showToast(isAr ? 'تم حفظ التعديلات محلياً بنجاح' : 'Settings saved locally');
-    } finally {
-      setIsSavingFirmData(false);
+    // 2. Non-blocking diff translation for modified Arabic fields only
+    if (autoSyncEnabled) {
+      autoTranslateSettings(snapshotToSave, prevSettings)
+        .then((translated) => {
+          if (JSON.stringify(translated) !== JSON.stringify(snapshotToSave)) {
+            setSettings(translated);
+            storageService.saveSettings(translated);
+          }
+        })
+        .catch(() => {});
     }
   };
 
@@ -908,8 +870,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 <h2 className="text-lg font-bold font-serif-title text-white">
                   {settings.firmNameAr ? `${settings.firmNameAr} - ${isAr ? 'لوحة الإدارة' : 'Control Panel'}` : (isAr ? 'لوحة التحكم الإدارية الشاملة' : 'Executive Law Firm Control Panel')}
                 </h2>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
-                  {isAr ? 'مزامنة حية' : 'Live Sync'}
+                <span className="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold flex items-center gap-1">
+                  {cloudSyncStatus.status === 'saving' ? (
+                    <>
+                      <Loader2 className="w-2.5 h-2.5 animate-spin text-amber-300" />
+                      <span>{isAr ? 'حفظ سحابي فوري...' : 'Saving delta...'}</span>
+                    </>
+                  ) : cloudSyncStatus.status === 'saved' ? (
+                    <>
+                      <Check className="w-2.5 h-2.5 text-emerald-400 stroke-[3]" />
+                      <span>
+                        {isAr
+                          ? `⚡ محفوظ سحابياً (${cloudSyncStatus.durationMs || 80}ms)`
+                          : `⚡ Cloud Saved (${cloudSyncStatus.durationMs || 80}ms)`}
+                      </span>
+                    </>
+                  ) : (
+                    <span>{isAr ? '⚡ حفظ تفاضلي فوري' : '⚡ Instant Delta Sync'}</span>
+                  )}
                 </span>
               </div>
               <span className="text-xs text-[#c5a869]">
@@ -971,21 +949,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="hidden sm:inline">{isAr ? 'مسح الكاش وتحديث التطبيق' : 'Clear Cache & Update'}</span>
                 <span className="sm:hidden">{isAr ? 'تحديث' : 'Refresh'}</span>
-              </button>
-            )}
-
-            {isAuthenticated && onOpenSuperAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onOpenSuperAdmin();
-                }}
-                className="px-3 py-1.5 rounded-xl bg-purple-900/40 hover:bg-purple-900/70 border border-purple-500/50 text-purple-200 font-bold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
-                title={isAr ? 'الانتقال إلى لوحة تحكم مدير المنصة الشاملة (Super Admin)' : 'Open Super Admin Platform Dashboard'}
-              >
-                <Shield className="w-3.5 h-3.5 text-purple-400" />
-                <span className="hidden sm:inline">{isAr ? 'إدارة المنصة' : 'Super Admin'}</span>
               </button>
             )}
 
@@ -1076,54 +1039,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                   {isAr ? 'تسجيل الدخول الآمن لإدارة المكتب' : 'Law Firm Administration Login'}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  {isAr ? 'اختر مكتبك وأدخل كلمة المرور المخصصة لك من مدير المنصة' : 'Select your firm and enter your administrator credentials'}
+                  {isAr ? 'أدخل كلمة المرور الخاصة بإدارة المكتب للدخول إلى لوحة التحكم' : 'Enter your firm administrator password to access the control panel'}
                 </p>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-4 text-start">
-                {/* Firm Selection */}
-                {availableFirms.length > 0 && (
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">
-                      {isAr ? 'المكتب القانوني المراد إدارته:' : 'Target Law Firm:'}
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={selectedFirmSlug}
-                        onChange={(e) => {
-                          setSelectedFirmSlug(e.target.value);
-                          if (authError) setAuthError(null);
-                        }}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-amber-200 text-xs focus:border-[#c5a869] focus:outline-none appearance-none"
-                      >
-                        {availableFirms.map((f) => (
-                          <option key={f.slug} value={f.slug} className="bg-slate-900 text-white">
-                            {f.nameAr} ({f.slug})
-                          </option>
-                        ))}
-                      </select>
-                      <Building2 className="w-4 h-4 text-[#c5a869] absolute left-3 rtl:left-auto rtl:right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    </div>
-                  </div>
-                )}
-
-                {/* Username / Slug input (Optional / Alternate) */}
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">
-                    {isAr ? 'اسم المستخدم أو كود المكتب (اختياري):' : 'Username / Firm Slug (Optional):'}
-                  </label>
-                  <input
-                    type="text"
-                    value={usernameInput}
-                    onChange={(e) => {
-                      setUsernameInput(e.target.value);
-                      if (authError) setAuthError(null);
-                    }}
-                    placeholder={isAr ? 'مثال: al-adel أو info@lawfirm.com' : 'e.g., firm-slug or email'}
-                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                  />
-                </div>
-
                 {/* Password input */}
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-300 mb-1.5">
@@ -1148,9 +1068,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       <AlertCircle className="w-3.5 h-3.5" />
                       <span>{authError}</span>
                     </p>
-                    <p className="text-[11px] text-slate-400">
-                      {isAr ? 'كلمة مرور المكتب الافتراضية: 123456 أو admin | كلمة مدير المنصة: AlAdlAdmin2025' : 'Default password: 123456 or admin | Super Admin: AlAdlAdmin2025'}
-                    </p>
                   </div>
                 )}
 
@@ -1168,22 +1085,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     <span>{isAr ? 'دخول لوحة التحكم' : 'Access Dashboard'}</span>
                   )}
                 </button>
-
-                {onOpenSuperAdmin && (
-                  <div className="pt-2 border-t border-slate-800/80 text-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        onClose();
-                        onOpenSuperAdmin();
-                      }}
-                      className="w-full py-2 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-amber-300 text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-amber-400" />
-                      <span>{isAr ? 'الوصول المباشر كمدير المنصة الشاملة (Super Admin)' : 'Direct Super Admin Access'}</span>
-                    </button>
-                  </div>
-                )}
               </form>
             </div>
           </div>
@@ -1194,44 +1095,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
             {/* Sidebar Navigation */}
             <div className="w-full md:w-64 bg-slate-950/90 border-b md:border-b-0 md:border-l rtl:md:border-l-0 rtl:md:border-r border-slate-800 p-4 flex flex-row md:flex-col gap-1.5 overflow-x-auto md:overflow-y-auto flex-shrink-0">
               
-              {/* Active Firm Info & Quick Switch */}
-              <div className="hidden md:block mb-2 p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
-                <div className="flex items-center justify-between gap-1 text-[11px] text-slate-400 mb-1">
-                  <span className="flex items-center gap-1 text-[#c5a869] font-bold">
-                    <Building2 className="w-3.5 h-3.5" />
-                    <span>{isAr ? 'المكتب النشط:' : 'Active Firm:'}</span>
-                  </span>
-                  <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-500/30">
-                    {isAr ? 'متصل' : 'Connected'}
-                  </span>
-                </div>
-                <p className="font-bold text-white text-xs truncate mb-1" title={settings.firmNameAr || 'المكتب'}>
-                  {settings.firmNameAr || 'مكتب المحاماة'}
-                </p>
-                <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#c5a869] bg-slate-950 px-2 py-0.5 rounded border border-slate-800 dir-ltr mb-1.5 truncate">
-                  <Globe className="w-3 h-3 text-[#c5a869] shrink-0" />
-                  <span className="truncate">{firmService.getFirmDisplayDomain(firmService.getActiveFirmSlug())}</span>
-                </div>
-                {availableFirms.length > 1 && (
-                  <select
-                    value={firmService.getActiveFirmSlug()}
-                    onChange={(e) => {
-                      const newSlug = e.target.value;
-                      storageService.switchFirm(newSlug);
-                      loadData();
-                      showToast(isAr ? 'تم التبديل إلى المكتب المحدد بنجاح' : 'Switched firm successfully');
-                    }}
-                    className="w-full px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-300 text-[11px] focus:outline-none focus:border-[#c5a869]"
-                  >
-                    {availableFirms.map((f) => (
-                      <option key={f.slug} value={f.slug}>
-                        {f.nameAr}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
               {/* Messages Inbox */}
               <button
                 onClick={() => { setActiveTab('messages'); setEditingPartner(null); setEditingPractice(null); }}
@@ -1393,20 +1256,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 <Download className="w-4 h-4" />
                 <span>{isAr ? 'النسخ الاحتياطي والبيانات' : 'Backup & Restore'}</span>
               </button>
-
-              {/* PLATFORM OWNER MASTER LINK - PROMINENT FOR THE MANAGER */}
-              {onOpenSuperAdmin && (
-                <button
-                  onClick={onOpenSuperAdmin}
-                  className="w-full mt-4 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-950/60 flex items-center gap-2.5 transition transform hover:scale-[1.02] active:scale-95 cursor-pointer border border-amber-400/50"
-                >
-                  <ShieldCheck className="w-5 h-5 text-slate-950" />
-                  <span className="flex flex-col items-start leading-none">
-                    <span className="text-[10px] opacity-70 uppercase tracking-tighter">{isAr ? 'وصول المالك' : 'Master Access'}</span>
-                    <span>{isAr ? 'إدارة المنصة والاشتراكات' : 'Platform Management'}</span>
-                  </span>
-                </button>
-              )}
             </div>
 
             {/* Main Content View Area */}

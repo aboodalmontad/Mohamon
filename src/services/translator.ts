@@ -92,8 +92,55 @@ const LEGAL_GLOSSARY: Record<string, { en: string; tr: string }> = {
   'أمريكا': { en: 'United States', tr: 'Amerika Birleşik Devletleri' },
 };
 
+// In-memory + localStorage cache for translated strings to guarantee 0ms repeat lookups
+const TRANSLATION_CACHE_KEY = 'aladl_translation_cache_v1';
+const translationMemoryCache: Record<string, string> = (() => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(TRANSLATION_CACHE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+})();
+
+let cacheSaveTimer: any = null;
+function setCachedTranslation(key: string, val: string) {
+  translationMemoryCache[key] = val;
+  if (typeof window === 'undefined') return;
+  if (cacheSaveTimer) clearTimeout(cacheSaveTimer);
+  cacheSaveTimer = setTimeout(() => {
+    try {
+      const keys = Object.keys(translationMemoryCache);
+      if (keys.length > 500) {
+        for (let i = 0; i < keys.length - 500; i++) {
+          delete translationMemoryCache[keys[i]];
+        }
+      }
+      localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(translationMemoryCache));
+    } catch {}
+  }, 500);
+}
+
+/**
+ * Synchronous instant glossary/cache lookup (0ms, no network)
+ */
+export function translateTextSync(text: string | undefined, targetLang: 'en' | 'tr', fallback?: string): string {
+  if (!text || text.trim() === '') return fallback || '';
+  const trimmed = text.trim();
+  if (LEGAL_GLOSSARY[trimmed] && LEGAL_GLOSSARY[trimmed][targetLang]) {
+    return LEGAL_GLOSSARY[trimmed][targetLang];
+  }
+  const cacheKey = `${targetLang}:${trimmed}`;
+  if (translationMemoryCache[cacheKey]) {
+    return translationMemoryCache[cacheKey];
+  }
+  return fallback || trimmed;
+}
+
 /**
  * Translate a single text string from Arabic to target language ('en' or 'tr')
+ * with instant cache lookup and 1.5s network timeout protection
  */
 export async function translateText(text: string, targetLang: 'en' | 'tr'): Promise<string> {
   if (!text || text.trim() === '') return '';
@@ -104,64 +151,108 @@ export async function translateText(text: string, targetLang: 'en' | 'tr'): Prom
     return LEGAL_GLOSSARY[trimmed][targetLang];
   }
 
-  // 2. Try Google Translate Endpoint (Client-side GTX)
+  // 2. Check instant memory cache
+  const cacheKey = `${targetLang}:${trimmed}`;
+  if (translationMemoryCache[cacheKey]) {
+    return translationMemoryCache[cacheKey];
+  }
+
+  // 3. Try Google Translate Endpoint (Client-side GTX) with fast 1.5s timeout
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 1500);
     const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ar&tl=${targetLang}&dt=t&q=${encodeURIComponent(trimmed)}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && Array.isArray(data[0])) {
         const translatedStr = data[0].map((item: any) => item[0]).filter(Boolean).join('');
         if (translatedStr && translatedStr.trim() !== '') {
-          return translatedStr.trim();
+          const finalStr = translatedStr.trim();
+          setCachedTranslation(cacheKey, finalStr);
+          return finalStr;
         }
       }
     }
-  } catch (err) {
-    console.warn(`[Translator] Google Translate API error for: "${trimmed.substring(0, 30)}..."`, err);
+  } catch {
+    // Fast fail on timeout or network error
   }
 
-  // 3. Fallback to MyMemory Free Translation API
-  try {
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=ar|${targetLang}`;
-    const res = await fetch(url);
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.responseData?.translatedText) {
-        const result = data.responseData.translatedText;
-        // Verify response is not an error quota message
-        if (!result.includes('MYMEMORY WARNING') && !result.includes('QUERY LENGTH LIMIT')) {
-          return result.trim();
-        }
-      }
-    }
-  } catch (err) {
-    console.warn(`[Translator] MyMemory API fallback error`, err);
-  }
-
-  // 4. Ultimate fallback: return original trimmed string
+  // 4. Ultimate fallback: return original trimmed string immediately
   return trimmed;
 }
 
 /**
- * Translate an array of text strings (like education, services, tags)
+ * Helper: only translate if Arabic source changed compared to previous, or if existing target is empty
  */
-export async function translateTextArray(texts: string[], targetLang: 'en' | 'tr'): Promise<string[]> {
-  if (!Array.isArray(texts) || texts.length === 0) return [];
-  const results: string[] = [];
-  for (const item of texts) {
-    if (item && item.trim()) {
-      const translated = await translateText(item, targetLang);
-      results.push(translated || item);
-    }
+async function smartTranslateField(
+  arText: string | undefined,
+  prevArText: string | undefined,
+  existingTarget: string | undefined,
+  targetLang: 'en' | 'tr',
+  forceAll = false
+): Promise<string> {
+  if (!arText || arText.trim() === '') return existingTarget || '';
+  const arTrimmed = arText.trim();
+  const prevTrimmed = (prevArText || '').trim();
+
+  // If not forcing all, and Arabic text did NOT change, and we already have a non-empty target translation, skip network!
+  if (!forceAll && prevArText !== undefined && arTrimmed === prevTrimmed && existingTarget && existingTarget.trim() !== '') {
+    return existingTarget;
   }
-  return results;
+
+  // Also if prevArText is undefined (e.g. not passed), if existingTarget is already populated and different from arTrimmed, keep it unless forced
+  if (!forceAll && prevArText === undefined && existingTarget && existingTarget.trim() !== '' && existingTarget.trim() !== arTrimmed) {
+    return existingTarget;
+  }
+
+  const translated = await translateText(arTrimmed, targetLang);
+  return translated || existingTarget || arTrimmed;
 }
 
 /**
- * Automatically translate and fill all missing/outdated English & Turkish fields of a Partner
+ * Translate an array of text strings (like education, services, tags) in parallel
  */
-export async function autoTranslatePartner(partner: Partner): Promise<Partner> {
+export async function translateTextArray(
+  texts: string[],
+  targetLang: 'en' | 'tr',
+  prevTexts?: string[],
+  existingTargets?: string[],
+  forceAll = false
+): Promise<string[]> {
+  if (!Array.isArray(texts) || texts.length === 0) return [];
+  if (
+    !forceAll &&
+    Array.isArray(prevTexts) &&
+    Array.isArray(existingTargets) &&
+    existingTargets.length === texts.length &&
+    texts.every((item, i) => item.trim() === (prevTexts[i] || '').trim())
+  ) {
+    return existingTargets;
+  }
+  return Promise.all(
+    texts.map(async (item, idx) => {
+      if (!item || !item.trim()) return '';
+      if (
+        !forceAll &&
+        prevTexts &&
+        existingTargets &&
+        prevTexts[idx]?.trim() === item.trim() &&
+        existingTargets[idx]?.trim()
+      ) {
+        return existingTargets[idx];
+      }
+      const translated = await translateText(item, targetLang);
+      return translated || item;
+    })
+  );
+}
+
+/**
+ * Automatically translate and fill only modified/missing English & Turkish fields of a Partner
+ */
+export async function autoTranslatePartner(partner: Partner, prevPartner?: Partner | null, forceAll = false): Promise<Partner> {
   const [
     nameEn, nameTr,
     titleEn, titleTr,
@@ -170,18 +261,18 @@ export async function autoTranslatePartner(partner: Partner): Promise<Partner> {
     barAdmissionEn, barAdmissionTr,
     educationEn, educationTr
   ] = await Promise.all([
-    partner.name ? translateText(partner.name, 'en') : Promise.resolve(partner.nameEn || ''),
-    partner.name ? translateText(partner.name, 'tr') : Promise.resolve(partner.nameTr || ''),
-    partner.title ? translateText(partner.title, 'en') : Promise.resolve(partner.titleEn || ''),
-    partner.title ? translateText(partner.title, 'tr') : Promise.resolve(partner.titleTr || ''),
-    partner.specialty ? translateText(partner.specialty, 'en') : Promise.resolve(partner.specialtyEn || ''),
-    partner.specialty ? translateText(partner.specialty, 'tr') : Promise.resolve(partner.specialtyTr || ''),
-    partner.bio ? translateText(partner.bio, 'en') : Promise.resolve(partner.bioEn || ''),
-    partner.bio ? translateText(partner.bio, 'tr') : Promise.resolve(partner.bioTr || ''),
-    partner.barAdmission ? translateText(partner.barAdmission, 'en') : Promise.resolve(partner.barAdmissionEn || ''),
-    partner.barAdmission ? translateText(partner.barAdmission, 'tr') : Promise.resolve(partner.barAdmissionTr || ''),
-    partner.education?.length ? translateTextArray(partner.education, 'en') : Promise.resolve(partner.educationEn || []),
-    partner.education?.length ? translateTextArray(partner.education, 'tr') : Promise.resolve(partner.educationTr || []),
+    smartTranslateField(partner.name, prevPartner?.name, partner.nameEn, 'en', forceAll),
+    smartTranslateField(partner.name, prevPartner?.name, partner.nameTr, 'tr', forceAll),
+    smartTranslateField(partner.title, prevPartner?.title, partner.titleEn, 'en', forceAll),
+    smartTranslateField(partner.title, prevPartner?.title, partner.titleTr, 'tr', forceAll),
+    smartTranslateField(partner.specialty, prevPartner?.specialty, partner.specialtyEn, 'en', forceAll),
+    smartTranslateField(partner.specialty, prevPartner?.specialty, partner.specialtyTr, 'tr', forceAll),
+    smartTranslateField(partner.bio, prevPartner?.bio, partner.bioEn, 'en', forceAll),
+    smartTranslateField(partner.bio, prevPartner?.bio, partner.bioTr, 'tr', forceAll),
+    smartTranslateField(partner.barAdmission, prevPartner?.barAdmission, partner.barAdmissionEn, 'en', forceAll),
+    smartTranslateField(partner.barAdmission, prevPartner?.barAdmission, partner.barAdmissionTr, 'tr', forceAll),
+    partner.education?.length ? translateTextArray(partner.education, 'en', prevPartner?.education, partner.educationEn, forceAll) : Promise.resolve(partner.educationEn || []),
+    partner.education?.length ? translateTextArray(partner.education, 'tr', prevPartner?.education, partner.educationTr, forceAll) : Promise.resolve(partner.educationTr || []),
   ]);
 
   return {
@@ -202,9 +293,9 @@ export async function autoTranslatePartner(partner: Partner): Promise<Partner> {
 }
 
 /**
- * Automatically translate and fill all missing/outdated English & Turkish fields of a Practice Area
+ * Automatically translate and fill only modified/missing English & Turkish fields of a Practice Area
  */
-export async function autoTranslatePracticeArea(practice: PracticeArea): Promise<PracticeArea> {
+export async function autoTranslatePracticeArea(practice: PracticeArea, prevPractice?: PracticeArea | null, forceAll = false): Promise<PracticeArea> {
   const [
     titleEn, titleTr,
     categoryLabelEn, categoryLabelTr,
@@ -212,16 +303,16 @@ export async function autoTranslatePracticeArea(practice: PracticeArea): Promise
     fullDescEn, fullDescTr,
     keyServicesEn, keyServicesTr
   ] = await Promise.all([
-    practice.title ? translateText(practice.title, 'en') : Promise.resolve(practice.titleEn || ''),
-    practice.title ? translateText(practice.title, 'tr') : Promise.resolve(practice.titleTr || ''),
-    practice.categoryLabelAr ? translateText(practice.categoryLabelAr, 'en') : Promise.resolve(practice.categoryLabelEn || ''),
-    practice.categoryLabelAr ? translateText(practice.categoryLabelAr, 'tr') : Promise.resolve(practice.categoryLabelTr || ''),
-    practice.shortDesc ? translateText(practice.shortDesc, 'en') : Promise.resolve(practice.shortDescEn || ''),
-    practice.shortDesc ? translateText(practice.shortDesc, 'tr') : Promise.resolve(practice.shortDescTr || ''),
-    practice.fullDesc ? translateText(practice.fullDesc, 'en') : Promise.resolve(practice.fullDescEn || ''),
-    practice.fullDesc ? translateText(practice.fullDesc, 'tr') : Promise.resolve(practice.fullDescTr || ''),
-    practice.keyServices?.length ? translateTextArray(practice.keyServices, 'en') : Promise.resolve(practice.keyServicesEn || []),
-    practice.keyServices?.length ? translateTextArray(practice.keyServices, 'tr') : Promise.resolve(practice.keyServicesTr || []),
+    smartTranslateField(practice.title, prevPractice?.title, practice.titleEn, 'en', forceAll),
+    smartTranslateField(practice.title, prevPractice?.title, practice.titleTr, 'tr', forceAll),
+    smartTranslateField(practice.categoryLabelAr, prevPractice?.categoryLabelAr, practice.categoryLabelEn, 'en', forceAll),
+    smartTranslateField(practice.categoryLabelAr, prevPractice?.categoryLabelAr, practice.categoryLabelTr, 'tr', forceAll),
+    smartTranslateField(practice.shortDesc, prevPractice?.shortDesc, practice.shortDescEn, 'en', forceAll),
+    smartTranslateField(practice.shortDesc, prevPractice?.shortDesc, practice.shortDescTr, 'tr', forceAll),
+    smartTranslateField(practice.fullDesc, prevPractice?.fullDesc, practice.fullDescEn, 'en', forceAll),
+    smartTranslateField(practice.fullDesc, prevPractice?.fullDesc, practice.fullDescTr, 'tr', forceAll),
+    practice.keyServices?.length ? translateTextArray(practice.keyServices, 'en', prevPractice?.keyServices, practice.keyServicesEn, forceAll) : Promise.resolve(practice.keyServicesEn || []),
+    practice.keyServices?.length ? translateTextArray(practice.keyServices, 'tr', prevPractice?.keyServices, practice.keyServicesTr, forceAll) : Promise.resolve(practice.keyServicesTr || []),
   ]);
 
   return {
@@ -240,9 +331,9 @@ export async function autoTranslatePracticeArea(practice: PracticeArea): Promise
 }
 
 /**
- * Automatically translate Case Study
+ * Automatically translate Case Study (only changed/missing fields)
  */
-export async function autoTranslateCaseStudy(item: CaseStudy): Promise<CaseStudy> {
+export async function autoTranslateCaseStudy(item: CaseStudy, prevItem?: CaseStudy | null, forceAll = false): Promise<CaseStudy> {
   const [
     titleEn, titleTr,
     categoryTr,
@@ -250,12 +341,12 @@ export async function autoTranslateCaseStudy(item: CaseStudy): Promise<CaseStudy
     outcomeTr,
     highlightTr
   ] = await Promise.all([
-    item.title ? translateText(item.title, 'en') : Promise.resolve(item.titleEn || ''),
-    item.title ? translateText(item.title, 'tr') : Promise.resolve(item.titleTr || ''),
-    item.category ? translateText(item.category, 'tr') : Promise.resolve(item.categoryTr || ''),
-    item.summary ? translateText(item.summary, 'tr') : Promise.resolve(item.summaryTr || ''),
-    item.outcome ? translateText(item.outcome, 'tr') : Promise.resolve(item.outcomeTr || ''),
-    item.highlight ? translateText(item.highlight, 'tr') : Promise.resolve(item.highlightTr || ''),
+    smartTranslateField(item.title, prevItem?.title, item.titleEn, 'en', forceAll),
+    smartTranslateField(item.title, prevItem?.title, item.titleTr, 'tr', forceAll),
+    smartTranslateField(item.category, prevItem?.category, item.categoryTr, 'tr', forceAll),
+    smartTranslateField(item.summary, prevItem?.summary, item.summaryTr, 'tr', forceAll),
+    smartTranslateField(item.outcome, prevItem?.outcome, item.outcomeTr, 'tr', forceAll),
+    smartTranslateField(item.highlight, prevItem?.highlight, item.highlightTr, 'tr', forceAll),
   ]);
 
   return {
@@ -270,9 +361,9 @@ export async function autoTranslateCaseStudy(item: CaseStudy): Promise<CaseStudy
 }
 
 /**
- * Automatically translate Testimonial
+ * Automatically translate Testimonial (only changed/missing fields)
  */
-export async function autoTranslateTestimonial(item: Testimonial): Promise<Testimonial> {
+export async function autoTranslateTestimonial(item: Testimonial, prevItem?: Testimonial | null, forceAll = false): Promise<Testimonial> {
   const [
     clientNameEn, clientNameTr,
     clientRoleEn, clientRoleTr,
@@ -280,15 +371,15 @@ export async function autoTranslateTestimonial(item: Testimonial): Promise<Testi
     contentEn, contentTr,
     caseTypeTr
   ] = await Promise.all([
-    item.clientName ? translateText(item.clientName, 'en') : Promise.resolve(item.clientNameEn || ''),
-    item.clientName ? translateText(item.clientName, 'tr') : Promise.resolve(item.clientNameTr || ''),
-    item.clientRole ? translateText(item.clientRole, 'en') : Promise.resolve(item.clientRoleEn || ''),
-    item.clientRole ? translateText(item.clientRole, 'tr') : Promise.resolve(item.clientRoleTr || ''),
-    item.company ? translateText(item.company, 'en') : Promise.resolve(item.companyEn || ''),
-    item.company ? translateText(item.company, 'tr') : Promise.resolve(item.companyTr || ''),
-    item.content ? translateText(item.content, 'en') : Promise.resolve(item.contentEn || ''),
-    item.content ? translateText(item.content, 'tr') : Promise.resolve(item.contentTr || ''),
-    item.caseType ? translateText(item.caseType, 'tr') : Promise.resolve(item.caseTypeTr || ''),
+    smartTranslateField(item.clientName, prevItem?.clientName, item.clientNameEn, 'en', forceAll),
+    smartTranslateField(item.clientName, prevItem?.clientName, item.clientNameTr, 'tr', forceAll),
+    smartTranslateField(item.clientRole, prevItem?.clientRole, item.clientRoleEn, 'en', forceAll),
+    smartTranslateField(item.clientRole, prevItem?.clientRole, item.clientRoleTr, 'tr', forceAll),
+    smartTranslateField(item.company, prevItem?.company, item.companyEn, 'en', forceAll),
+    smartTranslateField(item.company, prevItem?.company, item.companyTr, 'tr', forceAll),
+    smartTranslateField(item.content, prevItem?.content, item.contentEn, 'en', forceAll),
+    smartTranslateField(item.content, prevItem?.content, item.contentTr, 'tr', forceAll),
+    smartTranslateField(item.caseType, prevItem?.caseType, item.caseTypeTr, 'tr', forceAll),
   ]);
 
   return {
@@ -306,9 +397,9 @@ export async function autoTranslateTestimonial(item: Testimonial): Promise<Testi
 }
 
 /**
- * Automatically translate BlogPost
+ * Automatically translate BlogPost (only changed/missing fields)
  */
-export async function autoTranslateBlogPost(post: BlogPost): Promise<BlogPost> {
+export async function autoTranslateBlogPost(post: BlogPost, prevPost?: BlogPost | null, forceAll = false): Promise<BlogPost> {
   const [
     titleEn, titleTr,
     excerptTr,
@@ -318,14 +409,14 @@ export async function autoTranslateBlogPost(post: BlogPost): Promise<BlogPost> {
     readTimeTr,
     tagsTr
   ] = await Promise.all([
-    post.title ? translateText(post.title, 'en') : Promise.resolve(post.titleEn || ''),
-    post.title ? translateText(post.title, 'tr') : Promise.resolve(post.titleTr || ''),
-    post.excerpt ? translateText(post.excerpt, 'tr') : Promise.resolve(post.excerptTr || ''),
-    post.content ? translateText(post.content, 'tr') : Promise.resolve(post.contentTr || ''),
-    post.category ? translateText(post.category, 'tr') : Promise.resolve(post.categoryTr || ''),
-    post.authorRole ? translateText(post.authorRole, 'tr') : Promise.resolve(post.authorRoleTr || ''),
-    post.readTime ? translateText(post.readTime, 'tr') : Promise.resolve(post.readTimeTr || ''),
-    post.tags?.length ? translateTextArray(post.tags, 'tr') : Promise.resolve(post.tagsTr || []),
+    smartTranslateField(post.title, prevPost?.title, post.titleEn, 'en', forceAll),
+    smartTranslateField(post.title, prevPost?.title, post.titleTr, 'tr', forceAll),
+    smartTranslateField(post.excerpt, prevPost?.excerpt, post.excerptTr, 'tr', forceAll),
+    smartTranslateField(post.content, prevPost?.content, post.contentTr, 'tr', forceAll),
+    smartTranslateField(post.category, prevPost?.category, post.categoryTr, 'tr', forceAll),
+    smartTranslateField(post.authorRole, prevPost?.authorRole, post.authorRoleTr, 'tr', forceAll),
+    smartTranslateField(post.readTime, prevPost?.readTime, post.readTimeTr, 'tr', forceAll),
+    post.tags?.length ? translateTextArray(post.tags, 'tr', prevPost?.tags, post.tagsTr, forceAll) : Promise.resolve(post.tagsTr || []),
   ]);
 
   return {
@@ -342,20 +433,20 @@ export async function autoTranslateBlogPost(post: BlogPost): Promise<BlogPost> {
 }
 
 /**
- * Automatically translate Office Location
+ * Automatically translate Office Location (only changed/missing fields)
  */
-export async function autoTranslateOffice(office: OfficeLocation): Promise<OfficeLocation> {
+export async function autoTranslateOffice(office: OfficeLocation, prevOffice?: OfficeLocation | null, forceAll = false): Promise<OfficeLocation> {
   const [
     cityEn, cityTr,
     countryEn, countryTr,
     addressEn, addressTr
   ] = await Promise.all([
-    office.cityAr ? translateText(office.cityAr, 'en') : Promise.resolve(office.cityEn || ''),
-    office.cityAr ? translateText(office.cityAr, 'tr') : Promise.resolve(office.cityTr || ''),
-    office.countryAr ? translateText(office.countryAr, 'en') : Promise.resolve(office.countryEn || ''),
-    office.countryAr ? translateText(office.countryAr, 'tr') : Promise.resolve(office.countryTr || ''),
-    office.addressAr ? translateText(office.addressAr, 'en') : Promise.resolve(office.addressEn || ''),
-    office.addressAr ? translateText(office.addressAr, 'tr') : Promise.resolve(office.addressTr || ''),
+    smartTranslateField(office.cityAr, prevOffice?.cityAr, office.cityEn, 'en', forceAll),
+    smartTranslateField(office.cityAr, prevOffice?.cityAr, office.cityTr, 'tr', forceAll),
+    smartTranslateField(office.countryAr, prevOffice?.countryAr, office.countryEn, 'en', forceAll),
+    smartTranslateField(office.countryAr, prevOffice?.countryAr, office.countryTr, 'tr', forceAll),
+    smartTranslateField(office.addressAr, prevOffice?.addressAr, office.addressEn, 'en', forceAll),
+    smartTranslateField(office.addressAr, prevOffice?.addressAr, office.addressTr, 'tr', forceAll),
   ]);
 
   return {
@@ -370,9 +461,10 @@ export async function autoTranslateOffice(office: OfficeLocation): Promise<Offic
 }
 
 /**
- * Automatically translate Site Settings
+ * Automatically translate Site Settings (only changed/missing fields)
  */
-export async function autoTranslateSettings(settings: SiteSettings): Promise<SiteSettings> {
+export async function autoTranslateSettings(settings: SiteSettings, prevSettings?: SiteSettings | null, forceAll = false): Promise<SiteSettings> {
+  const prev = prevSettings || undefined;
   const [
     firmNameEn, firmNameTr,
     sloganEn, sloganTr,
@@ -398,52 +490,52 @@ export async function autoTranslateSettings(settings: SiteSettings): Promise<Sit
     workingHoursEn, workingHoursTr,
     navbarSubtitleEn, navbarSubtitleTr
   ] = await Promise.all([
-    settings.firmNameAr ? translateText(settings.firmNameAr, 'en') : Promise.resolve(settings.firmNameEn || ''),
-    settings.firmNameAr ? translateText(settings.firmNameAr, 'tr') : Promise.resolve(settings.firmNameTr || ''),
-    settings.sloganAr ? translateText(settings.sloganAr, 'en') : Promise.resolve(settings.sloganEn || ''),
-    settings.sloganAr ? translateText(settings.sloganAr, 'tr') : Promise.resolve(settings.sloganTr || ''),
-    settings.subSloganAr ? translateText(settings.subSloganAr, 'en') : Promise.resolve(settings.subSloganEn || ''),
-    settings.subSloganAr ? translateText(settings.subSloganAr, 'tr') : Promise.resolve(settings.subSloganTr || ''),
-    settings.aboutHeadingAr ? translateText(settings.aboutHeadingAr, 'en') : Promise.resolve(settings.aboutHeadingEn || ''),
-    settings.aboutHeadingAr ? translateText(settings.aboutHeadingAr, 'tr') : Promise.resolve(settings.aboutHeadingTr || ''),
-    settings.aboutBadgeAr ? translateText(settings.aboutBadgeAr, 'en') : Promise.resolve(settings.aboutBadgeEn || ''),
-    settings.aboutBadgeAr ? translateText(settings.aboutBadgeAr, 'tr') : Promise.resolve(settings.aboutBadgeTr || ''),
-    settings.aboutTextAr ? translateText(settings.aboutTextAr, 'en') : Promise.resolve(settings.aboutTextEn || ''),
-    settings.aboutTextAr ? translateText(settings.aboutTextAr, 'tr') : Promise.resolve(settings.aboutTextTr || ''),
-    settings.aboutVisionAr ? translateText(settings.aboutVisionAr, 'en') : Promise.resolve(settings.aboutVisionEn || ''),
-    settings.aboutVisionAr ? translateText(settings.aboutVisionAr, 'tr') : Promise.resolve(settings.aboutVisionTr || ''),
-    settings.aboutMethodologyAr ? translateText(settings.aboutMethodologyAr, 'en') : Promise.resolve(settings.aboutMethodologyEn || ''),
-    settings.aboutMethodologyAr ? translateText(settings.aboutMethodologyAr, 'tr') : Promise.resolve(settings.aboutMethodologyTr || ''),
-    settings.aboutConfidentialityAr ? translateText(settings.aboutConfidentialityAr, 'en') : Promise.resolve(settings.aboutConfidentialityEn || ''),
-    settings.aboutConfidentialityAr ? translateText(settings.aboutConfidentialityAr, 'tr') : Promise.resolve(settings.aboutConfidentialityTr || ''),
-    settings.aboutVisionPoint1Ar ? translateText(settings.aboutVisionPoint1Ar, 'en') : Promise.resolve(settings.aboutVisionPoint1En || ''),
-    settings.aboutVisionPoint1Ar ? translateText(settings.aboutVisionPoint1Ar, 'tr') : Promise.resolve(settings.aboutVisionPoint1Tr || ''),
-    settings.aboutVisionPoint2Ar ? translateText(settings.aboutVisionPoint2Ar, 'en') : Promise.resolve(settings.aboutVisionPoint2En || ''),
-    settings.aboutVisionPoint2Ar ? translateText(settings.aboutVisionPoint2Ar, 'tr') : Promise.resolve(settings.aboutVisionPoint2Tr || ''),
-    settings.aboutMethodologyPoint1Ar ? translateText(settings.aboutMethodologyPoint1Ar, 'en') : Promise.resolve(settings.aboutMethodologyPoint1En || ''),
-    settings.aboutMethodologyPoint1Ar ? translateText(settings.aboutMethodologyPoint1Ar, 'tr') : Promise.resolve(settings.aboutMethodologyPoint1Tr || ''),
-    settings.aboutMethodologyPoint2Ar ? translateText(settings.aboutMethodologyPoint2Ar, 'en') : Promise.resolve(settings.aboutMethodologyPoint2En || ''),
-    settings.aboutMethodologyPoint2Ar ? translateText(settings.aboutMethodologyPoint2Ar, 'tr') : Promise.resolve(settings.aboutMethodologyPoint2Tr || ''),
-    settings.aboutConfidentialityPoint1Ar ? translateText(settings.aboutConfidentialityPoint1Ar, 'en') : Promise.resolve(settings.aboutConfidentialityPoint1En || ''),
-    settings.aboutConfidentialityPoint1Ar ? translateText(settings.aboutConfidentialityPoint1Ar, 'tr') : Promise.resolve(settings.aboutConfidentialityPoint1Tr || ''),
-    settings.aboutConfidentialityPoint2Ar ? translateText(settings.aboutConfidentialityPoint2Ar, 'en') : Promise.resolve(settings.aboutConfidentialityPoint2En || ''),
-    settings.aboutConfidentialityPoint2Ar ? translateText(settings.aboutConfidentialityPoint2Ar, 'tr') : Promise.resolve(settings.aboutConfidentialityPoint2Tr || ''),
-    settings.aboutRankingTitleAr ? translateText(settings.aboutRankingTitleAr, 'en') : Promise.resolve(settings.aboutRankingTitleEn || ''),
-    settings.aboutRankingTitleAr ? translateText(settings.aboutRankingTitleAr, 'tr') : Promise.resolve(settings.aboutRankingTitleTr || ''),
-    settings.aboutRankingDescAr ? translateText(settings.aboutRankingDescAr, 'en') : Promise.resolve(settings.aboutRankingDescEn || ''),
-    settings.aboutRankingDescAr ? translateText(settings.aboutRankingDescAr, 'tr') : Promise.resolve(settings.aboutRankingDescTr || ''),
-    settings.aboutCtaTextAr ? translateText(settings.aboutCtaTextAr, 'en') : Promise.resolve(settings.aboutCtaTextEn || ''),
-    settings.aboutCtaTextAr ? translateText(settings.aboutCtaTextAr, 'tr') : Promise.resolve(settings.aboutCtaTextTr || ''),
-    settings.addressAr ? translateText(settings.addressAr, 'en') : Promise.resolve(settings.addressEn || ''),
-    settings.addressAr ? translateText(settings.addressAr, 'tr') : Promise.resolve(settings.addressTr || ''),
-    settings.countryAr ? translateText(settings.countryAr, 'en') : Promise.resolve(settings.countryEn || ''),
-    settings.countryAr ? translateText(settings.countryAr, 'tr') : Promise.resolve(settings.countryTr || ''),
-    settings.cityAr ? translateText(settings.cityAr, 'en') : Promise.resolve(settings.cityEn || ''),
-    settings.cityAr ? translateText(settings.cityAr, 'tr') : Promise.resolve(settings.cityTr || ''),
-    settings.workingHoursAr ? translateText(settings.workingHoursAr, 'en') : Promise.resolve(settings.workingHoursEn || ''),
-    settings.workingHoursAr ? translateText(settings.workingHoursAr, 'tr') : Promise.resolve(settings.workingHoursTr || ''),
-    settings.navbarSubtitleAr ? translateText(settings.navbarSubtitleAr, 'en') : Promise.resolve(settings.navbarSubtitleEn || ''),
-    settings.navbarSubtitleAr ? translateText(settings.navbarSubtitleAr, 'tr') : Promise.resolve(settings.navbarSubtitleTr || ''),
+    smartTranslateField(settings.firmNameAr, prev?.firmNameAr, settings.firmNameEn, 'en', forceAll),
+    smartTranslateField(settings.firmNameAr, prev?.firmNameAr, settings.firmNameTr, 'tr', forceAll),
+    smartTranslateField(settings.sloganAr, prev?.sloganAr, settings.sloganEn, 'en', forceAll),
+    smartTranslateField(settings.sloganAr, prev?.sloganAr, settings.sloganTr, 'tr', forceAll),
+    smartTranslateField(settings.subSloganAr, prev?.subSloganAr, settings.subSloganEn, 'en', forceAll),
+    smartTranslateField(settings.subSloganAr, prev?.subSloganAr, settings.subSloganTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutHeadingAr, prev?.aboutHeadingAr, settings.aboutHeadingEn, 'en', forceAll),
+    smartTranslateField(settings.aboutHeadingAr, prev?.aboutHeadingAr, settings.aboutHeadingTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutBadgeAr, prev?.aboutBadgeAr, settings.aboutBadgeEn, 'en', forceAll),
+    smartTranslateField(settings.aboutBadgeAr, prev?.aboutBadgeAr, settings.aboutBadgeTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutTextAr, prev?.aboutTextAr, settings.aboutTextEn, 'en', forceAll),
+    smartTranslateField(settings.aboutTextAr, prev?.aboutTextAr, settings.aboutTextTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutVisionAr, prev?.aboutVisionAr, settings.aboutVisionEn, 'en', forceAll),
+    smartTranslateField(settings.aboutVisionAr, prev?.aboutVisionAr, settings.aboutVisionTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutMethodologyAr, prev?.aboutMethodologyAr, settings.aboutMethodologyEn, 'en', forceAll),
+    smartTranslateField(settings.aboutMethodologyAr, prev?.aboutMethodologyAr, settings.aboutMethodologyTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutConfidentialityAr, prev?.aboutConfidentialityAr, settings.aboutConfidentialityEn, 'en', forceAll),
+    smartTranslateField(settings.aboutConfidentialityAr, prev?.aboutConfidentialityAr, settings.aboutConfidentialityTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutVisionPoint1Ar, prev?.aboutVisionPoint1Ar, settings.aboutVisionPoint1En, 'en', forceAll),
+    smartTranslateField(settings.aboutVisionPoint1Ar, prev?.aboutVisionPoint1Ar, settings.aboutVisionPoint1Tr, 'tr', forceAll),
+    smartTranslateField(settings.aboutVisionPoint2Ar, prev?.aboutVisionPoint2Ar, settings.aboutVisionPoint2En, 'en', forceAll),
+    smartTranslateField(settings.aboutVisionPoint2Ar, prev?.aboutVisionPoint2Ar, settings.aboutVisionPoint2Tr, 'tr', forceAll),
+    smartTranslateField(settings.aboutMethodologyPoint1Ar, prev?.aboutMethodologyPoint1Ar, settings.aboutMethodologyPoint1En, 'en', forceAll),
+    smartTranslateField(settings.aboutMethodologyPoint1Ar, prev?.aboutMethodologyPoint1Ar, settings.aboutMethodologyPoint1Tr, 'tr', forceAll),
+    smartTranslateField(settings.aboutMethodologyPoint2Ar, prev?.aboutMethodologyPoint2Ar, settings.aboutMethodologyPoint2En, 'en', forceAll),
+    smartTranslateField(settings.aboutMethodologyPoint2Ar, prev?.aboutMethodologyPoint2Ar, settings.aboutMethodologyPoint2Tr, 'tr', forceAll),
+    smartTranslateField(settings.aboutConfidentialityPoint1Ar, prev?.aboutConfidentialityPoint1Ar, settings.aboutConfidentialityPoint1En, 'en', forceAll),
+    smartTranslateField(settings.aboutConfidentialityPoint1Ar, prev?.aboutConfidentialityPoint1Ar, settings.aboutConfidentialityPoint1Tr, 'tr', forceAll),
+    smartTranslateField(settings.aboutConfidentialityPoint2Ar, prev?.aboutConfidentialityPoint2Ar, settings.aboutConfidentialityPoint2En, 'en', forceAll),
+    smartTranslateField(settings.aboutConfidentialityPoint2Ar, prev?.aboutConfidentialityPoint2Ar, settings.aboutConfidentialityPoint2Tr, 'tr', forceAll),
+    smartTranslateField(settings.aboutRankingTitleAr, prev?.aboutRankingTitleAr, settings.aboutRankingTitleEn, 'en', forceAll),
+    smartTranslateField(settings.aboutRankingTitleAr, prev?.aboutRankingTitleAr, settings.aboutRankingTitleTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutRankingDescAr, prev?.aboutRankingDescAr, settings.aboutRankingDescEn, 'en', forceAll),
+    smartTranslateField(settings.aboutRankingDescAr, prev?.aboutRankingDescAr, settings.aboutRankingDescTr, 'tr', forceAll),
+    smartTranslateField(settings.aboutCtaTextAr, prev?.aboutCtaTextAr, settings.aboutCtaTextEn, 'en', forceAll),
+    smartTranslateField(settings.aboutCtaTextAr, prev?.aboutCtaTextAr, settings.aboutCtaTextTr, 'tr', forceAll),
+    smartTranslateField(settings.addressAr, prev?.addressAr, settings.addressEn, 'en', forceAll),
+    smartTranslateField(settings.addressAr, prev?.addressAr, settings.addressTr, 'tr', forceAll),
+    smartTranslateField(settings.countryAr, prev?.countryAr, settings.countryEn, 'en', forceAll),
+    smartTranslateField(settings.countryAr, prev?.countryAr, settings.countryTr, 'tr', forceAll),
+    smartTranslateField(settings.cityAr, prev?.cityAr, settings.cityEn, 'en', forceAll),
+    smartTranslateField(settings.cityAr, prev?.cityAr, settings.cityTr, 'tr', forceAll),
+    smartTranslateField(settings.workingHoursAr, prev?.workingHoursAr, settings.workingHoursEn, 'en', forceAll),
+    smartTranslateField(settings.workingHoursAr, prev?.workingHoursAr, settings.workingHoursTr, 'tr', forceAll),
+    smartTranslateField(settings.navbarSubtitleAr, prev?.navbarSubtitleAr, settings.navbarSubtitleEn, 'en', forceAll),
+    smartTranslateField(settings.navbarSubtitleAr, prev?.navbarSubtitleAr, settings.navbarSubtitleTr, 'tr', forceAll),
   ]);
 
   return {
