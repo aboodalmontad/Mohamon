@@ -1,5 +1,5 @@
 import { 
-  Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation 
+  Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, WhyChooseUsPillar 
 } from '../types';
 import { storageService } from './storageService';
 
@@ -461,6 +461,29 @@ export async function autoTranslateOffice(office: OfficeLocation, prevOffice?: O
 }
 
 /**
+ * Automatically translate WhyChooseUsPillar (only changed/missing fields)
+ */
+export async function autoTranslateWhyPillar(item: WhyChooseUsPillar, prevItem?: WhyChooseUsPillar | null, forceAll = false): Promise<WhyChooseUsPillar> {
+  const [
+    titleEn, titleTr,
+    descEn, descTr
+  ] = await Promise.all([
+    smartTranslateField(item.titleAr, prevItem?.titleAr, item.titleEn, 'en', forceAll),
+    smartTranslateField(item.titleAr, prevItem?.titleAr, item.titleTr, 'tr', forceAll),
+    smartTranslateField(item.descAr, prevItem?.descAr, item.descEn, 'en', forceAll),
+    smartTranslateField(item.descAr, prevItem?.descAr, item.descTr, 'tr', forceAll),
+  ]);
+
+  return {
+    ...item,
+    titleEn: titleEn || item.titleEn || item.titleAr,
+    titleTr: titleTr || item.titleTr || item.titleAr,
+    descEn: descEn || item.descEn || item.descAr,
+    descTr: descTr || item.descTr || item.descAr,
+  };
+}
+
+/**
  * Automatically translate Site Settings (only changed/missing fields)
  */
 export async function autoTranslateSettings(settings: SiteSettings, prevSettings?: SiteSettings | null, forceAll = false): Promise<SiteSettings> {
@@ -484,11 +507,15 @@ export async function autoTranslateSettings(settings: SiteSettings, prevSettings
     aboutRankingTitleEn, aboutRankingTitleTr,
     aboutRankingDescEn, aboutRankingDescTr,
     aboutCtaTextEn, aboutCtaTextTr,
+    whyBadgeEn, whyBadgeTr,
+    whyHeadingEn, whyHeadingTr,
+    whySubtitleEn, whySubtitleTr,
     addressEn, addressTr,
     countryEn, countryTr,
     cityEn, cityTr,
     workingHoursEn, workingHoursTr,
-    navbarSubtitleEn, navbarSubtitleTr
+    navbarSubtitleEn, navbarSubtitleTr,
+    whyPillarsTranslated
   ] = await Promise.all([
     smartTranslateField(settings.firmNameAr, prev?.firmNameAr, settings.firmNameEn, 'en', forceAll),
     smartTranslateField(settings.firmNameAr, prev?.firmNameAr, settings.firmNameTr, 'tr', forceAll),
@@ -526,6 +553,12 @@ export async function autoTranslateSettings(settings: SiteSettings, prevSettings
     smartTranslateField(settings.aboutRankingDescAr, prev?.aboutRankingDescAr, settings.aboutRankingDescTr, 'tr', forceAll),
     smartTranslateField(settings.aboutCtaTextAr, prev?.aboutCtaTextAr, settings.aboutCtaTextEn, 'en', forceAll),
     smartTranslateField(settings.aboutCtaTextAr, prev?.aboutCtaTextAr, settings.aboutCtaTextTr, 'tr', forceAll),
+    smartTranslateField(settings.whyBadgeAr, prev?.whyBadgeAr, settings.whyBadgeEn, 'en', forceAll),
+    smartTranslateField(settings.whyBadgeAr, prev?.whyBadgeAr, settings.whyBadgeTr, 'tr', forceAll),
+    smartTranslateField(settings.whyHeadingAr, prev?.whyHeadingAr, settings.whyHeadingEn, 'en', forceAll),
+    smartTranslateField(settings.whyHeadingAr, prev?.whyHeadingAr, settings.whyHeadingTr, 'tr', forceAll),
+    smartTranslateField(settings.whySubtitleAr, prev?.whySubtitleAr, settings.whySubtitleEn, 'en', forceAll),
+    smartTranslateField(settings.whySubtitleAr, prev?.whySubtitleAr, settings.whySubtitleTr, 'tr', forceAll),
     smartTranslateField(settings.addressAr, prev?.addressAr, settings.addressEn, 'en', forceAll),
     smartTranslateField(settings.addressAr, prev?.addressAr, settings.addressTr, 'tr', forceAll),
     smartTranslateField(settings.countryAr, prev?.countryAr, settings.countryEn, 'en', forceAll),
@@ -536,6 +569,14 @@ export async function autoTranslateSettings(settings: SiteSettings, prevSettings
     smartTranslateField(settings.workingHoursAr, prev?.workingHoursAr, settings.workingHoursTr, 'tr', forceAll),
     smartTranslateField(settings.navbarSubtitleAr, prev?.navbarSubtitleAr, settings.navbarSubtitleEn, 'en', forceAll),
     smartTranslateField(settings.navbarSubtitleAr, prev?.navbarSubtitleAr, settings.navbarSubtitleTr, 'tr', forceAll),
+    Array.isArray(settings.whyPillars) && settings.whyPillars.length > 0
+      ? Promise.all(
+          settings.whyPillars.map((pillar) => {
+            const prevPillar = prev?.whyPillars?.find((p) => p.id === pillar.id);
+            return autoTranslateWhyPillar(pillar, prevPillar, forceAll);
+          })
+        )
+      : Promise.resolve(settings.whyPillars),
   ]);
 
   return {
@@ -576,6 +617,13 @@ export async function autoTranslateSettings(settings: SiteSettings, prevSettings
     aboutRankingDescTr: aboutRankingDescTr || settings.aboutRankingDescTr || settings.aboutRankingDescAr,
     aboutCtaTextEn: aboutCtaTextEn || settings.aboutCtaTextEn || settings.aboutCtaTextAr,
     aboutCtaTextTr: aboutCtaTextTr || settings.aboutCtaTextTr || settings.aboutCtaTextAr,
+    whyBadgeEn: whyBadgeEn || settings.whyBadgeEn || settings.whyBadgeAr,
+    whyBadgeTr: whyBadgeTr || settings.whyBadgeTr || settings.whyBadgeAr,
+    whyHeadingEn: whyHeadingEn || settings.whyHeadingEn || settings.whyHeadingAr,
+    whyHeadingTr: whyHeadingTr || settings.whyHeadingTr || settings.whyHeadingAr,
+    whySubtitleEn: whySubtitleEn || settings.whySubtitleEn || settings.whySubtitleAr,
+    whySubtitleTr: whySubtitleTr || settings.whySubtitleTr || settings.whySubtitleAr,
+    whyPillars: whyPillarsTranslated || settings.whyPillars,
     addressEn: addressEn || settings.addressEn || settings.addressAr,
     addressTr: addressTr || settings.addressTr || settings.addressAr,
     countryEn: countryEn || settings.countryEn || settings.countryAr,

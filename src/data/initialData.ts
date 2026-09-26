@@ -1,5 +1,67 @@
-import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, PlatformSettings, SiteSettings, OfficeLocation, ContactMessage } from '../types';
+import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, PlatformSettings, SiteSettings, OfficeLocation, ContactMessage, WhyChooseUsPillar } from '../types';
 
+export const DEFAULT_WHY_PILLARS: WhyChooseUsPillar[] = [
+  {
+    id: 'why-1',
+    iconName: 'Lock',
+    titleAr: 'سرية مطلقة وحصانة مصرفية',
+    titleEn: 'Bank-Grade Confidentiality & Privilege',
+    titleTr: 'Banka Düzeyinde Gizlilik ve Mesleki Dokunulmazlık',
+    descAr: 'نلتزم بأعلى بروتوكولات حماية وسرية المعلومات القانونية والمالية مع تشفير كامل لكافة الملفات والمراسلات.',
+    descEn: 'Strict attorney-client privilege protocols and enterprise-grade data encryption for all sensitive transactions.',
+    descTr: 'Tüm hassas ticari işlemlerde ve uyuşmazlıklarda avukat-müvekkil gizliliği ve kurumsal veri şifreleme protokolleri.'
+  },
+  {
+    id: 'why-2',
+    iconName: 'Trophy',
+    titleAr: 'سجل حافل بالانتصارات النوعية',
+    titleEn: 'Proven Track Record of Precedents',
+    titleTr: 'Emsal Nitelikte Yüksek Başarı Oranı',
+    descAr: 'نسبة نجاح تتجاوز 98% في القضايا التجارية والتحكيمية الدولية، وتحصيل تعويضات استثمارية كبرى.',
+    descEn: 'Over 98% success rate in high-value commercial arbitrations, recovering multi-million dispute compensations.',
+    descTr: 'Uluslararası ticari tahkim ve yüksek meblağlı davalarda %98\'i aşan başarı ve tazminat tahsilat oranı.'
+  },
+  {
+    id: 'why-3',
+    iconName: 'Globe2',
+    titleAr: 'تحالفات ومكاتب عابرة للحدود',
+    titleEn: 'Cross-Border International Reach',
+    titleTr: 'Sınır Ötesi Küresel Ofis Ağı',
+    descAr: 'شراكات وتواجد مباشر في الرياض، إسطنبول، دبي، ولندن لتوفير تمثيل قانوني متزامن في مختلف الاختصاصات.',
+    descEn: 'Strategic direct presence across Riyadh, Istanbul, Dubai, and London for seamless multi-jurisdictional representation.',
+    descTr: 'Riyad, İstanbul, Dubai ve Londra\'daki doğrudan varlığımızla çok yargılı davalarda eşzamanlı temsil.'
+  },
+  {
+    id: 'why-4',
+    iconName: 'Clock',
+    titleAr: 'فريق استجابة طارئة 24/7',
+    titleEn: '24/7 Rapid Response Legal Unit',
+    titleTr: '7/24 Acil Hukuki Müdahale Ekibi',
+    descAr: 'غرفة عمليات قانونية مخصصة للتعامل مع الأوامر الوقتية المستعجلة، الحجوزات التحفظية، والأزمات التنظيمية.',
+    descEn: 'Dedicated crisis team for injunctions, precautionary asset attachments, and emergency regulatory interventions.',
+    descTr: 'İhtiyati tedbirler, acil hacizler ve beklenmedik regülasyon denetimleri için özel kriz yönetim masası.'
+  },
+  {
+    id: 'why-5',
+    iconName: 'FileCheck2',
+    titleAr: 'وضوح وشفافية الأتعاب دون مفاجآت',
+    titleEn: 'Transparent Value-Based Billing',
+    titleTr: 'Şeffaf ve Öngörülebilir Ücretlendirme',
+    descAr: 'هيكلة أتعاب مرنة وواضحة ترتبط بالقيمة المضافة والنتائج المحققة دون أي تكاليف خفية أو مبالغ غير مبررة.',
+    descEn: 'Predictable, milestone-based and value-driven fee structures with full fiscal transparency.',
+    descTr: 'Aşamalara bağlı, katma değer odaklı ve hiçbir gizli maliyet barındırmayan tam şeffaf ücret politikası.'
+  },
+  {
+    id: 'why-6',
+    iconName: 'ShieldCheck',
+    titleAr: 'حلول استباقية تحصن عقودك',
+    titleEn: 'Proactive Dispute Prevention',
+    titleTr: 'Uyuşmazlık Önleyici Proaktif Sözleşmeler',
+    descAr: 'لا ننتظر وقوع النزاع؛ بل نصيغ العقود والاتفاقيات بحرفية هندسية تسد كل الثغرات وتمنع أي تعثر مستقبلي.',
+    descEn: 'Dispute-preventive contractual drafting that fortifies your commercial deals and mitigates exposure upfront.',
+    descTr: 'Uyuşmazlık doğmadan önce sözleşmeleri kusursuzca yapılandırarak gelecekteki tüm hukuki riskleri bertaraf ediyoruz.'
+  }
+];
 
 export const initialPlatformSettings: PlatformSettings = {
   platformNameAr: 'محامون',
@@ -21,6 +83,16 @@ export const initialSiteSettings: SiteSettings = {
   firmNameAr: 'مكتب النخبة والعدل للمحاماة والاستشارات القانونية',
   firmNameEn: 'Al-Nokhba & Al-Adl Law Firm',
   firmNameTr: 'El-Nohbe & El-Adl Hukuk ve Uluslararası Tahkim Bürosu',
+  whyBadgeAr: 'معايير التميز والريادة',
+  whyBadgeEn: 'Why Choose Us',
+  whyBadgeTr: 'Neden Biz',
+  whyHeadingAr: 'لماذا تضع كبرى الشركات ثقتها المطلقة في مكتبنا؟',
+  whyHeadingEn: 'Why Global Corporations Entrust Us With Their Critical Stakes',
+  whyHeadingTr: 'Küresel Şirketler Neden En Kritik Dosyalarını Bize Emanet Ediyor?',
+  whySubtitleAr: 'نلتزم بأعلى معايير الدقة والسرية لتقديم قيمة قانونية استثنائية تعزز أمان استثماراتكم.',
+  whySubtitleEn: 'Our uncompromising standard of legal precision makes us the safest strategic partner for your institutional growth.',
+  whySubtitleTr: 'Hukuki hassasiyetimiz ve tavizsiz standartlarımız, kurumsal büyümeniz için bizi en güvenilir stratejik ortak kılmaktadır.',
+  whyPillars: DEFAULT_WHY_PILLARS,
   sloganAr: 'حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية',
   sloganEn: 'Safeguarding Your Rights, Pioneering Your Legal Success',
   sloganTr: 'Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir',

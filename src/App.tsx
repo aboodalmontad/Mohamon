@@ -467,6 +467,7 @@ export default function App() {
 
           {/* 6. Why Choose Us */}
           <WhyChooseUsSection
+            settings={firmData.settings}
             lang={lang}
           />
 

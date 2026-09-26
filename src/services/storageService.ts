@@ -1,5 +1,5 @@
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, PlatformSettings, OfficeLocation, AuditLog, LawFirm } from '../types';
-import { initialPlatformSettings, initialPartners, initialPracticeAreas, initialTestimonials, initialBlogPosts, initialCaseStudies, initialContactMessages, initialSiteSettings, initialOffices } from '../data/initialData';
+import { initialPlatformSettings, initialPartners, initialPracticeAreas, initialTestimonials, initialBlogPosts, initialCaseStudies, initialContactMessages, initialSiteSettings, initialOffices, DEFAULT_WHY_PILLARS } from '../data/initialData';
 import { firmService } from './firmService';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID } from '../lib/supabase';
 
@@ -275,6 +275,9 @@ export const storageService = {
     const mergedSettings: SiteSettings = {
       ...fallbackSettings,
       ...(data.settings || {}),
+      whyPillars: Array.isArray(data.settings?.whyPillars) && data.settings.whyPillars.length > 0
+        ? data.settings.whyPillars
+        : DEFAULT_WHY_PILLARS,
       firmNameAr: data.settings?.firmNameAr || firm.nameAr,
       firmNameEn: data.settings?.firmNameEn || firm.nameEn || data.settings?.firmNameAr || firm.nameAr,
       phone: data.settings?.phone || firm.phone || '',

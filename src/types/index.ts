@@ -171,10 +171,31 @@ export interface PlatformSettings {
   ctaSecondaryTr?: string;
 }
 
+export interface WhyChooseUsPillar {
+  id: string;
+  iconName: string;
+  titleAr: string;
+  titleEn?: string;
+  titleTr?: string;
+  descAr: string;
+  descEn?: string;
+  descTr?: string;
+}
+
 export interface SiteSettings {
   firmNameAr: string;
   firmNameEn: string;
   firmNameTr?: string;
+  whyBadgeAr?: string;
+  whyBadgeEn?: string;
+  whyBadgeTr?: string;
+  whyHeadingAr?: string;
+  whyHeadingEn?: string;
+  whyHeadingTr?: string;
+  whySubtitleAr?: string;
+  whySubtitleEn?: string;
+  whySubtitleTr?: string;
+  whyPillars?: WhyChooseUsPillar[];
   sloganAr: string;
   sloganEn: string;
   sloganTr?: string;

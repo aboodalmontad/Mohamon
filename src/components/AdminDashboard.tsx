@@ -8,11 +8,12 @@ import {
   Layout, Sliders, Type, AlignCenter, AlignRight, Maximize2, Move, MapPin,
   Languages, Wand2, ArrowRightLeft, Loader2, Target, Compass, Award, History, FileText,
   Copy, Code2, HardDrive, Cloud, FileCode, Database, Link2, Server, HelpCircle, RotateCcw,
-  Coins, DollarSign, TrendingUp, BarChart3, Banknote
+  Coins, DollarSign, TrendingUp, BarChart3, Banknote, Lock, FileCheck2, Globe2, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { firmService } from '../services/firmService';
-import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, OfficeLocation, Language, LawFirm } from '../types';
+import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage, SiteSettings, OfficeLocation, Language, LawFirm, WhyChooseUsPillar } from '../types';
+import { DEFAULT_WHY_PILLARS } from '../data/initialData';
 import { COUNTRIES_LIST } from '../data/countries';
 import { ImageUploader } from './ImageUploader';
 import { 
@@ -23,6 +24,7 @@ import {
   autoTranslateBlogPost, 
   autoTranslateOffice, 
   autoTranslateSettings, 
+  autoTranslateWhyPillar,
   autoTranslateAllSiteData,
   translateText
 } from '../services/translator';
@@ -59,6 +61,96 @@ const PRESET_PRACTICE_ICONS = [
   { name: 'Globe', label: 'دولي واستثمار (Globe)' },
   { name: 'Sparkles', label: 'تقنية وابتكار (Sparkles)' },
   { name: 'Trophy', label: 'إنجازات ونزاعات (Trophy)' },
+];
+
+const PRESET_WHY_ICONS = [
+  { name: 'Lock', label: '🔒 سرية وحصانة (Lock)' },
+  { name: 'Trophy', label: '🏆 إنجازات وانتصارات (Trophy)' },
+  { name: 'Globe2', label: '🌐 حضور وتحالفات دولية (Globe2)' },
+  { name: 'Clock', label: '⏱️ استجابة طارئة 24/7 (Clock)' },
+  { name: 'FileCheck2', label: '📑 شفافية الأتعاب والعقود (FileCheck2)' },
+  { name: 'ShieldCheck', label: '🛡️ حلول استباقية وحماية (ShieldCheck)' },
+  { name: 'Scale', label: '⚖️ عدالة ومرافعات (Scale)' },
+  { name: 'Award', label: '🎖️ اعتماد وتميز مهني (Award)' },
+  { name: 'Gavel', label: '🔨 تحكيم وقضاء عالي (Gavel)' },
+  { name: 'Building2', label: '🏢 شركات واستثمار (Building2)' },
+  { name: 'Landmark', label: '🏛️ محاكم عليا ونقض (Landmark)' },
+  { name: 'Sparkles', label: '✨ ابتكار وتقنية قانونية (Sparkles)' },
+];
+
+const PRESET_WHY_TEMPLATES: Omit<WhyChooseUsPillar, 'id'>[] = [
+  {
+    iconName: 'Lock',
+    titleAr: 'سرية مطلقة وحصانة مصرفية',
+    titleEn: 'Bank-Grade Confidentiality & Privilege',
+    titleTr: 'Banka Düzeyinde Gizlilik ve Mesleki Dokunulmazlık',
+    descAr: 'نلتزم بأعلى بروتوكولات حماية وسرية المعلومات القانونية والمالية مع تشفير كامل لكافة الملفات والمراسلات.',
+    descEn: 'Strict attorney-client privilege protocols and enterprise-grade data encryption for all sensitive transactions.',
+    descTr: 'Tüm hassas ticari işlemlerde ve uyuşmazlıklarda avukat-müvekkil gizliliği ve kurumsal veri şifreleme protokolleri.'
+  },
+  {
+    iconName: 'Trophy',
+    titleAr: 'سجل حافل بالانتصارات النوعية',
+    titleEn: 'Proven Track Record of Precedents',
+    titleTr: 'Emsal Nitelikte Yüksek Başarı Oranı',
+    descAr: 'نسبة نجاح تتجاوز 98% في القضايا التجارية والتحكيمية الدولية، وتحصيل تعويضات استثمارية كبرى.',
+    descEn: 'Over 98% success rate in high-value commercial arbitrations, recovering multi-million dispute compensations.',
+    descTr: 'Uluslararası ticari tahkim ve yüksek meblağlı davalarda %98\'i aşan başarı ve tazminat tahsilat oranı.'
+  },
+  {
+    iconName: 'Gavel',
+    titleAr: 'اعتماد في التحكيم التجاري والمحاكم العليا',
+    titleEn: 'Accredited Commercial Arbitration & Supreme Courts',
+    titleTr: 'Yetkili Ticari Tahkim ve Yüksek Yargı Temsili',
+    descAr: 'يضم مكتبنا محكمين معتمدين ومحامين بالنقض ذوي خبرة راسخة في إدارة النزاعات المعقدة أمام هيئات التحكيم والمحاكم العليا.',
+    descEn: 'Our firm features accredited arbitrators and supreme court advocates seasoned in complex multi-party disputes.',
+    descTr: 'Büromuz, karmaşık ticari uyuşmazlıklarda yüksek yargı ve tahkim heyetleri önünde uzmanlaşmış yetkili hakem ve avukatlardan oluşur.'
+  },
+  {
+    iconName: 'ShieldCheck',
+    titleAr: 'حلول استباقية تحصن عقودك واستثماراتك',
+    titleEn: 'Proactive Dispute Prevention & Contract Shielding',
+    titleTr: 'Uyuşmazlık Önleyici Proaktif Sözleşmeler',
+    descAr: 'لا ننتظر وقوع النزاع؛ بل نصيغ العقود والاتفاقيات بحرفية هندسية تسد كل الثغرات وتمنع أي تعثر مستقبلي.',
+    descEn: 'Dispute-preventive contractual drafting that fortifies your commercial deals and mitigates exposure upfront.',
+    descTr: 'Uyuşmazlık doğmadan önce sözleşmeleri kusursuzca yapılandırarak gelecekteki tüm hukuki riskleri bertaraf ediyoruz.'
+  },
+  {
+    iconName: 'Clock',
+    titleAr: 'فريق استجابة طارئة 24/7',
+    titleEn: '24/7 Rapid Response Legal Unit',
+    titleTr: '7/24 Acil Hukuki Müdahale Ekibi',
+    descAr: 'غرفة عمليات قانونية مخصصة للتعامل مع الأوامر الوقتية المستعجلة، الحجوزات التحفظية، والأزمات التنظيمية.',
+    descEn: 'Dedicated crisis team for injunctions, precautionary asset attachments, and emergency regulatory interventions.',
+    descTr: 'İhtiyati tedbirler, acil hacizler ve beklenmedik regülasyon denetimleri için özel kriz yönetim masası.'
+  },
+  {
+    iconName: 'FileCheck2',
+    titleAr: 'وضوح وشفافية الأتعاب دون مفاجآت',
+    titleEn: 'Transparent Value-Based Billing',
+    titleTr: 'Şeffaf ve Öngörülebilir Ücretlendirme',
+    descAr: 'هيكلة أتعاب مرنة وواضحة ترتبط بالقيمة المضافة والنتائج المحققة دون أي تكاليف خفية أو مبالغ غير مبررة.',
+    descEn: 'Predictable, milestone-based and value-driven fee structures with full fiscal transparency.',
+    descTr: 'Aşamalara bağlı, katma değer odaklı ve hiçbir gizli maliyet barındırmayan tam şeffaf ücret politikası.'
+  },
+  {
+    iconName: 'Globe2',
+    titleAr: 'تحالفات ومكاتب عابرة للحدود',
+    titleEn: 'Cross-Border International Reach',
+    titleTr: 'Sınır Ötesi Küresel Ofis Ağı',
+    descAr: 'شراكات وتواجد مباشر لتوفير تمثيل قانوني متزامن وحماية مصالح موكلينا في مختلف الاختصاصات القضائية.',
+    descEn: 'Strategic international network for seamless multi-jurisdictional legal representation.',
+    descTr: 'Uluslararası stratejik işbirliklerimizle çok yargılı davalarda eşzamanlı hukuki temsil.'
+  },
+  {
+    iconName: 'Award',
+    titleAr: 'إشراف مباشر من الشركاء المؤسسين',
+    titleEn: 'Direct Senior Partner Supervision',
+    titleTr: 'Kurucu Ortakların Doğrudan Denetimi',
+    descAr: 'تخضع كل قضية واستشارة لمراجعة وإشراف مباشر من الشركاء المؤسسين لضمان أعلى درجات الدقة والرصانة القانونية.',
+    descEn: 'Every case and transaction receives hands-on scrutiny and strategic direction from our senior founding partners.',
+    descTr: 'Her dosya ve hukuki mütalaa, en yüksek hukuki hassasiyeti sağlamak adına kurucu ortaklarımızın doğrudan denetimindedir.'
+  }
 ];
 
 // Preset photo options to make adding/editing effortless
@@ -100,7 +192,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    'messages' | 'about' | 'partners' | 'practices' | 'caseStudies' | 'testimonials' | 'blog' | 'offices' | 'settings' | 'domain' | 'backup'
+    'messages' | 'about' | 'whyUs' | 'partners' | 'practices' | 'caseStudies' | 'testimonials' | 'blog' | 'offices' | 'settings' | 'domain' | 'backup'
   >('messages');
 
   // Custom Domain Management State
@@ -153,6 +245,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [editingOffice, setEditingOffice] = useState<OfficeLocation | null>(null);
+  const [editingWhyPillar, setEditingWhyPillar] = useState<WhyChooseUsPillar | null>(null);
 
   // Firm Data Saving State for Manager
   const [isSavingFirmData, setIsSavingFirmData] = useState(false);
@@ -179,7 +272,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
   // Delete Confirmation Modal state
   const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<{
-    type: 'partner' | 'practice' | 'caseStudy' | 'testimonial' | 'blog' | 'office' | 'message';
+    type: 'partner' | 'practice' | 'caseStudy' | 'testimonial' | 'blog' | 'office' | 'message' | 'whyPillar';
     id: string;
     title: string;
   } | null>(null);
@@ -778,6 +871,150 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     setDeleteConfirmTarget({ type: 'message', id, title: name || id });
   };
 
+  // ---------------- WHY CHOOSE US (EXCELLENCE & LEADERSHIP STANDARDS) CRUD ----------------
+  const activeWhyPillars: WhyChooseUsPillar[] =
+    Array.isArray(settings.whyPillars) && settings.whyPillars.length > 0
+      ? settings.whyPillars
+      : DEFAULT_WHY_PILLARS;
+
+  const handleSaveWhyPillar = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!editingWhyPillar) return;
+
+    if (!editingWhyPillar.titleAr?.trim()) {
+      showToast(isAr ? 'الرجاء إدخال عنوان المعيار بالعربية' : 'Please enter standard title in Arabic', 'error');
+      return;
+    }
+
+    const currentList = [...activeWhyPillars];
+    const existingIdx = currentList.findIndex((p) => p.id === editingWhyPillar.id);
+    const prevPillar = existingIdx >= 0 ? currentList[existingIdx] : null;
+    const titleChanged = prevPillar && prevPillar.titleAr?.trim() !== editingWhyPillar.titleAr?.trim();
+    const descChanged = prevPillar && prevPillar.descAr?.trim() !== editingWhyPillar.descAr?.trim();
+
+    const pillarToSave: WhyChooseUsPillar = {
+      ...editingWhyPillar,
+      titleAr: editingWhyPillar.titleAr.trim(),
+      descAr: editingWhyPillar.descAr.trim(),
+      titleEn: titleChanged ? '' : (editingWhyPillar.titleEn?.trim() || ''),
+      titleTr: titleChanged ? '' : (editingWhyPillar.titleTr?.trim() || ''),
+      descEn: descChanged ? '' : (editingWhyPillar.descEn?.trim() || ''),
+      descTr: descChanged ? '' : (editingWhyPillar.descTr?.trim() || ''),
+    };
+
+    if (existingIdx >= 0) {
+      currentList[existingIdx] = pillarToSave;
+    } else {
+      currentList.push(pillarToSave);
+    }
+
+    const nextSettings: SiteSettings = {
+      ...settings,
+      whyPillars: currentList,
+    };
+
+    // 1. Save immediately in 0ms + sync delta to Supabase
+    setSettings(nextSettings);
+    storageService.saveSettings(nextSettings);
+    setEditingWhyPillar(null);
+    setSaveSuccessTick(true);
+    setTimeout(() => setSaveSuccessTick(false), 2500);
+    showToast(isAr ? '⚡ تم حفظ معيار التميز والريادة في قاعدة البيانات فوراً!' : '⚡ Excellence standard saved immediately!');
+
+    // 2. Non-blocking background translation for EN & TR
+    if (autoSyncEnabled) {
+      autoTranslateWhyPillar(pillarToSave, prevPillar)
+        .then((translatedPillar) => {
+          if (JSON.stringify(translatedPillar) !== JSON.stringify(pillarToSave)) {
+            const latestSettings = storageService.getSettings();
+            const latestList = Array.isArray(latestSettings.whyPillars) && latestSettings.whyPillars.length > 0
+              ? [...latestSettings.whyPillars]
+              : [...currentList];
+            const idx = latestList.findIndex((p) => p.id === translatedPillar.id);
+            if (idx >= 0) {
+              latestList[idx] = translatedPillar;
+              const patchedSettings = { ...latestSettings, whyPillars: latestList };
+              setSettings(patchedSettings);
+              storageService.saveSettings(patchedSettings);
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  };
+
+  const handleQuickAddWhyPreset = (preset: Omit<WhyChooseUsPillar, 'id'>) => {
+    const newPillar: WhyChooseUsPillar = {
+      ...preset,
+      id: `why-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    };
+    const updatedList = [...activeWhyPillars, newPillar];
+    const nextSettings: SiteSettings = {
+      ...settings,
+      whyPillars: updatedList,
+    };
+    setSettings(nextSettings);
+    storageService.saveSettings(nextSettings);
+    setSaveSuccessTick(true);
+    setTimeout(() => setSaveSuccessTick(false), 2500);
+    showToast(isAr ? `⚡ تمت إضافة وحفظ معيار: "${preset.titleAr}" فوراً!` : `⚡ Added & saved standard: "${preset.titleEn || preset.titleAr}"!`);
+  };
+
+  const handleMoveWhyPillar = (index: number, direction: 'up' | 'down') => {
+    const list = [...activeWhyPillars];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const temp = list[index];
+    list[index] = list[targetIndex];
+    list[targetIndex] = temp;
+    const nextSettings: SiteSettings = {
+      ...settings,
+      whyPillars: list,
+    };
+    setSettings(nextSettings);
+    storageService.saveSettings(nextSettings);
+    showToast(isAr ? '⚡ تم تحديث ترتيب المعايير وحفظه فوراً' : '⚡ Standards order updated and saved');
+  };
+
+  const handleDeleteWhyPillar = (id: string, title: string) => {
+    setDeleteConfirmTarget({ type: 'whyPillar', id, title: title || id });
+  };
+
+  const handleResetWhyPillarsToDefault = () => {
+    const nextSettings: SiteSettings = {
+      ...settings,
+      whyBadgeAr: 'معايير التميز والريادة',
+      whyBadgeEn: 'Why Choose Us',
+      whyBadgeTr: 'Neden Biz',
+      whyHeadingAr: 'لماذا تضع كبرى الشركات ثقتها المطلقة في مكتبنا؟',
+      whyHeadingEn: 'Why Global Corporations Entrust Us With Their Critical Stakes',
+      whyHeadingTr: 'Küresel Şirketler Neden En Kritik Dosyalarını Bize Emanet Ediyor?',
+      whySubtitleAr: 'نلتزم بأعلى معايير الدقة والسرية لتقديم قيمة قانونية استثنائية تعزز أمان استثماراتكم.',
+      whySubtitleEn: 'Our uncompromising standard of legal precision makes us the safest strategic partner for your institutional growth.',
+      whySubtitleTr: 'Hukuki hassasiyetimiz ve tavizsiz standartlarımız, kurumsal büyümeniz için bizi en güvenilir stratejik ortak kılmaktadır.',
+      whyPillars: DEFAULT_WHY_PILLARS,
+    };
+    setSettings(nextSettings);
+    storageService.saveSettings(nextSettings);
+    setEditingWhyPillar(null);
+    showToast(isAr ? '✅ تمت استعادة وحفظ معايير التميز الستة الافتراضية' : '✅ Default 6 Excellence Standards restored & saved');
+  };
+
+  const handleTranslateCurrentWhyPillar = async () => {
+    if (!editingWhyPillar) return;
+    setIsTranslating(true);
+    try {
+      const prev = activeWhyPillars.find((p) => p.id === editingWhyPillar.id);
+      const translated = await autoTranslateWhyPillar(editingWhyPillar, prev, true);
+      setEditingWhyPillar(translated);
+      showToast(isAr ? '✨ تم ترجمة معيار التميز للإنجليزية والتركية' : 'Translated standard to EN & TR');
+    } catch {
+      showToast(isAr ? 'تعذر إتمام الترجمة' : 'Translation failed', 'error');
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
   // ---------------- SETTINGS SAVE (INSTANT DELTA SAVE) ----------------
   const handleSaveSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -805,6 +1042,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
     if (editingOffice) {
       await handleSaveOffice({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+    if (editingWhyPillar) {
+      await handleSaveWhyPillar({ preventDefault: () => {} } as React.FormEvent);
       return;
     }
 
@@ -1168,7 +1409,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
               {/* About the Firm & Journey */}
               <button
-                onClick={() => { setActiveTab('about'); setEditingPartner(null); setEditingPractice(null); }}
+                onClick={() => { setActiveTab('about'); setEditingPartner(null); setEditingPractice(null); setEditingWhyPillar(null); }}
                 className={`w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-between cursor-pointer whitespace-nowrap ${
                   activeTab === 'about' ? 'bg-[#c5a869] text-slate-950 font-bold shadow-md' : 'text-slate-300 hover:bg-slate-900'
                 }`}
@@ -1180,6 +1421,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-[#e5cb8e] font-semibold border border-slate-700">
                   {isAr ? 'القصة والرؤية' : 'Story'}
                 </span>
+              </button>
+
+              {/* Why Choose Us / Excellence & Leadership Standards */}
+              <button
+                onClick={() => { setActiveTab('whyUs'); setEditingPartner(null); setEditingPractice(null); setEditingWhyPillar(null); }}
+                className={`w-full px-4 py-3 rounded-xl text-xs sm:text-sm font-medium transition flex items-center justify-between cursor-pointer whitespace-nowrap ${
+                  activeTab === 'whyUs' ? 'bg-[#c5a869] text-slate-950 font-bold shadow-md' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  <span>{isAr ? 'معايير التميز والريادة' : 'Excellence Standards'}</span>
+                </div>
+                <span className="text-[11px] opacity-75 font-mono">({activeWhyPillars.length})</span>
               </button>
 
               {/* Partners */}
@@ -2016,6 +2271,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
+                  {/* Quick Shortcut Banner to Excellence & Leadership Standards */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-[#c5a869]/15 via-slate-900 to-slate-900 border border-[#c5a869]/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869] flex-shrink-0">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-white">
+                          {isAr ? 'إدارة وإضافة «معايير التميز والريادة» (لماذا تختارنا)' : 'Manage Excellence & Leadership Standards (Why Choose Us)'}
+                        </h4>
+                        <p className="text-[11px] text-slate-300">
+                          {isAr
+                            ? `يوجد حالياً (${activeWhyPillars.length}) معايير تميز معروضة على موقع مكتبك. يمكنك إضافة معايير جديدة أو تعديلها وحفظها فوراً.`
+                            : `Currently showing (${activeWhyPillars.length}) excellence standards on your website.`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('whyUs')}
+                      className="px-4 py-2 rounded-xl bg-[#c5a869] hover:brightness-110 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shadow-md"
+                    >
+                      <Award className="w-4 h-4" />
+                      <span>{isAr ? 'فتح وإضافة معايير التميز والريادة' : 'Manage Excellence Standards'}</span>
+                    </button>
+                  </div>
+
                   {/* Sticky Floating Save Bar for About Journey Content */}
                   <div className="sticky bottom-3 z-30 flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-md border-2 border-[#c5a869] shadow-2xl shadow-black/80">
                     <div className="flex items-center gap-2.5">
@@ -2051,6 +2333,506 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         <>
                           <Save className="w-4 h-4 text-slate-950" />
                           <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: WHY CHOOSE US / EXCELLENCE & LEADERSHIP STANDARDS (معايير التميز والريادة) */}
+              {activeTab === 'whyUs' && (
+                <div className="space-y-6">
+                  {/* Top Bar Header */}
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-md">
+                    <div className="flex items-start sm:items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#c5a869] to-[#87641d] flex items-center justify-center text-slate-950 font-bold flex-shrink-0 shadow-lg">
+                        <Award className="w-6 h-6 text-slate-950" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xl font-bold font-serif-title text-white">
+                            {isAr ? 'إدارة وإضافة «معايير التميز والريادة»' : 'Excellence & Leadership Standards (Why Choose Us)'}
+                          </h3>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c5a869]/20 text-[#e5cb8e] font-bold border border-[#c5a869]/40">
+                            {isAr ? `${activeWhyPillars.length} معايير نشطة` : `${activeWhyPillars.length} Active`}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {isAr
+                            ? 'أضف وعدّل واحفظ ركائز ومعايير التميز والريادة الخاصة بمكتبك لتظهر فوراً في قسم «لماذا تختارنا» على موقعك.'
+                            : 'Add, edit, and save your firm’s excellence and leadership standards shown in the Why Choose Us section.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {!editingWhyPillar && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingWhyPillar({
+                              id: `why-${Date.now()}`,
+                              iconName: 'Award',
+                              titleAr: '',
+                              titleEn: '',
+                              titleTr: '',
+                              descAr: '',
+                              descEn: '',
+                              descTr: '',
+                            })
+                          }
+                          className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer shadow-lg"
+                        >
+                          <Plus className="w-4 h-4 stroke-[3]" />
+                          <span>{isAr ? '+ إضافة معيار تميز جديد' : '+ Add New Standard'}</span>
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleTranslateCurrentSettings}
+                        disabled={isTranslating}
+                        className="px-3.5 py-2 rounded-xl bg-purple-950/60 border border-purple-500/40 text-purple-200 hover:bg-purple-900/60 font-bold text-xs flex items-center gap-2 transition disabled:opacity-50 cursor-pointer shadow-sm"
+                      >
+                        {isTranslating ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-300" />
+                            <span>{isAr ? 'جاري الترجمة...' : 'Translating...'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                            <span>{isAr ? 'ترجمة المعايير (EN & TR)' : 'Translate Standards'}</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSettings()}
+                        disabled={isSavingFirmData}
+                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 hover:brightness-110 transition cursor-pointer shadow-lg disabled:opacity-50"
+                      >
+                        {saveSuccessTick ? (
+                          <>
+                            <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                            <span>{isAr ? 'تم الحفظ!' : 'Saved!'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-4 h-4 text-slate-950" />
+                            <span>{isAr ? 'حفظ المعايير والتعديلات' : 'Save Standards'}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Quick 1-Click Preset Standards to Add Immediately */}
+                  <div className="p-4 rounded-2xl bg-slate-900/80 border border-[#c5a869]/30 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#e5cb8e]">
+                        <Wand2 className="w-4 h-4 text-[#c5a869]" />
+                        <span>{isAr ? 'إضافة سريعة بنقرة واحدة من نماذج معايير التميز القانوني الجاهزة (تُضاف وتُحفظ فوراً):' : '1-Click Ready Legal Excellence Standards (Instant Add & Save):'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleResetWhyPillarsToDefault}
+                        className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer self-start sm:self-auto"
+                      >
+                        {isAr ? '🔄 استعادة المعايير الستة الافتراضية' : '🔄 Restore Default 6 Standards'}
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {PRESET_WHY_TEMPLATES.map((preset, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            if (editingWhyPillar) {
+                              setEditingWhyPillar({
+                                ...editingWhyPillar,
+                                iconName: preset.iconName,
+                                titleAr: preset.titleAr,
+                                titleEn: preset.titleEn,
+                                titleTr: preset.titleTr,
+                                descAr: preset.descAr,
+                                descEn: preset.descEn,
+                                descTr: preset.descTr,
+                              });
+                              showToast(isAr ? `تم تعبئة النموذج: ${preset.titleAr}` : 'Template filled in form');
+                            } else {
+                              handleQuickAddWhyPreset(preset);
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-[#c5a869]/20 text-slate-200 hover:text-[#e5cb8e] text-xs font-medium transition cursor-pointer border border-slate-800 hover:border-[#c5a869]/50 flex items-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-[#c5a869]" />
+                          <span>{preset.titleAr}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ADD / EDIT STANDARD FORM */}
+                  {editingWhyPillar && (
+                    <form
+                      onSubmit={handleSaveWhyPillar}
+                      className="p-6 rounded-2xl bg-slate-900 border-2 border-[#c5a869] shadow-2xl space-y-5 animate-fade-in"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869]">
+                            <Award className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-base font-bold text-white">
+                              {activeWhyPillars.some((p) => p.id === editingWhyPillar.id)
+                                ? isAr
+                                  ? 'تعديل معيار التميز والريادة'
+                                  : 'Edit Excellence Standard'
+                                : isAr
+                                ? 'إضافة معيار تميز وريادة جديد'
+                                : 'Add New Excellence Standard'}
+                            </h4>
+                            <p className="text-[11px] text-slate-400">
+                              {isAr ? 'أدخل العنوان والوصف بالعربية واضغط «حفظ المعيار فوراً» ليتم الحفظ والترجمة التلقائية.' : 'Enter the title and description and click Save Standard.'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleTranslateCurrentWhyPillar}
+                            disabled={isTranslating}
+                            className="px-3 py-1.5 rounded-xl bg-purple-950/60 border border-purple-500/40 text-purple-200 hover:bg-purple-900/60 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                            <span>{isAr ? 'ترجمة فورية (EN & TR)' : 'Auto-Translate'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditingWhyPillar(null)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
+                          >
+                            {isAr ? 'إلغاء' : 'Cancel'}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Icon Selector */}
+                        <div>
+                          <label className="block text-xs text-slate-300 font-bold mb-1.5">
+                            {isAr ? 'أيقونة المعيار:' : 'Standard Icon:'}
+                          </label>
+                          <select
+                            value={editingWhyPillar.iconName || 'Award'}
+                            onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, iconName: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                          >
+                            {PRESET_WHY_ICONS.map((ic) => (
+                              <option key={ic.name} value={ic.name}>
+                                {ic.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Title Arabic */}
+                        <div className="md:col-span-2">
+                          <label className="block text-xs text-[#e5cb8e] font-bold mb-1.5">
+                            {isAr ? 'عنوان معيار التميز والريادة (بالعربية) *:' : 'Standard Title (Arabic) *:'}
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={editingWhyPillar.titleAr}
+                            onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, titleAr: e.target.value })}
+                            placeholder={isAr ? 'مثال: سرية مطلقة وحصانة مصرفية / خبرة تحكيمية دولية...' : 'Enter Arabic title...'}
+                            className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-[#c5a869]/60 text-white text-sm font-bold focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Description Arabic */}
+                      <div>
+                        <label className="block text-xs text-[#e5cb8e] font-bold mb-1.5">
+                          {isAr ? 'الوصف التفصيلي للمعيار (بالعربية) *:' : 'Detailed Description (Arabic) *:'}
+                        </label>
+                        <textarea
+                          rows={3}
+                          required
+                          value={editingWhyPillar.descAr}
+                          onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, descAr: e.target.value })}
+                          placeholder={isAr ? 'اشرح كيف يطبق مكتبك هذا المعيار وما القيمة القانونية المضافة للموكلين...' : 'Describe how your firm upholds this standard...'}
+                          className="w-full p-3.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs leading-relaxed focus:border-[#c5a869] focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Optional English & Turkish Translations */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
+                        <div className="space-y-2">
+                          <label className="block text-[11px] text-slate-400 font-semibold">
+                            {isAr ? 'العنوان والوصف بالإنجليزية (تُترجم تلقائياً عند الحفظ):' : 'English Title & Description (Auto-translated):'}
+                          </label>
+                          <input
+                            type="text"
+                            dir="ltr"
+                            value={editingWhyPillar.titleEn || ''}
+                            onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, titleEn: e.target.value })}
+                            placeholder="English Title (Optional - Auto-translated)"
+                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs"
+                          />
+                          <textarea
+                            rows={2}
+                            dir="ltr"
+                            value={editingWhyPillar.descEn || ''}
+                            onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, descEn: e.target.value })}
+                            placeholder="English Description (Optional - Auto-translated)"
+                            className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-[11px] text-slate-400 font-semibold">
+                            {isAr ? 'العنوان والوصف بالتركية (تُترجم تلقائياً عند الحفظ):' : 'Turkish Title & Description (Auto-translated):'}
+                          </label>
+                          <input
+                            type="text"
+                            dir="ltr"
+                            value={editingWhyPillar.titleTr || ''}
+                            onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, titleTr: e.target.value })}
+                            placeholder="Turkish Title (Optional - Auto-translated)"
+                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs"
+                          />
+                          <textarea
+                            rows={2}
+                            dir="ltr"
+                            value={editingWhyPillar.descTr || ''}
+                            onChange={(e) => setEditingWhyPillar({ ...editingWhyPillar, descTr: e.target.value })}
+                            placeholder="Turkish Description (Optional - Auto-translated)"
+                            className="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingWhyPillar(null)}
+                          className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition cursor-pointer"
+                        >
+                          {isAr ? 'إلغاء' : 'Cancel'}
+                        </button>
+                        <button
+                          type="submit"
+                          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-[#d4af37] to-[#c5a869] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl transition cursor-pointer"
+                        >
+                          <Save className="w-4 h-4 text-slate-950" />
+                          <span>{isAr ? 'حفظ المعيار فوراً' : 'Save Standard Immediately'}</span>
+                        </button>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* SECTION HEADINGS CUSTOMIZATION */}
+                  <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <Tag className="w-4 h-4 text-[#c5a869]" />
+                        <span>{isAr ? 'عناوين قسم «معايير التميز والريادة» في الصفحة الرئيسية' : 'Section Badge, Heading & Subtitle'}</span>
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveSettings()}
+                        className="px-3.5 py-1.5 rounded-lg bg-[#c5a869]/20 hover:bg-[#c5a869]/30 text-[#e5cb8e] border border-[#c5a869]/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'حفظ العناوين' : 'Save Headings'}</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs text-slate-300 font-semibold mb-1">
+                          {isAr ? 'شارة القسم (Badge):' : 'Section Badge:'}
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.whyBadgeAr ?? 'معايير التميز والريادة'}
+                          onChange={(e) => setSettings({ ...settings, whyBadgeAr: e.target.value })}
+                          placeholder="معايير التميز والريادة"
+                          className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs text-slate-300 font-semibold mb-1">
+                          {isAr ? 'العنوان الرئيسي للقسم (Heading):' : 'Section Main Heading:'}
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.whyHeadingAr ?? 'لماذا تضع كبرى الشركات ثقتها المطلقة في مكتبنا؟'}
+                          onChange={(e) => setSettings({ ...settings, whyHeadingAr: e.target.value })}
+                          placeholder="لماذا تضع كبرى الشركات ثقتها المطلقة في مكتبنا؟"
+                          className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-300 font-semibold mb-1">
+                        {isAr ? 'الوصف الفرعي تحت العنوان (Subtitle):' : 'Section Subtitle:'}
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.whySubtitleAr ?? 'نلتزم بأعلى معايير الدقة والسرية لتقديم قيمة قانونية استثنائية تعزز أمان استثماراتكم.'}
+                        onChange={(e) => setSettings({ ...settings, whySubtitleAr: e.target.value })}
+                        placeholder="نلتزم بأعلى معايير الدقة والسرية لتقديم قيمة قانونية استثنائية تعزز أمان استثماراتكم."
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* LIST OF CURRENT EXCELLENCE & LEADERSHIP STANDARDS */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-[#c5a869]" />
+                        <span>{isAr ? `قائمة معايير التميز والريادة المعتمدة (${activeWhyPillars.length})` : `Current Excellence Standards (${activeWhyPillars.length})`}</span>
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditingWhyPillar({
+                            id: `why-${Date.now()}`,
+                            iconName: 'Award',
+                            titleAr: '',
+                            titleEn: '',
+                            titleTr: '',
+                            descAr: '',
+                            descEn: '',
+                            descTr: '',
+                          })
+                        }
+                        className="px-3.5 py-1.5 rounded-xl bg-[#c5a869]/20 hover:bg-[#c5a869]/30 text-[#e5cb8e] border border-[#c5a869]/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{isAr ? 'إضافة معيار جديد' : 'Add Standard'}</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {activeWhyPillars.map((pillar, idx) => (
+                        <div
+                          key={pillar.id || idx}
+                          className="p-5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-[#c5a869]/60 transition flex flex-col justify-between gap-4 relative group shadow-lg"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2 mb-3">
+                              <span className="px-2.5 py-1 rounded-lg bg-[#c5a869]/15 border border-[#c5a869]/30 text-[#e5cb8e] text-xs font-bold font-mono tabular-nums">
+                                #{idx + 1 < 10 ? `0${idx + 1}` : idx + 1} · {pillar.iconName}
+                              </span>
+
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  disabled={idx === 0}
+                                  onClick={() => handleMoveWhyPillar(idx, 'up')}
+                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 transition cursor-pointer"
+                                  title={isAr ? 'تحريك لأعلى' : 'Move Up'}
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === activeWhyPillars.length - 1}
+                                  onClick={() => handleMoveWhyPillar(idx, 'down')}
+                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 disabled:opacity-30 transition cursor-pointer"
+                                  title={isAr ? 'تحريك لأسفل' : 'Move Down'}
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingWhyPillar({ ...pillar })}
+                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-[#c5a869] text-slate-200 hover:text-slate-950 transition cursor-pointer"
+                                  title={isAr ? 'تعديل المعيار' : 'Edit'}
+                                >
+                                  <Edit3 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteWhyPillar(pillar.id, pillar.titleAr)}
+                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white transition cursor-pointer"
+                                  title={isAr ? 'حذف المعيار' : 'Delete'}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <h5 className="text-base font-bold text-white font-serif-title mb-2">
+                              {pillar.titleAr}
+                            </h5>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                              {pillar.descAr}
+                            </p>
+                          </div>
+
+                          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-500 truncate max-w-[180px]" dir="ltr">
+                              {pillar.titleEn || 'Auto-translated'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setEditingWhyPillar({ ...pillar })}
+                              className="text-xs font-bold text-[#c5a869] hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                              <span>{isAr ? 'تعديل النص' : 'Edit'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Sticky Bottom Save Bar */}
+                  <div className="sticky bottom-3 z-30 flex items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-950/95 backdrop-blur-md border-2 border-[#c5a869] shadow-2xl shadow-black/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-[#c5a869]/20 border border-[#c5a869]/40 flex items-center justify-center text-[#c5a869] flex-shrink-0">
+                        <Save className="w-5 h-5 text-[#c5a869]" />
+                      </div>
+                      <div>
+                        <span className="block text-xs sm:text-sm font-bold text-white">
+                          {isAr ? 'حفظ وتثبيت معايير التميز والريادة' : 'Save Excellence & Leadership Standards'}
+                        </span>
+                        <span className="text-[11px] text-slate-400 hidden sm:inline">
+                          {isAr ? 'يتم حفظ كافة المعايير ومزامنتها فوراً مع قاعدة البيانات السحابية' : 'All standards are immediately synced to cloud database'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSaveSettings()}
+                      disabled={isSavingFirmData}
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#aa8022] hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-xl cursor-pointer disabled:opacity-50"
+                    >
+                      {saveSuccessTick ? (
+                        <>
+                          <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                          <span>{isAr ? 'تم حفظ المعايير بنجاح!' : 'Standards Saved!'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4 text-slate-950" />
+                          <span>{isAr ? 'حفظ معايير التميز والريادة' : 'Save Excellence Standards'}</span>
                         </>
                       )}
                     </button>
@@ -7288,6 +8070,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       const updated = storageService.deleteMessage(id);
                       setMessages(updated);
                       showToast(isAr ? 'تم حذف الرسالة بنجاح' : 'Message deleted');
+                    } else if (type === 'whyPillar') {
+                      const updatedPillars = activeWhyPillars.filter((p) => p.id !== id);
+                      const nextSettings: SiteSettings = {
+                        ...settings,
+                        whyPillars: updatedPillars,
+                      };
+                      setSettings(nextSettings);
+                      storageService.saveSettings(nextSettings);
+                      showToast(isAr ? 'تم حذف معيار التميز وحفظ التعديلات فوراً' : 'Excellence standard deleted');
                     }
                     setDeleteConfirmTarget(null);
                   }}
