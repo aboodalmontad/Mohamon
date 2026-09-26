@@ -567,12 +567,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     if (!editingPartner) return;
     
     const prevPartner = partners.find(p => p.id === editingPartner.id);
-    const snapshotToSave = { ...editingPartner };
+    const mergedEducation = [...(editingPartner.education || [])].map(s => s.trim()).filter(Boolean);
+    if (tempEducationItem.trim() && !mergedEducation.includes(tempEducationItem.trim())) {
+      mergedEducation.push(tempEducationItem.trim());
+    }
+
+    const nameChanged = prevPartner && prevPartner.name?.trim() !== editingPartner.name?.trim();
+    const titleChanged = prevPartner && prevPartner.title?.trim() !== editingPartner.title?.trim();
+    const specialtyChanged = prevPartner && prevPartner.specialty?.trim() !== editingPartner.specialty?.trim();
+    const barChanged = prevPartner && (prevPartner.barAdmission || '').trim() !== (editingPartner.barAdmission || '').trim();
+    const bioChanged = prevPartner && prevPartner.bio?.trim() !== editingPartner.bio?.trim();
+
+    const snapshotToSave: Partner = {
+      ...editingPartner,
+      education: mergedEducation,
+      nameEn: nameChanged ? editingPartner.name : (editingPartner.nameEn?.trim() || editingPartner.name),
+      nameTr: nameChanged ? '' : editingPartner.nameTr,
+      titleEn: titleChanged ? editingPartner.title : (editingPartner.titleEn?.trim() || editingPartner.title),
+      titleTr: titleChanged ? '' : editingPartner.titleTr,
+      specialtyEn: specialtyChanged ? editingPartner.specialty : (editingPartner.specialtyEn?.trim() || editingPartner.specialty),
+      specialtyTr: specialtyChanged ? '' : editingPartner.specialtyTr,
+      barAdmission: editingPartner.barAdmission?.trim() || '',
+      barAdmissionEn: barChanged ? (editingPartner.barAdmission?.trim() || '') : (editingPartner.barAdmissionEn?.trim() || editingPartner.barAdmission?.trim() || ''),
+      barAdmissionTr: barChanged ? '' : editingPartner.barAdmissionTr,
+      bioEn: bioChanged ? '' : editingPartner.bioEn,
+      bioTr: bioChanged ? '' : editingPartner.bioTr,
+    };
 
     try {
       // 1. Save immediately in 0ms + dispatch delta update of ONLY this lawyer to Supabase
       const updatedList = storageService.savePartner(snapshotToSave);
       setPartners(updatedList);
+      setTempEducationItem('');
       setEditingPartner(null);
       showToast(isAr ? '⚡ تم حفظ تعديلات المحامي في قاعدة البيانات السحابية فوراً!' : '⚡ Lawyer changes saved to cloud immediately!');
 
@@ -755,6 +781,33 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
   // ---------------- SETTINGS SAVE (INSTANT DELTA SAVE) ----------------
   const handleSaveSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
+    // If user is currently editing a partner/lawyer and clicks the top "Save Changes" button, save the partner immediately too
+    if (editingPartner) {
+      await handleSavePartner({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+    if (editingPractice) {
+      await handleSavePractice({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+    if (editingCaseStudy) {
+      await handleSaveCaseStudy({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+    if (editingTestimonial) {
+      await handleSaveTestimonial({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+    if (editingBlog) {
+      await handleSaveBlog({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+    if (editingOffice) {
+      await handleSaveOffice({ preventDefault: () => {} } as React.FormEvent);
+      return;
+    }
+
     const prevSettings = storageService.getSettings();
     const snapshotToSave = { ...settings };
 
@@ -2026,29 +2079,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       <div className="flex flex-wrap items-center gap-2">
                         {/* Add Partner Button */}
                         <button
-                          onClick={() => setEditingPartner({
-                            id: `partner-${Date.now()}`,
-                            name: '',
-                            nameEn: '',
-                            title: 'شريك في المكتب ومستشار',
-                            titleEn: 'Partner & Senior Legal Advisor',
-                            specialty: 'الشركات والاستثمار التجاري',
-                            specialtyEn: 'Corporate & Investment Advisory',
-                            experienceYears: 15,
-                            education: ['ماجستير في القانون التجاري الدولي'],
-                            bio: '',
-                            bioEn: '',
-                            email: 'partner@aladllaw.com',
-                            phone: '+966 11 456 7890',
-                            linkedin: 'https://linkedin.com',
-                            image: PRESET_PARTNER_IMAGES[0],
-                            featured: true,
-                            barAdmission: 'الهيئة السعودية للمحامين (شريك ممارس)',
-                            languages: ['العربية', 'الإنجليزية'],
-                            casesWonCount: 150,
-                            isPartner: true,
-                            roleCategory: 'partner'
-                          })}
+                          onClick={() => {
+                            setTempEducationItem('');
+                            const isSyria = (settings.countryAr || '').includes('سوري') || (settings.cityAr || '').includes('حلب') || (settings.cityAr || '').includes('دمشق');
+                            const existingBar = partners.find(p => p.barAdmission?.trim())?.barAdmission?.trim();
+                            const defaultSyrianBar = (settings.cityAr || '').includes('حلب')
+                              ? 'نقابة المحامين في الجمهورية العربية السورية - فرع حلب'
+                              : settings.cityAr
+                              ? `نقابة المحامين في الجمهورية العربية السورية - فرع ${settings.cityAr}`
+                              : 'نقابة المحامين في الجمهورية العربية السورية - فرع حلب';
+                            setEditingPartner({
+                              id: `partner-${Date.now()}`,
+                              name: '',
+                              nameEn: '',
+                              title: 'شريك في المكتب ومستشار قانوني',
+                              titleEn: 'Partner & Senior Legal Advisor',
+                              specialty: 'الشركات والاستثمار التجاري والتحكيم',
+                              specialtyEn: 'Corporate, Investment & Arbitration',
+                              experienceYears: 15,
+                              education: ['إجازة ليسانس في القانون'],
+                              bio: '',
+                              bioEn: '',
+                              email: settings.email || 'info@lawfirm.com',
+                              phone: settings.phone || '',
+                              linkedin: 'https://linkedin.com',
+                              image: PRESET_PARTNER_IMAGES[0],
+                              featured: true,
+                              barAdmission: existingBar || (isSyria ? defaultSyrianBar : 'محامٍ أستاذ معتمد'),
+                              languages: ['العربية', 'الإنجليزية'],
+                              casesWonCount: 150,
+                              isPartner: true,
+                              roleCategory: 'partner'
+                            });
+                          }}
                           className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#c5a869] to-[#d4af37] text-slate-950 font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition cursor-pointer shadow-md"
                         >
                           <Plus className="w-4 h-4" />
@@ -2057,29 +2120,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
                         {/* Add Associate (Non-Partner Lawyer) Button */}
                         <button
-                          onClick={() => setEditingPartner({
-                            id: `attorney-${Date.now()}`,
-                            name: '',
-                            nameEn: '',
-                            title: 'محامٍ مشارك أول - قسم التقاضي والعقود',
-                            titleEn: 'Senior Associate Attorney - Litigation & Commercial Contracts',
-                            specialty: 'التقاضي التجاري والعمالي وصياغة المذكرات',
-                            specialtyEn: 'Commercial Litigation & Contract Drafting',
-                            experienceYears: 8,
-                            education: ['بكالوريوس في الأنظمة والقانون'],
-                            bio: '',
-                            bioEn: '',
-                            email: 'attorney@aladllaw.com',
-                            phone: '+966 11 456 7890',
-                            linkedin: 'https://linkedin.com',
-                            image: PRESET_PARTNER_IMAGES[4] || PRESET_PARTNER_IMAGES[0],
-                            featured: false,
-                            barAdmission: 'الهيئة السعودية للمحامين (رخصة محامٍ ممارس)',
-                            languages: ['العربية', 'الإنجليزية'],
-                            casesWonCount: 95,
-                            isPartner: false,
-                            roleCategory: 'associate'
-                          })}
+                          onClick={() => {
+                            setTempEducationItem('');
+                            const isSyria = (settings.countryAr || '').includes('سوري') || (settings.cityAr || '').includes('حلب') || (settings.cityAr || '').includes('دمشق');
+                            const existingBar = partners.find(p => p.barAdmission?.trim())?.barAdmission?.trim();
+                            const defaultSyrianBar = (settings.cityAr || '').includes('حلب')
+                              ? 'نقابة المحامين في الجمهورية العربية السورية - فرع حلب'
+                              : settings.cityAr
+                              ? `نقابة المحامين في الجمهورية العربية السورية - فرع ${settings.cityAr}`
+                              : 'نقابة المحامين في الجمهورية العربية السورية - فرع حلب';
+                            setEditingPartner({
+                              id: `attorney-${Date.now()}`,
+                              name: '',
+                              nameEn: '',
+                              title: 'محامٍ مشارك أول - قسم التقاضي والعقود',
+                              titleEn: 'Senior Associate Attorney - Litigation & Commercial Contracts',
+                              specialty: 'التقاضي التجاري والمدني وصياغة العقود',
+                              specialtyEn: 'Commercial Litigation & Contract Drafting',
+                              experienceYears: 8,
+                              education: ['إجازة ليسانس في القانون'],
+                              bio: '',
+                              bioEn: '',
+                              email: settings.email || 'info@lawfirm.com',
+                              phone: settings.phone || '',
+                              linkedin: 'https://linkedin.com',
+                              image: PRESET_PARTNER_IMAGES[4] || PRESET_PARTNER_IMAGES[0],
+                              featured: false,
+                              barAdmission: existingBar || (isSyria ? defaultSyrianBar : 'محامٍ ممارس معتمد'),
+                              languages: ['العربية', 'الإنجليزية'],
+                              casesWonCount: 95,
+                              isPartner: false,
+                              roleCategory: 'associate'
+                            });
+                          }}
                           className="px-3.5 py-2 rounded-xl bg-cyan-600/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-600/30 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
                         >
                           <UserPlus className="w-4 h-4 text-cyan-400" />
@@ -2088,29 +2161,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
                         {/* Add Counsel Button */}
                         <button
-                          onClick={() => setEditingPartner({
-                            id: `counsel-${Date.now()}`,
-                            name: '',
-                            nameEn: '',
-                            title: 'مستشار قانوني أول',
-                            titleEn: 'Senior Legal Counsel & Regulatory Advisor',
-                            specialty: 'الاستشارات التنظيمية والتحكيم والامتثال',
-                            specialtyEn: 'Regulatory Compliance & International Arbitration',
-                            experienceYears: 14,
-                            education: ['ماجستير في القانون والتحكيم التجاري'],
-                            bio: '',
-                            bioEn: '',
-                            email: 'counsel@aladllaw.com',
-                            phone: '+966 11 456 7890',
-                            linkedin: 'https://linkedin.com',
-                            image: PRESET_PARTNER_IMAGES[5] || PRESET_PARTNER_IMAGES[1],
-                            featured: false,
-                            barAdmission: 'ترخيص استشارات قانونية / تحكيم',
-                            languages: ['العربية', 'الإنجليزية'],
-                            casesWonCount: 180,
-                            isPartner: false,
-                            roleCategory: 'counsel'
-                          })}
+                          onClick={() => {
+                            setTempEducationItem('');
+                            const isSyria = (settings.countryAr || '').includes('سوري') || (settings.cityAr || '').includes('حلب') || (settings.cityAr || '').includes('دمشق');
+                            const existingBar = partners.find(p => p.barAdmission?.trim())?.barAdmission?.trim();
+                            const defaultSyrianBar = (settings.cityAr || '').includes('حلب')
+                              ? 'نقابة المحامين في الجمهورية العربية السورية - فرع حلب'
+                              : settings.cityAr
+                              ? `نقابة المحامين في الجمهورية العربية السورية - فرع ${settings.cityAr}`
+                              : 'نقابة المحامين في الجمهورية العربية السورية - فرع حلب';
+                            setEditingPartner({
+                              id: `counsel-${Date.now()}`,
+                              name: '',
+                              nameEn: '',
+                              title: 'مستشار قانوني أول ومحكم معتمد',
+                              titleEn: 'Senior Legal Counsel & Accredited Arbitrator',
+                              specialty: 'الاستشارات التنظيمية والتحكيم التجاري',
+                              specialtyEn: 'Regulatory Compliance & Commercial Arbitration',
+                              experienceYears: 14,
+                              education: ['إجازة ليسانس في القانون', 'محكم معتمد من نقابة المحامين في سورية'],
+                              bio: '',
+                              bioEn: '',
+                              email: settings.email || 'info@lawfirm.com',
+                              phone: settings.phone || '',
+                              linkedin: 'https://linkedin.com',
+                              image: PRESET_PARTNER_IMAGES[5] || PRESET_PARTNER_IMAGES[1],
+                              featured: false,
+                              barAdmission: existingBar || (isSyria ? defaultSyrianBar : 'ترخيص استشارات قانونية وتحكيم'),
+                              languages: ['العربية', 'الإنجليزية'],
+                              casesWonCount: 180,
+                              isPartner: false,
+                              roleCategory: 'counsel'
+                            });
+                          }}
                           className="px-3.5 py-2 rounded-xl bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/30 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
                         >
                           <Briefcase className="w-4 h-4 text-emerald-400" />
@@ -2430,40 +2513,99 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         helpText={isAr ? "يمكنك رفع صورة عالية الدقة من جهازك أو اختيار أحد النماذج الجاهزة." : "Upload high-res photo from your device."}
                       />
 
-                      {/* Names */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'الاسم بالعربية *' : 'Name (Arabic) *'}</label>
+                      {/* Bar Admission / Syndicate & Branch Header (العنوان النقابي والفرع أعلى بطاقة المحامي) */}
+                      <div className="p-4 rounded-xl bg-slate-950/95 border-2 border-[#c5a869]/50 space-y-3 shadow-md">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <label className="block text-xs font-bold text-[#e5cb8e] flex items-center gap-1.5">
+                            <ShieldCheck className="w-4 h-4 text-[#c5a869]" />
+                            <span>
+                              {isAr
+                                ? 'العنوان النقابي والفرع / القيد النقابي (يظهر كعنوان أعلى بطاقة المحامي فوق الاسم مباشرة)'
+                                : 'Bar Association & Branch Header (Shown at the top of the lawyer card)'}
+                            </span>
+                          </label>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#c5a869]/20 text-[#e5cb8e] font-bold border border-[#c5a869]/30">
+                            {isAr ? 'الشارة العلوية للبطاقة' : 'Top Card Badge'}
+                          </span>
+                        </div>
+
                         <input
                           type="text"
-                          required
-                          placeholder="مثال: أ.د. طارق السبيعي"
-                          value={editingPartner.name}
-                          onChange={(e) => setEditingPartner({ ...editingPartner, name: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                          placeholder="مثال: نقابة المحامين في الجمهورية العربية السورية - فرع حلب"
+                          value={editingPartner.barAdmission || ''}
+                          onChange={(e) => setEditingPartner({ ...editingPartner, barAdmission: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-[#c5a869]/50 text-white text-xs focus:border-[#c5a869] focus:outline-none font-semibold"
                         />
+
+                        {/* Quick Full Presets */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                            <span className="text-slate-400 font-semibold">{isAr ? 'عناوين نقابية وفروع جاهزة بنقرة واحدة:' : 'Quick presets:'}</span>
+                            {[
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع حلب',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع دمشق',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع ريف دمشق',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع حمص',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع حماة',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع اللاذقية',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع طرطوس',
+                              'نقابة المحامين في الجمهورية العربية السورية - فرع إدلب',
+                              'نقابة المحامين في الجمهورية العربية السورية',
+                              'محكم معتمد من نقابة المحامين في سورية',
+                              'الهيئة السعودية للمحامين',
+                            ].map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => setEditingPartner({ ...editingPartner, barAdmission: preset })}
+                                className={`px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                                  (editingPartner.barAdmission || '').trim() === preset
+                                    ? 'bg-[#c5a869] text-slate-950 font-bold border-[#c5a869]'
+                                    : 'bg-slate-900 hover:bg-[#c5a869]/20 text-slate-300 hover:text-[#e5cb8e] border-slate-800 hover:border-[#c5a869]/40'
+                                }`}
+                              >
+                                {preset}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
 
-                      {/* Titles */}
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'المسمى المهني بالعربية *' : 'Professional Title (Arabic) *'}</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="مثال: محامٍ مشارك أول - قسم الشركات"
-                          value={editingPartner.title}
-                          onChange={(e) => setEditingPartner({ ...editingPartner, title: e.target.value })}
-                          className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                        />
+                      {/* Names & Titles */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'الاسم بالعربية *' : 'Name (Arabic) *'}</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="مثال: المحامي عبد الرحمن نحوي"
+                            value={editingPartner.name}
+                            onChange={(e) => setEditingPartner({ ...editingPartner, name: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'المسمى المهني بالعربية *' : 'Professional Title (Arabic) *'}</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="مثال: شريك مؤسس / محامٍ ومستشار قانوني"
+                            value={editingPartner.title}
+                            onChange={(e) => setEditingPartner({ ...editingPartner, title: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
                       </div>
 
                       {/* Specialty & Stats */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-1">
                           <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'مجال الاختصاص الرئيسي بالعربية *' : 'Primary Specialty (Arabic) *'}</label>
                           <input
                             type="text"
                             required
-                            placeholder="مثال: النزاعات التجارية والتحكيم"
+                            placeholder="مثال: القضايا المدنية - الشرعية - التحكيم"
                             value={editingPartner.specialty}
                             onChange={(e) => setEditingPartner({ ...editingPartner, specialty: e.target.value })}
                             className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
@@ -2478,23 +2620,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
                           />
                         </div>
-                      </div>
-
-                      {/* English Specialty, Won cases, Languages */}
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'مجال الاختصاص بالإنجليزية *' : 'Specialty in English *'}</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Commercial Litigation & Arbitration"
-                            value={editingPartner.specialtyEn}
-                            onChange={(e) => setEditingPartner({ ...editingPartner, specialtyEn: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">القضايا والملفات المنجزة (+)</label>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'القضايا والملفات المنجزة (+)' : 'Cases Handled (+)'}</label>
                           <input
                             type="number"
                             value={editingPartner.casesWonCount || 100}
@@ -2502,43 +2629,80 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                             className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
                           />
                         </div>
+                      </div>
+
+                      {/* Languages & Optional English Specialty */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-300 mb-1">اللغات المتقنة (مفصولة بفواصل)</label>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'اللغات المتقنة (مفصولة بفواصل)' : 'Languages (comma-separated)'}</label>
                           <input
                             type="text"
                             value={editingPartner.languages?.join(', ') || 'العربية, الإنجليزية'}
                             onChange={(e) => {
-                              const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              const list = e.target.value.split(/[،,]/).map(s => s.trim()).filter(Boolean);
                               setEditingPartner({ ...editingPartner, languages: list });
                             }}
                             className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
                           />
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-300 mb-1">{isAr ? 'مجال الاختصاص بالإنجليزية (يُترجم تلقائياً إن تُرك فارغاً)' : 'Specialty in English'}</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Civil Law, Sharia & Commercial Arbitration"
+                            value={editingPartner.specialtyEn || ''}
+                            onChange={(e) => setEditingPartner({ ...editingPartner, specialtyEn: e.target.value })}
+                            className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                          />
+                        </div>
                       </div>
 
-                      {/* Education item list builder */}
-                      <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800">
-                        <label className="block text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
-                          <GraduationCap className="w-4 h-4 text-[#c5a869]" />
-                          <span>المؤهلات والشهادات الأكاديمية</span>
-                        </label>
-                        <div className="space-y-1.5 mb-3">
-                          {editingPartner.education.map((edu, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-xs bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                              <span className="text-slate-200">• {edu}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updated = editingPartner.education.filter((_, i) => i !== idx);
-                                  setEditingPartner({ ...editingPartner, education: updated });
-                                }}
-                                className="text-rose-400 hover:text-rose-300 text-[11px] cursor-pointer"
-                              >
-                                حذف
-                              </button>
-                            </div>
-                          ))}
+                      {/* Education & Accreditations item list builder (Editable in-place + auto-adds typed item on Save) */}
+                      <div className="p-4 rounded-xl bg-slate-950/90 border border-[#c5a869]/40 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <label className="text-xs font-bold text-[#e5cb8e] flex items-center gap-1.5">
+                            <GraduationCap className="w-4 h-4 text-[#c5a869]" />
+                            <span>{isAr ? 'المؤهلات العلمية والشهادات والاعتمادات المهنية (مثل: محكم معتمد من نقابة المحامين في سورية)' : 'Academic Qualifications & Professional Accreditations'}</span>
+                          </label>
+                          <span className="text-[11px] text-emerald-400 font-semibold">
+                            {editingPartner.education?.length || 0} {isAr ? 'مؤهل/اعتماد مسجل' : 'items'}
+                          </span>
                         </div>
+
+                        {editingPartner.education && editingPartner.education.length > 0 ? (
+                          <div className="space-y-2">
+                            {editingPartner.education.map((edu, idx) => (
+                              <div key={idx} className="flex items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-800">
+                                <span className="text-[#c5a869] font-bold text-xs px-1.5">{idx + 1}.</span>
+                                <input
+                                  type="text"
+                                  value={edu}
+                                  onChange={(e) => {
+                                    const updated = [...editingPartner.education];
+                                    updated[idx] = e.target.value;
+                                    setEditingPartner({ ...editingPartner, education: updated });
+                                  }}
+                                  className="flex-grow px-2.5 py-1.5 rounded bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = editingPartner.education.filter((_, i) => i !== idx);
+                                    setEditingPartner({ ...editingPartner, education: updated });
+                                  }}
+                                  className="px-2.5 py-1.5 rounded bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 text-[11px] font-semibold cursor-pointer flex-shrink-0"
+                                >
+                                  {isAr ? 'حذف' : 'Remove'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                            {isAr ? 'لا توجد مؤهلات مضافة بعد. اكتب المؤهل في الحقل أدناه أو اختر من النماذج السريعة:' : 'No qualifications added yet. Type below or choose a quick preset:'}
+                          </p>
+                        )}
+
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -2550,14 +2714,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                                 if (tempEducationItem.trim()) {
                                   setEditingPartner({
                                     ...editingPartner,
-                                    education: [...editingPartner.education, tempEducationItem.trim()]
+                                    education: [...(editingPartner.education || []), tempEducationItem.trim()]
                                   });
                                   setTempEducationItem('');
                                 }
                               }
                             }}
-                            placeholder="مثال: ماجستير في قانون الأعمال - جامعة الملك سعود"
-                            className="flex-grow px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                            placeholder="اكتب مؤهلاً أو اعتماداً جديداً (مثال: محكم معتمد من نقابة المحامين في سورية)..."
+                            className="flex-grow px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
                           />
                           <button
                             type="button"
@@ -2565,15 +2729,43 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               if (tempEducationItem.trim()) {
                                 setEditingPartner({
                                   ...editingPartner,
-                                  education: [...editingPartner.education, tempEducationItem.trim()]
+                                  education: [...(editingPartner.education || []), tempEducationItem.trim()]
                                 });
                                 setTempEducationItem('');
                               }
                             }}
-                            className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-[#c5a869] hover:text-slate-950 text-xs font-semibold transition cursor-pointer"
+                            className="px-4 py-2 rounded-lg bg-[#c5a869] hover:bg-[#d4af37] text-slate-950 text-xs font-bold transition cursor-pointer flex-shrink-0"
                           >
-                            + إضافة مؤهل
+                            {isAr ? '+ إضافة مؤهل' : '+ Add'}
                           </button>
+                        </div>
+
+                        {/* Quick Accreditation Presets */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                          <span className="text-slate-400">{isAr ? 'إضافة سريعة بنقرة واحدة:' : 'Quick add:'}</span>
+                          {[
+                            'إجازة ليسانس في القانون',
+                            'محكم معتمد من نقابة المحامين في سورية',
+                            'محكم معتمد لدى رابطة الحقوقيين',
+                            'ماجستير في القانون',
+                            'عضو مجلس إدارة رابطة الحقوقيين',
+                          ].map((presetEdu) => (
+                            <button
+                              key={presetEdu}
+                              type="button"
+                              onClick={() => {
+                                if (!editingPartner.education.includes(presetEdu)) {
+                                  setEditingPartner({
+                                    ...editingPartner,
+                                    education: [...editingPartner.education, presetEdu]
+                                  });
+                                }
+                              }}
+                              className="px-2 py-0.5 rounded bg-slate-900 hover:bg-[#c5a869]/20 text-slate-300 hover:text-[#e5cb8e] border border-slate-800 hover:border-[#c5a869]/40 transition cursor-pointer"
+                            >
+                              + {presetEdu}
+                            </button>
+                          ))}
                         </div>
                       </div>
 
@@ -2670,11 +2862,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                       {/* Filtered list rendering */}
                       {(() => {
                         const filtered = partners.filter((p) => {
+                          const q = partnerSearch.toLowerCase();
                           const matchSearch = partnerSearch === '' ||
-                            p.name.toLowerCase().includes(partnerSearch.toLowerCase()) ||
-                            p.nameEn.toLowerCase().includes(partnerSearch.toLowerCase()) ||
-                            p.title.toLowerCase().includes(partnerSearch.toLowerCase()) ||
-                            p.specialty.toLowerCase().includes(partnerSearch.toLowerCase());
+                            (p.name || '').toLowerCase().includes(q) ||
+                            (p.nameEn || '').toLowerCase().includes(q) ||
+                            (p.title || '').toLowerCase().includes(q) ||
+                            (p.specialty || '').toLowerCase().includes(q) ||
+                            (p.barAdmission || '').toLowerCase().includes(q) ||
+                            (Array.isArray(p.education) && p.education.some(e => (e || '').toLowerCase().includes(q)));
 
                           let matchRole = true;
                           if (partnerRoleFilter === 'partner') {
@@ -2708,6 +2903,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               const isPartner = partner.isPartner !== false;
                               const isCounsel = partner.roleCategory === 'counsel' || partner.roleCategory === 'legal_consultant';
                               const isTrainee = partner.roleCategory === 'trainee';
+                              const eduList = Array.isArray(partner.education) ? partner.education.filter(Boolean) : [];
 
                               return (
                                 <div 
@@ -2722,7 +2918,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                                       : 'border-cyan-500/30 hover:border-cyan-400/70'
                                   }`}
                                 >
-                                  <div>
+                                  <div className="space-y-2.5">
                                     {/* Top Row: Photo & Role Badge */}
                                     <div className="flex items-start gap-3">
                                       <div className="relative">
@@ -2760,14 +2956,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                                           )}
                                         </div>
 
-                                        <h4 className="font-bold text-white text-sm truncate">{partner.name}</h4>
-                                        <p className="text-[11px] text-[#c5a869] line-clamp-1 mt-0.5">{partner.title}</p>
-                                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">{partner.specialty}</p>
+                                        <h4 className="font-bold text-white text-sm">{partner.name}</h4>
+                                        <p className="text-[11px] text-[#c5a869] mt-0.5">{partner.title}</p>
+                                        <p className="text-[11px] text-slate-300 mt-0.5">{partner.specialty}</p>
                                       </div>
                                     </div>
 
+                                    {/* Bar Admission Badge */}
+                                    {partner.barAdmission && (
+                                      <div className="px-2.5 py-1.5 rounded-lg bg-slate-950/90 border border-slate-800 text-[11px] text-[#e5cb8e] flex items-center gap-1.5">
+                                        <Shield className="w-3.5 h-3.5 text-[#c5a869] flex-shrink-0" />
+                                        <span>{partner.barAdmission}</span>
+                                      </div>
+                                    )}
+
+                                    {/* Qualifications & Accreditations List (e.g. محكم معتمد من نقابة المحامين في سورية) */}
+                                    {eduList.length > 0 && (
+                                      <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/90 space-y-1">
+                                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                          <GraduationCap className="w-3 h-3 text-[#c5a869]" />
+                                          <span>{isAr ? 'المؤهلات والاعتمادات:' : 'Credentials:'}</span>
+                                        </span>
+                                        {eduList.map((edu, idx) => (
+                                          <div key={idx} className="text-[11px] text-slate-200 flex items-start gap-1.5">
+                                            <span className="text-[#c5a869] font-bold">•</span>
+                                            <span>{edu}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
                                     {/* Stats line */}
-                                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+                                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
                                       <span>⏳ {partner.experienceYears} {isAr ? 'سنة خبرة' : 'Yrs Exp'}</span>
                                       <span>⚖️ {partner.casesWonCount || 0}+ {isAr ? 'قضية' : 'Cases'}</span>
                                     </div>
@@ -2775,13 +2995,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
 
                                   {/* Action Buttons */}
                                   <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-800">
-                                    <span className="text-[10px] text-slate-500 font-mono truncate max-w-[120px]">
-                                      {partner.barAdmission || 'الهيئة السعودية'}
+                                    <span className="text-[10px] text-slate-400 truncate max-w-[150px]">
+                                      {partner.languages?.join(' • ') || 'العربية'}
                                     </span>
 
                                     <div className="flex items-center gap-3">
                                       <button
-                                        onClick={() => setEditingPartner(partner)}
+                                        onClick={() => {
+                                          setTempEducationItem('');
+                                          setEditingPartner({
+                                            ...partner,
+                                            education: Array.isArray(partner.education) ? [...partner.education] : [],
+                                            languages: Array.isArray(partner.languages) ? [...partner.languages] : ['العربية'],
+                                          });
+                                        }}
                                         className="text-xs text-[#e5cb8e] hover:underline flex items-center gap-1 cursor-pointer font-medium"
                                       >
                                         <Edit3 className="w-3.5 h-3.5" />

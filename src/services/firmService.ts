@@ -157,6 +157,7 @@ class FirmService {
   private initPromise: Promise<void> | null = null;
   private realtimeSetup = false;
   private lastSupabaseFetchBySlug: Map<string, number> = new Map();
+  private lastLocalEditBySlug: Map<string, number> = new Map();
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -186,7 +187,13 @@ class FirmService {
       const tableName = config.tableName || 'law_firms';
       client
         .channel('public:law_firms_global_sync')
-        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, () => {
+        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload: any) => {
+          const changedSlug = (payload?.new?.slug || '').toLowerCase();
+          const lastLocalEdit = this.lastLocalEditBySlug.get(changedSlug) || 0;
+          // Ignore realtime echo triggered by our own local edit within the last 10 seconds
+          if (changedSlug && Date.now() - lastLocalEdit < 10000) {
+            return;
+          }
           this.fetchFromSupabase().catch(() => {});
         })
         .subscribe();
@@ -298,8 +305,9 @@ class FirmService {
     }
   }
 
-  // Merge incoming firms with existing memoryFirms, preserving full data/images if incoming is partial
+  // Merge incoming firms with existing memoryFirms, preserving full data/images if incoming is partial or older than local edits
   private mergeFirmsIntoMemory(incoming: LawFirm[]): void {
+    const now = Date.now();
     const mergedMap = new Map<string, LawFirm>();
     for (const mf of this.memoryFirms) {
       mergedMap.set(mf.slug.toLowerCase(), mf);
@@ -309,6 +317,18 @@ class FirmService {
       const key = firm.slug.toLowerCase();
       const existing = mergedMap.get(key);
       if (existing) {
+        // Never overwrite a firm that was locally edited within the last 15 seconds
+        const lastEdit = this.lastLocalEditBySlug.get(key) || 0;
+        if (now - lastEdit < 15000) {
+          continue;
+        }
+        // Also compare savedAt timestamps if both exist so an older snapshot never overwrites a newer one
+        const existingSavedAt = existing.data?.savedAt ? new Date(existing.data.savedAt).getTime() : 0;
+        const incomingSavedAt = firm.data?.savedAt ? new Date(firm.data.savedAt).getTime() : 0;
+        if (existingSavedAt > 0 && incomingSavedAt > 0 && existingSavedAt > incomingSavedAt) {
+          continue;
+        }
+
         const hasIncomingData = firm.data && (firm.data.partners?.length || firm.data.practiceAreas?.length || firm.data.offices?.length || firm.data.settings);
         mergedMap.set(key, {
           ...existing,
@@ -450,6 +470,16 @@ class FirmService {
 
       if (error) throw error;
       if (data) {
+        const cleanKey = cleanSlug.toLowerCase();
+        const lastLocalEdit = this.lastLocalEditBySlug.get(cleanKey) || 0;
+        // Do not overwrite a firm that was just edited locally on this device
+        if (Date.now() - lastLocalEdit < 15000) {
+          const localFirm = this.memoryFirms.find(f => f.slug.toLowerCase() === cleanKey);
+          if (localFirm) {
+            return { success: true, firm: localFirm };
+          }
+        }
+
         const firm = this.mapSupabaseRowToFirm(data);
 
         // Replace or insert in memoryFirms
@@ -460,7 +490,7 @@ class FirmService {
           this.memoryFirms.push(firm);
         }
 
-        this.saveToLocalCache(false);
+        this.saveToLocalCache(false, true);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('aladl_firm_data_synced', { detail: { slug: firm.slug, firm } }));
         }
@@ -472,11 +502,13 @@ class FirmService {
     }
   }
 
-  private saveToLocalCache(syncToCloud = false): void {
+  private saveToLocalCache(syncToCloud = false, emitFirmsUpdated = true): void {
     if (typeof window === 'undefined') return;
     
-    // Immediately notify UI listeners in 0ms
-    window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+    // Notify UI listeners if requested
+    if (emitFirmsUpdated) {
+      window.dispatchEvent(new CustomEvent('aladl_firms_updated', { detail: this.memoryFirms }));
+    }
 
     if ((this as any)._saveTimeout) clearTimeout((this as any)._saveTimeout);
     
@@ -574,13 +606,21 @@ class FirmService {
         const now = Date.now();
         const loadedFirms: LawFirm[] = data.map((row: any) => {
           const mapped = this.mapSupabaseRowToFirm(row);
-          this.lastSupabaseFetchBySlug.set(mapped.slug.toLowerCase(), now);
+          const slugKey = mapped.slug.toLowerCase();
+          this.lastSupabaseFetchBySlug.set(slugKey, now);
+
+          // Preserve local in-memory firm if it was edited locally within the last 15 seconds
+          const lastEdit = this.lastLocalEditBySlug.get(slugKey) || 0;
+          if (now - lastEdit < 15000) {
+            const localFirm = this.memoryFirms.find(f => f.slug.toLowerCase() === slugKey);
+            if (localFirm) return localFirm;
+          }
           return mapped;
         });
 
         // Replace memoryFirms with the authoritative list from Supabase so all visitors globally see the exact same firms and data
         this.memoryFirms = loadedFirms;
-        this.saveToLocalCache(false);
+        this.saveToLocalCache(false, true);
         this.pushToServer(loadedFirms).catch(() => {});
 
         if (typeof window !== 'undefined') {
@@ -835,23 +875,40 @@ class FirmService {
       id?: string;
       sortOrder?: number;
       changedRootCols?: Record<string, any>;
+      firmData?: any;
     }
   ): Promise<{ success: boolean; durationMs: number }> {
     const startTime = performance.now();
     const cleanSlug = (slug || this.getActiveFirmSlug()).trim().toLowerCase();
-    const firm = this.memoryFirms.find((f) => f.slug.toLowerCase() === cleanSlug);
+    const nowMs = Date.now();
+    this.lastLocalEditBySlug.set(cleanSlug, nowMs);
+    this.lastSupabaseFetchBySlug.set(cleanSlug, nowMs);
+
+    let firm = this.memoryFirms.find((f) => f.slug.toLowerCase() === cleanSlug);
     if (!firm) {
-      return { success: false, durationMs: 0 };
+      const fallback = this.getFirmBySlug(cleanSlug);
+      if (!fallback) return { success: false, durationMs: 0 };
+      this.memoryFirms.push(fallback);
+      firm = fallback;
     }
 
     const nowIso = new Date().toISOString();
     firm.updatedAt = nowIso;
-    if (firm.data) {
+
+    // Crucial: update firm.data in-place inside memoryFirms so it always has the exact latest edit
+    if (delta.firmData) {
+      firm.data = {
+        ...firm.data,
+        ...delta.firmData,
+        savedAt: nowIso,
+      };
+    } else if (firm.data) {
       firm.data.savedAt = nowIso;
     }
 
-    // Defer local cache write off the critical path
-    this.saveToLocalCache(false);
+    // Defer local cache write off the critical path without re-triggering loadFirm
+    this.saveToLocalCache(false, false);
+    this.pushToServer().catch(() => {});
 
     const config = getStoredSupabaseConfig();
     if (!config.url || !config.anonKey) {
@@ -1502,7 +1559,7 @@ class FirmService {
     if (!slug) return null;
     const cleanSlug = slug.trim().toLowerCase();
     const found = this.memoryFirms.find((f) => f.slug.toLowerCase() === cleanSlug);
-    if (found) return { ...found };
+    if (found) return found;
 
     // If requested slug is not in memory yet, return a graceful fallback firm so URL landing works immediately
     return {
@@ -1694,7 +1751,14 @@ class FirmService {
 
   // Save or update an existing law firm immediately to Supabase
   public async saveFirm(firm: LawFirm): Promise<{ success: boolean; message: string; supabaseStatus?: string }> {
-    const index = this.memoryFirms.findIndex((f) => f.id === firm.id || f.slug === firm.slug);
+    const cleanSlug = (firm.slug || '').trim().toLowerCase();
+    const nowMs = Date.now();
+    if (cleanSlug) {
+      this.lastLocalEditBySlug.set(cleanSlug, nowMs);
+      this.lastSupabaseFetchBySlug.set(cleanSlug, nowMs);
+    }
+
+    const index = this.memoryFirms.findIndex((f) => f.id === firm.id || f.slug.toLowerCase() === cleanSlug);
     const updatedFirm: LawFirm = {
       ...firm,
       updatedAt: new Date().toISOString(),

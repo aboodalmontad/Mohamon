@@ -117,25 +117,30 @@ const syncDeltaImmediately = (
   if (typeof window === 'undefined') return Promise.resolve({ success: false, durationMs: 0 });
   const targetSlug = firmService.getActiveFirmSlug();
   const firm = firmService.getFirmBySlug(targetSlug);
+  const nowIso = new Date().toISOString();
+
+  const currentFirmData = {
+    settings: storageService.getSettings(),
+    partners: storageService.getPartners(),
+    practiceAreas: storageService.getPracticeAreas(),
+    caseStudies: storageService.getCaseStudies(),
+    testimonials: storageService.getTestimonials(),
+    blogPosts: storageService.getBlogPosts(),
+    offices: storageService.getOffices(),
+    messages: storageService.getMessages(),
+    savedAt: nowIso,
+  };
 
   if (firm) {
-    const nowIso = new Date().toISOString();
-    firm.data = {
-      settings: storageService.getSettings(),
-      partners: storageService.getPartners(),
-      practiceAreas: storageService.getPracticeAreas(),
-      caseStudies: storageService.getCaseStudies(),
-      testimonials: storageService.getTestimonials(),
-      blogPosts: storageService.getBlogPosts(),
-      offices: storageService.getOffices(),
-      messages: storageService.getMessages(),
-      savedAt: nowIso,
-    };
+    firm.data = currentFirmData;
     firm.updatedAt = nowIso;
   }
 
   scheduleBackgroundLocalBackup();
-  return firmService.syncFirmDeltaToSupabase(targetSlug, delta);
+  return firmService.syncFirmDeltaToSupabase(targetSlug, {
+    ...delta,
+    firmData: currentFirmData,
+  });
 };
 
 // Legacy full mirror helper (used only on bulk JSON import or full reset)
@@ -434,13 +439,13 @@ export const storageService = {
     }
     
     MEMORY_CACHE.partners = updated;
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(updated)), 10);
     syncDeltaImmediately({
       type: 'partner_upsert',
       item: partner,
       sortOrder: index >= 0 ? index : 0,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(updated)), 10);
     return updated;
   },
 
@@ -451,13 +456,13 @@ export const storageService = {
     const label = isAssociate ? 'المحامي / المستشار' : 'الشريك';
     
     MEMORY_CACHE.partners = list;
-    notifyChange();
     storageService.logAction('DELETE', 'الشركاء والمحامين (Legal Team)', id, `حذف ${label}: ${partner?.name || id}`);
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(list)), 10);
     syncDeltaImmediately({
       type: 'partner_delete',
       id,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(list)), 10);
     return list;
   },
 
@@ -487,13 +492,13 @@ export const storageService = {
     }
     
     MEMORY_CACHE.practiceAreas = updated;
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(updated)), 10);
     syncDeltaImmediately({
       type: 'practice_upsert',
       item,
       sortOrder: index >= 0 ? index : updated.length - 1,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(updated)), 10);
     return updated;
   },
 
@@ -502,13 +507,13 @@ export const storageService = {
     const list = storageService.getPracticeAreas().filter(p => p.id !== id);
     
     MEMORY_CACHE.practiceAreas = list;
-    notifyChange();
     storageService.logAction('DELETE', 'الاختصاصات (Practice Areas)', id, `حذف الاختصاص: ${item?.title || id}`);
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(list)), 10);
     syncDeltaImmediately({
       type: 'practice_delete',
       id,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(list)), 10);
     return list;
   },
 
@@ -531,12 +536,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.caseStudies = updated;
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(updated)), 10);
     syncDeltaImmediately({
       type: 'caseStudy_upsert',
       item,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(updated)), 10);
     return updated;
   },
 
@@ -545,13 +550,13 @@ export const storageService = {
     const list = storageService.getCaseStudies().filter(c => c.id !== id);
     
     MEMORY_CACHE.caseStudies = list;
-    notifyChange();
     storageService.logAction('DELETE', 'الإنجازات والقضايا (Case Studies)', id, `حذف القضية: ${item?.title || id}`);
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(list)), 10);
     syncDeltaImmediately({
       type: 'caseStudy_delete',
       id,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(list)), 10);
     return list;
   },
 
@@ -574,12 +579,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.testimonials = updated;
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated)), 10);
     syncDeltaImmediately({
       type: 'testimonial_upsert',
       item,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(updated)), 10);
     return updated;
   },
 
@@ -588,13 +593,13 @@ export const storageService = {
     const list = storageService.getTestimonials().filter(t => t.id !== id);
     
     MEMORY_CACHE.testimonials = list;
-    notifyChange();
     storageService.logAction('DELETE', 'آراء العملاء (Testimonials)', id, `حذف شهادة: ${item?.clientName || id}`);
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(list)), 10);
     syncDeltaImmediately({
       type: 'testimonial_delete',
       id,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(list)), 10);
     return list;
   },
 
@@ -617,12 +622,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.blogPosts = updated;
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(updated)), 10);
     syncDeltaImmediately({
       type: 'blog_upsert',
       item: post,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(updated)), 10);
     return updated;
   },
 
@@ -631,13 +636,13 @@ export const storageService = {
     const list = storageService.getBlogPosts().filter(b => b.id !== id);
     
     MEMORY_CACHE.blogPosts = list;
-    notifyChange();
     storageService.logAction('DELETE', 'المقالات والمدونة (Blog)', id, `حذف المقال: ${item?.title || id}`);
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(list)), 10);
     syncDeltaImmediately({
       type: 'blog_delete',
       id,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(list)), 10);
     return list;
   },
 
@@ -660,12 +665,12 @@ export const storageService = {
     }
     
     MEMORY_CACHE.offices = updated;
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(updated)), 10);
     syncDeltaImmediately({
       type: 'office_upsert',
       item: office,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(updated)), 10);
     return updated;
   },
 
@@ -674,13 +679,13 @@ export const storageService = {
     const list = storageService.getOffices().filter(o => o.id !== id);
     
     MEMORY_CACHE.offices = list;
-    notifyChange();
     storageService.logAction('DELETE', 'المقار والفروع (Offices)', id, `حذف المقر: ${item?.cityAr || id}`);
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(list)), 10);
     syncDeltaImmediately({
       type: 'office_delete',
       id,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(list)), 10);
     return list;
   },
 
@@ -876,13 +881,13 @@ export const storageService = {
       console.warn('Could not auto-sync HQ office with settings', e);
     }
 
-    notifyChange();
-    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(settings)), 10);
     syncDeltaImmediately({
       type: updatedHqOffice ? 'office_upsert' : 'settings_update',
       item: updatedHqOffice,
       changedRootCols,
     });
+    notifyChange();
+    setTimeout(() => safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(settings)), 10);
     return settings;
   },
 
