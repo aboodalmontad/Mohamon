@@ -476,7 +476,8 @@ export const storageService = {
     return list.map((p: any) => ({
       ...p,
       keyServices: Array.isArray(p.keyServices) ? p.keyServices : [],
-      keyServicesEn: Array.isArray(p.keyServicesEn) ? p.keyServicesEn : (Array.isArray(p.keyServices) ? p.keyServices : []),
+      keyServicesEn: Array.isArray(p.keyServicesEn) ? p.keyServicesEn : [],
+      keyServicesTr: Array.isArray(p.keyServicesTr) ? p.keyServicesTr : [],
       casesCount: typeof p.casesCount === 'number' ? p.casesCount : 0,
     }));
   },

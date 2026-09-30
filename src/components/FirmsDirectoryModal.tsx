@@ -20,6 +20,8 @@ import {
 import { firmService } from '../services/firmService';
 import { storageService } from '../services/storageService';
 import { LawFirm, Language } from '../types';
+import { getLocalized } from '../services/i18n';
+import { translateTextSync } from '../services/translator';
 
 interface FirmsDirectoryModalProps {
   isOpen: boolean;
@@ -165,14 +167,18 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
 
           <div className="flex items-center gap-3 text-[#d4b068] text-sm font-semibold mb-2">
             <Globe2 className="w-4 h-4" />
-            <span>منصة وشبكة المكاتب القانونية المعتمدة | Multi-Firm Legal Network</span>
+            <span>{lang === 'ar' ? 'منصة وشبكة المكاتب القانونية المعتمدة | Multi-Firm Legal Network' : lang === 'tr' ? 'Onaylı Hukuk Büroları Ağı | Multi-Firm Legal Network' : 'Accredited Multi-Firm Legal Network'}</span>
           </div>
 
           <h2 className="text-2xl md:text-3xl font-bold font-serif-custom text-white tracking-wide">
-            دليل المكاتب القانونية المستقلة
+            {lang === 'ar' ? 'دليل المكاتب القانونية المستقلة' : lang === 'tr' ? 'Bağımsız Hukuk Büroları Rehberi' : 'Independent Law Firms Directory'}
           </h2>
           <p className="text-stone-300 text-sm mt-2 max-w-2xl leading-relaxed">
-            تستضيف المنصة مئات المواقع القانونية المستقلة، حيث يمتلك كل مكتب قانوني موقعه وهويته ومحاميه واختصاصاته ورابطه الخاص مع قاعدة بيانات سحابية مركزية ومزامنة Supabase.
+            {lang === 'ar'
+              ? 'تستضيف المنصة مئات المواقع القانونية المستقلة، حيث يمتلك كل مكتب قانوني موقعه وهويته ومحاميه واختصاصاته ورابطه الخاص مع قاعدة بيانات سحابية مركزية ومزامنة Supabase.'
+              : lang === 'tr'
+              ? 'Platformumuz, her hukuk bürosunun kendi bağımsız web sitesine, kimliğine, avukatlarına ve uzmanlık alanlarına sahip olduğu yüzlerce hukuk bürosuna ev sahipliği yapmaktadır.'
+              : 'Our platform hosts independent law firm websites, each with its own dedicated identity, partners, practice areas, and cloud-synchronized database.'}
           </p>
 
           <div className="flex flex-wrap items-center gap-3 mt-5">
@@ -187,12 +193,12 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
               {isCreatingNew ? (
                 <>
                   <ArrowRight className="w-4 h-4" />
-                  <span>العودة لقائمة المكاتب</span>
+                  <span>{lang === 'ar' ? 'العودة لقائمة المكاتب' : lang === 'tr' ? 'Büro Listesine Dön' : 'Back to Firms List'}</span>
                 </>
               ) : (
                 <>
                   <PlusCircle className="w-4 h-4" />
-                  <span>تسجيل وإطلاق موقع مكتب قانوني جديد</span>
+                  <span>{lang === 'ar' ? 'تسجيل وإطلاق موقع مكتب قانوني جديد' : lang === 'tr' ? 'Yeni Hukuk Bürosu Kaydet ve Başlat' : 'Register & Launch New Law Firm'}</span>
                 </>
               )}
             </button>
@@ -205,7 +211,7 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-white/10 hover:bg-white/20 text-stone-100 transition-colors"
             >
               <KeyRound className="w-4 h-4 text-[#d4b068]" />
-              <span>دخول لوحة تحكم مدراء المكاتب</span>
+              <span>{lang === 'ar' ? 'دخول لوحة تحكم مدراء المكاتب' : lang === 'tr' ? 'Büro Yöneticisi Girişi' : 'Firm Admin Portal'}</span>
             </button>
           </div>
         </div>
@@ -394,7 +400,7 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                   <Search className="w-4 h-4 absolute right-3.5 top-3.5 text-stone-400" />
                   <input
                     type="text"
-                    placeholder="ابحث عن مكتب بالاسم، التخصص، المدينة، أو الرابط..."
+                    placeholder={lang === 'ar' ? "ابحث عن مكتب بالاسم، التخصص، المدينة، أو الرابط..." : lang === 'tr' ? "Büro adı, uzmanlık, şehir veya bağlantıya göre ara..." : "Search law firms by name, specialty, city, or slug..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pr-10 pl-4 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#b38a38] text-sm bg-white shadow-sm"
@@ -408,10 +414,10 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                       onChange={(e) => setSelectedCity(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-[#b38a38] text-sm bg-white shadow-sm text-stone-700"
                     >
-                      <option value="all">كافة المدن والدول ({firms.length})</option>
+                      <option value="all">{lang === 'ar' ? `كافة المدن والدول (${firms.length})` : lang === 'tr' ? `Tüm Şehirler (${firms.length})` : `All Cities (${firms.length})`}</option>
                       {cities.map((city) => (
                         <option key={city} value={city}>
-                          {city}
+                          {lang === 'ar' ? city : translateTextSync(city, lang === 'tr' ? 'tr' : 'en')}
                         </option>
                       ))}
                     </select>
@@ -424,6 +430,21 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                 {filteredFirms.map((firm) => {
                   const isActive = firm.slug === activeSlug;
                   const isCopied = copiedSlug === firm.slug;
+                  const firmSettings = firm.data?.settings;
+                  const displayName = lang === 'ar'
+                    ? firm.nameAr
+                    : firmSettings
+                    ? getLocalized(firmSettings, 'firmName', lang, firm.nameEn || firm.nameAr)
+                    : getLocalized(firm, 'name', lang, firm.nameAr);
+                  const rawTagline = firm.taglineAr || firmSettings?.sloganAr || 'مكتب محاماة واستشارات قانونية متكامل.';
+                  const displayTagline = lang === 'ar'
+                    ? rawTagline
+                    : firmSettings
+                    ? getLocalized(firmSettings, 'slogan', lang, firm.taglineEn || rawTagline)
+                    : getLocalized(firm, 'tagline', lang, rawTagline);
+                  const displayCity = firm.cityAr
+                    ? (lang === 'ar' ? firm.cityAr : getLocalized(firm, 'city', lang, firm.cityAr))
+                    : '';
 
                   return (
                     <div
@@ -437,7 +458,7 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                       {isActive && (
                         <div className="absolute -top-3 right-6 bg-[#b38a38] text-white text-[11px] font-bold px-3 py-0.5 rounded-full shadow-sm flex items-center gap-1">
                           <Check className="w-3 h-3" />
-                          <span>الموقع المعروض حالياً</span>
+                          <span>{lang === 'ar' ? 'الموقع المعروض حالياً' : lang === 'tr' ? 'Şu Anda Görüntülenen' : 'Currently Viewing'}</span>
                         </div>
                       )}
 
@@ -445,20 +466,20 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                         {/* Header card info */}
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-stone-900 to-[#2a241c] text-[#d4b068] flex items-center justify-center font-serif-custom font-bold text-lg shadow-sm flex-shrink-0">
-                            {firm.nameAr.charAt(0)}
+                            {displayName.charAt(0)}
                           </div>
 
                           <div className="flex items-center gap-1.5">
                             {firm.isVerified && (
                               <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                                 <ShieldCheck className="w-3 h-3" />
-                                <span>معتمد</span>
+                                <span>{lang === 'ar' ? 'معتمد' : lang === 'tr' ? 'Onaylı' : 'Verified'}</span>
                               </span>
                             )}
                             <button
                               onClick={(e) => handleCopyLink(firm.slug, e)}
                               className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
-                              title="نسخ رابط الموقع المستقل"
+                              title={lang === 'ar' ? "نسخ رابط الموقع المستقل" : lang === 'tr' ? "Site Bağlantısını Kopyala" : "Copy Website URL"}
                             >
                               {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                             </button>
@@ -467,22 +488,22 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
 
                         {/* Title and tagline */}
                         <h4 className="font-bold text-base text-stone-900 leading-snug break-words">
-                          {firm.nameAr}
+                          {displayName}
                         </h4>
-                        {firm.nameEn && (
+                        {lang === 'ar' && firm.nameEn && (
                           <p className="text-xs text-stone-400 font-sans mt-0.5 break-words">{firm.nameEn}</p>
                         )}
 
                         <p className="text-xs text-stone-600 mt-2 break-words leading-relaxed">
-                          {firm.taglineAr || firm.data?.settings?.sloganAr || 'مكتب محاماة واستشارات قانونية متكامل.'}
+                          {displayTagline}
                         </p>
 
                         {/* Metadata badges */}
                         <div className="mt-4 pt-3 border-t border-stone-100 space-y-1.5 text-xs text-stone-500">
-                          {firm.cityAr && (
+                          {displayCity && (
                             <div className="flex items-center gap-2">
                               <MapPin className="w-3.5 h-3.5 text-stone-400 flex-shrink-0" />
-                              <span>{firm.cityAr}</span>
+                              <span>{displayCity}</span>
                             </div>
                           )}
                           {firm.phone && (
@@ -513,7 +534,11 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                           }`}
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
-                          <span>{isActive ? 'أنت تتصفحه الآن' : 'زيارة موقع المكتب'}</span>
+                          <span>
+                            {isActive
+                              ? (lang === 'ar' ? 'أنت تتصفحه الآن' : lang === 'tr' ? 'Şu Anda Görüntüleniyor' : 'Viewing Now')
+                              : (lang === 'ar' ? 'زيارة موقع المكتب' : lang === 'tr' ? 'Büro Sitesini Ziyaret Et' : 'Visit Firm Website')}
+                          </span>
                         </button>
 
                         <button
@@ -522,10 +547,10 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                             onOpenAdmin(firm.slug);
                           }}
                           className="py-2 px-3 rounded-xl text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200 transition-colors flex items-center gap-1"
-                          title="دخول إدارة وتعديل هذا المكتب"
+                          title={lang === 'ar' ? "دخول إدارة وتعديل هذا المكتب" : lang === 'tr' ? "Büro Yönetim Paneli" : "Manage Firm"}
                         >
                           <KeyRound className="w-3.5 h-3.5 text-[#b38a38]" />
-                          <span>إدارة</span>
+                          <span>{lang === 'ar' ? 'إدارة' : lang === 'tr' ? 'Yönet' : 'Admin'}</span>
                         </button>
                       </div>
                     </div>

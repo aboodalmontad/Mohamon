@@ -59,6 +59,7 @@ export const AchievementsSection: React.FC<AchievementsSectionProps> = React.mem
             const summary = getLocalized(item, 'summary', lang, item.summary);
             const outcome = getLocalized(item, 'outcome', lang, item.outcome);
             const category = getLocalized(item, 'category', lang, item.category);
+            const dealValue = item.value ? getLocalized(item, 'value', lang, item.value) : '';
 
             return (
               <div
@@ -75,9 +76,9 @@ export const AchievementsSection: React.FC<AchievementsSectionProps> = React.mem
                   </div>
 
                   {/* Deal Value */}
-                  {item.value && (
+                  {dealValue && (
                     <div className="text-2xl sm:text-3xl font-serif-title font-bold gold-gradient-text mb-2">
-                      {item.value}
+                      {dealValue}
                     </div>
                   )}
 

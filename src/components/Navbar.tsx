@@ -82,11 +82,14 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   ];
 
   const currentFirmName = getLocalized(settings, 'firmName', lang, settings.firmNameAr);
-  const currentSubtitle = lang === 'ar'
-    ? (settings.navbarSubtitleAr || 'محامون ومستشارون قانونيون ومحكّمون')
+  const defaultSubtitle = lang === 'ar'
+    ? 'محامون ومستشارون قانونيون ومحكّمون'
     : lang === 'tr'
-    ? (settings.navbarSubtitleTr || settings.navbarSubtitleEn || 'Avukatlar, Hukuk Müşavirleri ve Uluslararası Hakemler')
-    : (settings.navbarSubtitleEn || 'Attorneys, Legal Counsel & Arbitrators');
+    ? 'Avukatlar, Hukuk Müşavirleri ve Uluslararası Hakemler'
+    : 'Attorneys, Legal Counsel & Arbitrators';
+  const currentSubtitle = settings.navbarSubtitleAr
+    ? getLocalized(settings, 'navbarSubtitle', lang, defaultSubtitle)
+    : defaultSubtitle;
 
   const currentLangObj = languagesList.find(l => l.code === lang) || languagesList[0];
 
@@ -100,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
               <span className="flex items-center gap-1 text-[#87641d] font-semibold text-[11px] sm:text-xs">
                 <Shield className="w-3.5 h-3.5 text-[#b38a38]" />
                 <span className="hidden xs:inline">{t.topAccredited}</span>
-                <span className="xs:hidden">{lang === 'ar' ? 'معتمد' : 'Verified'}</span>
+                <span className="xs:hidden">{lang === 'ar' ? 'معتمد' : lang === 'tr' ? 'Onaylı' : 'Verified'}</span>
               </span>
               {settings.emergencyPhone && (
                 <>

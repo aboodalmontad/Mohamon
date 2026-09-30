@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Calendar, Clock, ArrowLeft, ArrowRight, X, User, Tag } from 'lucide-react';
 import { BlogPost, Language } from '../types';
-import { useTranslation, getLocalized } from '../services/i18n';
+import { useTranslation, getLocalized, getLocalizedArray } from '../services/i18n';
 
 interface BlogSectionProps {
   blogPosts: BlogPost[];
@@ -208,12 +208,7 @@ export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, 
             {/* Tags */}
             <div className="flex flex-wrap items-center gap-2 pt-6 mt-8 border-t border-[#e6ddcc]">
               <Tag className="w-3.5 h-3.5 text-[#b38a38]" />
-              {(lang === 'tr' && selectedPost.tagsTr && selectedPost.tagsTr.length > 0
-                ? selectedPost.tagsTr
-                : lang === 'en' && selectedPost.tagsEn && selectedPost.tagsEn.length > 0
-                ? selectedPost.tagsEn
-                : selectedPost.tags || []
-              ).map((tag, i) => (
+              {getLocalizedArray(selectedPost, 'tags', lang, selectedPost.tags || []).map((tag, i) => (
                 <span key={i} className="text-xs px-2.5 py-1 rounded-lg bg-[#f4eee2] text-[#87641d] font-semibold border border-[#e6ddcc]">
                   #{tag}
                 </span>

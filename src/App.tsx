@@ -25,6 +25,7 @@ import { PlatformLanding } from './components/PlatformLanding';
 import { storageService } from './services/storageService';
 import { firmService } from './services/firmService';
 import { applyTypographySettings } from './services/typographyService';
+import { autoTranslateAllSiteData, hasArabicChars, translateTextSync } from './services/translator';
 import { ChevronDown } from 'lucide-react';
 import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, Language, LawFirm } from './types';
 
@@ -220,9 +221,22 @@ export default function App() {
       }
     };
 
+    const handleTranslationUpdated = () => {
+      setFirmData(prev => ({
+        settings: { ...prev.settings },
+        partners: [...prev.partners],
+        practiceAreas: [...prev.practiceAreas],
+        caseStudies: [...prev.caseStudies],
+        testimonials: [...prev.testimonials],
+        blogPosts: [...prev.blogPosts],
+        offices: [...prev.offices]
+      }));
+    };
+
     window.addEventListener('aladl_storage_sync', handleStorageChange);
     window.addEventListener('aladl_firms_updated', handleFirmsSynced);
     window.addEventListener('aladl_firm_data_synced', handleFirmsSynced);
+    window.addEventListener('aladl_translation_updated', handleTranslationUpdated);
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('keydown', handleKeyDown);
 
@@ -255,10 +269,51 @@ export default function App() {
       window.removeEventListener('aladl_storage_sync', handleStorageChange);
       window.removeEventListener('aladl_firms_updated', handleFirmsSynced);
       window.removeEventListener('aladl_firm_data_synced', handleFirmsSynced);
+      window.removeEventListener('aladl_translation_updated', handleTranslationUpdated);
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
+
+  // Automatically ensure all site data is translated in EN & TR when switching languages
+  useEffect(() => {
+    if (lang === 'ar' || isPlatformView) return;
+    const s = firmData.settings;
+    const needsAutoTranslate =
+      !s.firmNameTr ||
+      !s.aboutTextTr ||
+      hasArabicChars(s.firmNameEn) ||
+      hasArabicChars(s.firmNameTr) ||
+      firmData.partners.some(p => !p.nameTr || !p.bioTr || hasArabicChars(p.nameEn)) ||
+      firmData.practiceAreas.some(pa => !pa.titleTr || !pa.shortDescTr || hasArabicChars(pa.titleEn));
+
+    if (needsAutoTranslate) {
+      let cancelled = false;
+      autoTranslateAllSiteData({
+        settings: firmData.settings,
+        partners: firmData.partners,
+        practiceAreas: firmData.practiceAreas,
+        caseStudies: firmData.caseStudies,
+        testimonials: firmData.testimonials,
+        blogPosts: firmData.blogPosts,
+        offices: firmData.offices,
+        forceAll: false,
+      }).then((translated) => {
+        if (cancelled) return;
+        storageService.saveSettings(translated.settings);
+        storageService.savePartners(translated.partners);
+        storageService.savePracticeAreas(translated.practiceAreas);
+        storageService.saveCaseStudies(translated.caseStudies);
+        storageService.saveTestimonials(translated.testimonials);
+        storageService.saveBlogPosts(translated.blogPosts);
+        storageService.saveOffices(translated.offices);
+        refreshData();
+      }).catch(() => {});
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [lang, activeFirmSlug, isPlatformView]);
 
   // Update HTML document direction, title and typography on settings/language change
   useEffect(() => {
@@ -266,14 +321,16 @@ export default function App() {
     document.documentElement.lang = lang;
     
     if (isPlatformView) {
-      document.title = lang === 'en' ? 'Lawyers Platform | منصة محامون' : 'منصة محامون';
+      document.title = lang === 'en' ? 'Lawyers Platform | منصة محامون' : lang === 'tr' ? 'Avukatlar Platformu | منصة محامون' : 'منصة محامون';
     } else {
       if (lang === 'ar') {
         document.title = firmData.settings.firmNameAr || activeFirm?.nameAr || 'مكتب المحاماة';
       } else if (lang === 'tr') {
-        document.title = firmData.settings.firmNameTr || firmData.settings.firmNameEn || activeFirm?.nameEn || 'Hukuk Bürosu';
+        const rawTr = firmData.settings.firmNameTr || firmData.settings.firmNameEn || activeFirm?.nameEn || firmData.settings.firmNameAr || 'Hukuk Bürosu';
+        document.title = hasArabicChars(rawTr) ? translateTextSync(rawTr, 'tr') : rawTr;
       } else {
-        document.title = firmData.settings.firmNameEn || activeFirm?.nameEn || 'Law Firm';
+        const rawEn = firmData.settings.firmNameEn || activeFirm?.nameEn || firmData.settings.firmNameAr || 'Law Firm';
+        document.title = hasArabicChars(rawEn) ? translateTextSync(rawEn, 'en') : rawEn;
       }
     }
 

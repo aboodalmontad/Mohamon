@@ -263,11 +263,11 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                         {t.formTitle}
                       </h3>
                       <p className="text-xs text-[#6b6255] mt-0.5">
-                        {isAr ? 'سيتم تحويل طلبك مباشرة للشريك المختص بالقضية' : 'Directly routed to the managing partner in charge'}
+                        {isAr ? 'سيتم تحويل طلبك مباشرة للشريك المختص بالقضية' : isTr ? 'Talebiniz doğrudan ilgili kıdemli ortağa iletilecektir' : 'Directly routed to the managing partner in charge'}
                       </p>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#b38a38]/15 text-[#87641d] font-bold">
-                      {isAr ? 'سرية تامة' : 'Strict NDA'}
+                      {isAr ? 'سرية تامة' : isTr ? 'Tam Gizlilik' : 'Strict NDA'}
                     </span>
                   </div>
 
@@ -464,7 +464,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                   <div className="p-3 rounded-xl bg-[#f7f2e8] border border-[#e6ddcc]">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#87641d] uppercase mb-1">
                       <Phone className="w-3 h-3 text-[#b38a38]" />
-                      <span>{isAr ? 'الهاتف المباشر' : 'Phone'}</span>
+                      <span>{isAr ? 'الهاتف المباشر' : isTr ? 'Telefon' : 'Phone'}</span>
                     </div>
                     <a href={`tel:${settings.phone}`} className="text-xs font-bold text-[#181512] hover:text-[#87641d] font-mono ltr block truncate">
                       {settings.phone || '+966 11 456 7890'}
@@ -474,7 +474,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                   <div className="p-3 rounded-xl bg-[#f7f2e8] border border-[#e6ddcc]">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#87641d] uppercase mb-1">
                       <Shield className="w-3 h-3 text-[#b38a38]" />
-                      <span>{isAr ? 'طوارئ 24/7' : 'Emergency'}</span>
+                      <span>{isAr ? 'طوارئ 24/7' : isTr ? '7/24 Acil' : 'Emergency'}</span>
                     </div>
                     <a href={`tel:${settings.emergencyPhone}`} className="text-xs font-bold text-[#181512] hover:text-[#87641d] font-mono ltr block truncate">
                       {settings.emergencyPhone || '+966 50 123 4567'}
@@ -487,7 +487,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#87641d] uppercase mb-0.5">
                       <Mail className="w-3 h-3 text-[#b38a38]" />
-                      <span>{isAr ? 'البريد الرسمي المعتمد' : 'Official Email'}</span>
+                      <span>{isAr ? 'البريد الرسمي المعتمد' : isTr ? 'Resmi E-Posta' : 'Official Email'}</span>
                     </div>
                     <a href={`mailto:${settings.email}`} className="text-xs font-semibold text-[#181512] hover:text-[#87641d] block truncate">
                       {settings.email || 'info@aladllaw.com'}
@@ -497,7 +497,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                     href={`mailto:${settings.email}`} 
                     className="px-2.5 py-1.5 rounded-lg bg-[#b38a38]/15 text-[#87641d] hover:bg-[#b38a38]/25 text-[11px] font-bold transition flex-shrink-0"
                   >
-                    {isAr ? 'مراسلة' : 'Send'}
+                    {isAr ? 'مراسلة' : isTr ? 'Gönder' : 'Send'}
                   </a>
                 </div>
               </div>
@@ -509,7 +509,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                   className="py-2.5 px-3 rounded-xl bg-[#181512] text-white hover:bg-[#2c261e] text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                 >
                   <Phone className="w-3.5 h-3.5 text-[#c5a869]" />
-                  <span>{isAr ? 'اتصال هاتفي مباشر' : 'Call Now'}</span>
+                  <span>{isAr ? 'اتصال هاتفي مباشر' : isTr ? 'Hemen Ara' : 'Call Now'}</span>
                 </a>
 
                 {cleanPhoneForWhatsApp ? (
@@ -520,7 +520,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                     className="py-2.5 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
                     <MessageCircle className="w-3.5 h-3.5 text-white" />
-                    <span>{isAr ? 'محادثة واتساب' : 'WhatsApp'}</span>
+                    <span>{isAr ? 'محادثة واتساب' : isTr ? 'WhatsApp' : 'WhatsApp'}</span>
                   </a>
                 ) : (
                   <a
@@ -528,7 +528,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                     className="py-2.5 px-3 rounded-xl bg-[#b38a38] hover:bg-[#87641d] text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
                     <Mail className="w-3.5 h-3.5 text-white" />
-                    <span>{isAr ? 'إرسال بريد' : 'Email Us'}</span>
+                    <span>{isAr ? 'إرسال بريد' : isTr ? 'E-Posta Gönder' : 'Email Us'}</span>
                   </a>
                 )}
               </div>
@@ -543,7 +543,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                     <span>{t.globalOffices}</span>
                   </h4>
                   <span className="text-[10px] text-[#6b6255]">
-                    {offices.length} {isAr ? 'مقار إقليمية ودولية' : 'Locations'}
+                    {offices.length} {isAr ? 'مقار إقليمية ودولية' : isTr ? 'Ofis / Şube' : 'Locations'}
                   </span>
                 </div>
 

@@ -5,6 +5,8 @@ import { Language, LawFirm } from '../types';
 import { firmService, createDefaultFirms } from '../services/firmService';
 import { storageService } from '../services/storageService';
 import { PlatformSettings } from '../types';
+import { getLocalized } from '../services/i18n';
+import { translateTextSync } from '../services/translator';
 
 interface PlatformLandingProps {
   onAdminClick: () => void;
@@ -86,7 +88,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               </div>
               <div>
                 <h1 className="text-2xl font-serif text-[#c5a869] tracking-wider leading-none">{isRtl ? settings.platformNameAr : settings.platformNameEn}</h1>
-                <p className="text-xs text-white/40 tracking-[0.2em] mt-1 uppercase">{isRtl ? settings.platformNameEn : settings.platformNameEn}</p>
+                <p className="text-xs text-white/40 tracking-[0.2em] mt-1 uppercase">{settings.platformNameEn}</p>
               </div>
             </div>
             
@@ -96,22 +98,22 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c5a869] text-[#181512] font-bold text-sm hover:bg-[#ebd397] transition-all shadow-lg shadow-[#c5a869]/30 cursor-pointer whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>{isRtl ? 'سجل مكتبك' : 'Register'}</span>
+                <span>{isRtl ? 'سجل مكتبك' : lang === 'tr' ? 'Büro Kaydı' : 'Register'}</span>
               </button>
               <button 
                 onClick={() => storageService.clearCacheAndRefreshApp()}
                 className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition-colors bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-lg cursor-pointer"
-                title={isRtl ? 'مسح الكاش وتحديث الصفحة' : 'Clear Cache & Refresh'}
+                title={isRtl ? 'مسح الكاش وتحديث الصفحة' : lang === 'tr' ? 'Önbelleği Temizle ve Yenile' : 'Clear Cache & Refresh'}
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isRtl ? 'تحديث الكاش' : 'Clear Cache'}</span>
+                <span className="hidden sm:inline">{isRtl ? 'تحديث الكاش' : lang === 'tr' ? 'Önbelleği Temizle' : 'Clear Cache'}</span>
               </button>
               <button 
                 onClick={onAdminClick}
                 className="flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
               >
                 <Server className="w-4 h-4" />
-                <span>{isRtl ? 'إدارة المنصة' : 'Platform Admin'}</span>
+                <span>{isRtl ? 'إدارة المنصة' : lang === 'tr' ? 'Platform Yönetimi' : 'Platform Admin'}</span>
               </button>
             </div>
           </div>
@@ -142,11 +144,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
           <div className="text-center max-w-3xl mx-auto mt-16 drop-shadow-[0_4px_16px_rgba(0,0,0,0.85)]">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[#c5a869] text-sm mb-6 shadow-lg">
               <span className="w-2 h-2 rounded-full bg-[#c5a869] animate-pulse" />
-              {isRtl ? settings.heroBadgeAr : settings.heroBadgeEn}
+              {isRtl ? settings.heroBadgeAr : lang === 'tr' ? translateTextSync(settings.heroBadgeAr, 'tr') : settings.heroBadgeEn}
             </div>
             <h2 className="text-5xl md:text-7xl font-serif text-white mb-6 leading-tight drop-shadow-[0_4px_20px_rgba(0,0,0,0.9)]" dangerouslySetInnerHTML={{__html: isRtl ? settings.heroHeadingAr : settings.heroHeadingEn}} />
             <p className="text-lg md:text-xl text-white/90 mb-10 leading-relaxed max-w-2xl mx-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] font-medium">
-              {isRtl ? settings.heroSubheadingAr : settings.heroSubheadingEn}
+              {isRtl ? settings.heroSubheadingAr : lang === 'tr' ? translateTextSync(settings.heroSubheadingAr, 'tr') : settings.heroSubheadingEn}
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -155,14 +157,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-10 py-4 rounded-xl text-lg font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl"
               >
                 <UserPlus className="w-5 h-5 text-[#c5a869]" />
-                <span>{isRtl ? 'سجل مكتبك الآن' : 'Register Your Firm'}</span>
+                <span>{isRtl ? 'سجل مكتبك الآن' : lang === 'tr' ? 'Büronuzu Şimdi Kaydedin' : 'Register Your Firm'}</span>
               </button>
               <button 
                 onClick={() => document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' })}
                 className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-10 py-4 rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#c5a869]/20 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Building className="w-5 h-5" />
-                <span>{isRtl ? settings.ctaSecondaryAr : settings.ctaSecondaryEn}</span>
+                <span>{isRtl ? settings.ctaSecondaryAr : lang === 'tr' ? 'Onaylı Büroları Keşfet' : settings.ctaSecondaryEn}</span>
               </button>
             </div>
           </div>
@@ -174,28 +176,45 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
             <div>
-              <h3 className="text-3xl font-serif text-white mb-4">{isRtl ? "دليل المكاتب المعتمدة" : "Registered Firms Directory"}</h3>
-              <p className="text-white/50 max-w-2xl">{isRtl ? "تصفح قائمة بمكاتب المحاماة الموثوقة والمسجلة في منصتنا، وتواصل معهم مباشرة." : "Browse the list of trusted law firms registered on our platform and connect with them directly."}</p>
+              <h3 className="text-3xl font-serif text-white mb-4">{isRtl ? "دليل المكاتب المعتمدة" : lang === 'tr' ? "Kayıtlı Hukuk Büroları Rehberi" : "Registered Firms Directory"}</h3>
+              <p className="text-white/50 max-w-2xl">{isRtl ? "تصفح قائمة بمكاتب المحاماة الموثوقة والمسجلة في منصتنا، وتواصل معهم مباشرة." : lang === 'tr' ? "Platformumuzda kayıtlı güvenilir hukuk bürolarının listesine göz atın ve doğrudan iletişime geçin." : "Browse the list of trusted law firms registered on our platform and connect with them directly."}</p>
             </div>
             <div className="text-[#c5a869] bg-[#c5a869]/10 px-4 py-2 rounded-lg font-medium border border-[#c5a869]/20 inline-flex items-center gap-2">
               <Scale className="w-5 h-5" />
-              <span>{activeFirms.length} {isRtl ? "مكتب مسجل" : "Registered Firms"}</span>
+              <span>{activeFirms.length} {isRtl ? "مكتب مسجل" : lang === 'tr' ? "Kayıtlı Büro" : "Registered Firms"}</span>
             </div>
           </div>
 
           {isLoading && activeFirms.length === 0 ? (
             <div className="text-center py-20 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center justify-center">
               <div className="w-10 h-10 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin mb-4"></div>
-              <h4 className="text-xl text-white mb-2">{isRtl ? "جاري تحميل المكاتب..." : "Loading Firms..."}</h4>
-              <p className="text-white/50">{isRtl ? "يرجى الانتظار بينما نقوم بجلب قائمة المكاتب المعتمدة." : "Please wait while we fetch the registered law firms."}</p>
+              <h4 className="text-xl text-white mb-2">{isRtl ? "جاري تحميل المكاتب..." : lang === 'tr' ? "Bürolar Yükleniyor..." : "Loading Firms..."}</h4>
+              <p className="text-white/50">{isRtl ? "يرجى الانتظار بينما نقوم بجلب قائمة المكاتب المعتمدة." : lang === 'tr' ? "Kayıtlı hukuk bürolarını getirirken lütfen bekleyin." : "Please wait while we fetch the registered law firms."}</p>
             </div>
           ) : activeFirms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {activeFirms.map((firm) => {
                 const logo = firm.logoUrl || (firm.data?.settings as any)?.customLogoUrl || (firm.data?.settings as any)?.logoUrl;
-                const name = firm.nameAr || firm.data?.settings?.firmNameAr || 'مكتب محاماة معتمد';
-                const city = firm.cityAr || (firm.data as any)?.offices?.[0]?.cityAr || 'الرياض';
-                const tagline = firm.taglineAr || firm.data?.settings?.sloganAr || '';
+                const firmSettings = firm.data?.settings;
+                const rawNameAr = firm.nameAr || firmSettings?.firmNameAr || 'مكتب محاماة معتمد';
+                const name = lang === 'ar'
+                  ? rawNameAr
+                  : firmSettings
+                  ? getLocalized(firmSettings, 'firmName', lang, firm.nameEn || rawNameAr)
+                  : getLocalized(firm, 'name', lang, rawNameAr);
+                const firstOffice = (firm.data as any)?.offices?.[0];
+                const rawCityAr = firm.cityAr || firstOffice?.cityAr || 'الرياض';
+                const city = lang === 'ar'
+                  ? rawCityAr
+                  : firstOffice
+                  ? getLocalized(firstOffice, 'city', lang, firm.cityEn || rawCityAr)
+                  : getLocalized(firm, 'city', lang, rawCityAr);
+                const rawTaglineAr = firm.taglineAr || firmSettings?.sloganAr || '';
+                const tagline = lang === 'ar'
+                  ? rawTaglineAr
+                  : firmSettings
+                  ? getLocalized(firmSettings, 'slogan', lang, firm.taglineEn || rawTaglineAr)
+                  : getLocalized(firm, 'tagline', lang, rawTaglineAr);
                 return (
                   <a 
                     key={firm.id}
@@ -231,7 +250,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                           </h4>
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#ebd397] bg-[#c5a869]/15 px-2.5 py-0.5 rounded-full border border-[#c5a869]/30 shadow-xs">
                             <Shield className="w-3 h-3 text-[#c5a869]" />
-                            <span>{isRtl ? 'مكتب معتمد' : 'Verified'}</span>
+                            <span>{isRtl ? 'مكتب معتمد' : lang === 'tr' ? 'Onaylı Hukuk Bürosu' : 'Verified'}</span>
                           </span>
                         </div>
                         
@@ -247,7 +266,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                             <span className="break-words">{city}</span>
                           </div>
                           <div className="flex items-center gap-1 text-xs text-[#ebd397] font-semibold bg-[#c5a869]/15 px-2.5 py-1 rounded-md border border-[#c5a869]/30 group-hover:bg-[#c5a869] group-hover:text-[#181512] transition-colors">
-                            <span>{isRtl ? 'زيارة الموقع' : 'Visit Site'}</span>
+                            <span>{isRtl ? 'زيارة الموقع' : lang === 'tr' ? 'Siteyi Ziyaret Et' : 'Visit Site'}</span>
                             <ArrowIcon className="w-3 h-3" />
                           </div>
                         </div>
@@ -260,8 +279,8 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
           ) : (
             <div className="text-center py-20 bg-white/5 border border-white/10 rounded-2xl">
               <Scale className="w-12 h-12 text-white/20 mx-auto mb-4" />
-              <h4 className="text-xl text-white mb-2">{isRtl ? "لا توجد مكاتب مسجلة حالياً" : "No firms registered currently"}</h4>
-              <p className="text-white/50">{isRtl ? "يرجى مراجعة إدارة المنصة لتفعيل المكاتب." : "Please contact platform administration to activate firms."}</p>
+              <h4 className="text-xl text-white mb-2">{isRtl ? "لا توجد مكاتب مسجلة حالياً" : lang === 'tr' ? "Şu anda kayıtlı hukuk bürosu bulunmamaktadır" : "No firms registered currently"}</h4>
+              <p className="text-white/50">{isRtl ? "يرجى مراجعة إدارة المنصة لتفعيل المكاتب." : lang === 'tr' ? "Büroları etkinleştirmek için lütfen platform yönetimiyle iletişime geçin." : "Please contact platform administration to activate firms."}</p>
             </div>
           )}
         </div>
@@ -271,8 +290,12 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
       <section id="features" className="py-24 bg-black/40 border-t border-white/5 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h3 className="text-3xl font-serif text-white mb-4">{isRtl ? `لماذا تختار منصة ${settings.platformNameAr}؟` : `Why Choose ${settings.platformNameEn}?`}</h3>
-            <p className="text-white/50 max-w-2xl mx-auto">نوفر لك كل ما تحتاجه لإدارة مكتب محاماة عصري وموثوق.</p>
+            <h3 className="text-3xl font-serif text-white mb-4">
+              {isRtl ? `لماذا تختار منصة ${settings.platformNameAr}؟` : lang === 'tr' ? `Neden ${settings.platformNameEn} Platformunu Seçmelisiniz?` : `Why Choose ${settings.platformNameEn}?`}
+            </h3>
+            <p className="text-white/50 max-w-2xl mx-auto">
+              {isRtl ? 'نوفر لك كل ما تحتاجه لإدارة مكتب محاماة عصري وموثوق.' : lang === 'tr' ? 'Modern ve güvenilir bir hukuk bürosunu yönetmek için ihtiyacınız olan her şeyi sunuyoruz.' : 'We provide everything you need to manage a modern, trusted law firm.'}
+            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -280,9 +303,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               <div className="w-12 h-12 bg-[#c5a869]/10 rounded-xl flex items-center justify-center mb-6">
                 <Globe className="w-6 h-6 text-[#c5a869]" />
               </div>
-              <h4 className="text-xl font-medium text-white mb-3">نطاق رسمي وموقع مستقل</h4>
+              <h4 className="text-xl font-medium text-white mb-3">
+                {isRtl ? 'نطاق رسمي وموقع مستقل' : lang === 'tr' ? 'Resmi Alan Adı ve Bağımsız Web Sitesi' : 'Official Domain & Independent Website'}
+              </h4>
               <p className="text-white/50 leading-relaxed">
-                رابط رسمي ونطاق مخصص لمكتبك (مثال: nahwi.mohamoon.sa أو نطاقك الخاص المستقل .sa / .com) بواجهة مهنية فاخرة تعكس هويتك القانونية.
+                {isRtl
+                  ? 'رابط رسمي ونطاق مخصص لمكتبك (مثال: nahwi.mohamoon.sa أو نطاقك الخاص المستقل .sa / .com) بواجهة مهنية فاخرة تعكس هويتك القانونية.'
+                  : lang === 'tr'
+                  ? 'Hukuki kimliğinizi yansıtan prestijli ve profesyonel bir arayüzle büronuza özel resmi bağlantı ve alan adı.'
+                  : 'An official dedicated domain for your law firm with a prestigious executive interface that reflects your legal identity.'}
               </p>
             </div>
             
@@ -290,9 +319,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               <div className="w-12 h-12 bg-[#c5a869]/10 rounded-xl flex items-center justify-center mb-6">
                 <Briefcase className="w-6 h-6 text-[#c5a869]" />
               </div>
-              <h4 className="text-xl font-medium text-white mb-3">إدارة متكاملة</h4>
+              <h4 className="text-xl font-medium text-white mb-3">
+                {isRtl ? 'إدارة متكاملة' : lang === 'tr' ? 'Entegre Yönetim Paneli' : 'Integrated Management'}
+              </h4>
               <p className="text-white/50 leading-relaxed">
-                لوحة تحكم خاصة بك لإدارة المحتوى، فريق العمل، الخدمات، واستقبال طلبات الاستشارة مباشرة.
+                {isRtl
+                  ? 'لوحة تحكم خاصة بك لإدارة المحتوى، فريق العمل، الخدمات، واستقبال طلبات الاستشارة مباشرة.'
+                  : lang === 'tr'
+                  ? 'İçeriği, ekibinizi, uzmanlık alanlarınızı yönetmek ve danışmanlık taleplerini doğrudan almak için özel kontrol paneli.'
+                  : 'A dedicated control panel to manage content, team members, practice areas, and receive consultation requests directly.'}
               </p>
             </div>
             
@@ -300,9 +335,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               <div className="w-12 h-12 bg-[#c5a869]/10 rounded-xl flex items-center justify-center mb-6">
                 <Shield className="w-6 h-6 text-[#c5a869]" />
               </div>
-              <h4 className="text-xl font-medium text-white mb-3">أمان وسرية</h4>
+              <h4 className="text-xl font-medium text-white mb-3">
+                {isRtl ? 'أمان وسرية' : lang === 'tr' ? 'Güvenlik ve Gizlilik' : 'Security & Confidentiality'}
+              </h4>
               <p className="text-white/50 leading-relaxed">
-                حماية فائقة لبيانات مكتبك وعملائك من خلال خوادم مشفرة ونظام صلاحيات متقدم.
+                {isRtl
+                  ? 'حماية فائقة لبيانات مكتبك وعملائك من خلال خوادم مشفرة ونظام صلاحيات متقدم.'
+                  : lang === 'tr'
+                  ? 'Şifreli sunucular ve gelişmiş yetkilendirme sistemi ile büronuzun ve müvekkillerinizin verileri için üst düzey koruma.'
+                  : 'Superior protection for your firm and client data through encrypted cloud servers and advanced access controls.'}
               </p>
             </div>
           </div>

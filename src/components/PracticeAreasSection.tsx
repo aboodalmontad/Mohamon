@@ -4,7 +4,8 @@ import {
   ArrowLeft, ArrowRight, CheckCircle2, X 
 } from 'lucide-react';
 import { PracticeArea, Partner, Language } from '../types';
-import { useTranslation, getLocalized } from '../services/i18n';
+import { useTranslation, getLocalized, getLocalizedArray } from '../services/i18n';
+import { translateTextSync } from '../services/translator';
 
 interface PracticeAreasSectionProps {
   practiceAreas: PracticeArea[];
@@ -41,16 +42,17 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
 
   const getCategoryName = (catKey: string, match?: PracticeArea) => {
     if (catKey === 'all') return t.allAreas;
-    if (match) {
-      if (lang === 'tr') return match.categoryLabelTr || match.categoryLabelEn || knownCategoryLabels[catKey]?.tr || catKey;
-      if (lang === 'en') return match.categoryLabelEn || knownCategoryLabels[catKey]?.en || catKey;
-      return match.categoryLabelAr || knownCategoryLabels[catKey]?.ar || catKey;
-    }
     const known = knownCategoryLabels[catKey];
+    if (match) {
+      const fallbackCat = known
+        ? (lang === 'tr' ? known.tr : lang === 'en' ? known.en : known.ar)
+        : (match.categoryLabelAr || catKey);
+      return getLocalized(match, 'categoryLabel', lang, fallbackCat);
+    }
     if (known) {
       return lang === 'tr' ? known.tr : lang === 'en' ? known.en : known.ar;
     }
-    return catKey;
+    return lang === 'ar' ? catKey : translateTextSync(catKey, lang === 'tr' ? 'tr' : 'en');
   };
 
   // Derive categories dynamically from available practice areas
@@ -84,17 +86,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
   };
 
   const getServicesList = (practice: PracticeArea): string[] => {
-    if (lang === 'tr') {
-      return (practice.keyServicesTr && practice.keyServicesTr.length > 0)
-        ? practice.keyServicesTr
-        : practice.keyServicesEn || practice.keyServices || [];
-    }
-    if (lang === 'en') {
-      return (practice.keyServicesEn && practice.keyServicesEn.length > 0)
-        ? practice.keyServicesEn
-        : practice.keyServices || [];
-    }
-    return practice.keyServices || [];
+    return getLocalizedArray(practice, 'keyServices', lang, practice.keyServices || []);
   };
 
   if (!practiceAreas || practiceAreas.length === 0) return null;

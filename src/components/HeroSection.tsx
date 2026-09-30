@@ -245,29 +245,27 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
                   labelDisplay = settings?.stats?.recoveredCapitalTextAr || 'مليار ليرة سورية مبالغ وقضايا محمية';
                 } else if (lang === 'tr') {
                   valueDisplay = `+${rawVal} Mr SYP`;
-                  labelDisplay = 'Kazanılan & Korunan Tazminat (SYP)';
+                  labelDisplay = getLocalized(settings?.stats, 'recoveredCapitalText', 'tr', 'Kazanılan & Korunan Tazminat (SYP)');
                 } else {
                   valueDisplay = `+${rawVal}B SYP`;
-                  labelDisplay = 'Billion SYP Protected & Recovered';
+                  labelDisplay = getLocalized(settings?.stats, 'recoveredCapitalText', 'en', 'Billion SYP Protected & Recovered');
                 }
               } else if (currency === 'SAR') {
                 valueDisplay = lang === 'ar' ? `+${rawVal}M ر.س` : `+${rawVal}M SAR`;
-                labelDisplay = lang === 'ar' ? 'مليون ريال مبالغ مستردة ومحمية' : 'Million SAR Protected Capital';
+                labelDisplay = lang === 'ar' ? 'مليون ريال مبالغ مستردة ومحمية' : lang === 'tr' ? 'Milyon SAR Korunan Sermaye' : 'Million SAR Protected Capital';
               } else if (currency === 'AED') {
                 valueDisplay = lang === 'ar' ? `+${rawVal}M د.إ` : `+${rawVal}M AED`;
-                labelDisplay = lang === 'ar' ? 'مليون درهم مبالغ مستردة ومحمية' : 'Million AED Protected Capital';
+                labelDisplay = lang === 'ar' ? 'مليون درهم مبالغ مستردة ومحمية' : lang === 'tr' ? 'Milyon AED Korunan Sermaye' : 'Million AED Protected Capital';
               } else if (currency === 'EUR') {
                 valueDisplay = `€${rawVal}M+`;
-                labelDisplay = lang === 'ar' ? 'مليون يورو مبالغ مستردة ومحمية' : 'Million EUR Protected Capital';
+                labelDisplay = lang === 'ar' ? 'مليون يورو مبالغ مستردة ومحمية' : lang === 'tr' ? 'Milyon EUR Korunan Sermaye' : 'Million EUR Protected Capital';
               } else if (settings?.currencySymbolAr || settings?.currencySymbolEn) {
                 const sym = lang === 'ar' ? (settings.currencySymbolAr || '$') : (settings.currencySymbolEn || '$');
                 valueDisplay = `${sym}${rawVal}M+`;
               }
 
-              if (settings?.stats?.recoveredCapitalTextAr && lang === 'ar') {
-                labelDisplay = settings.stats.recoveredCapitalTextAr;
-              } else if (settings?.stats?.recoveredCapitalTextEn && lang === 'en') {
-                labelDisplay = settings.stats.recoveredCapitalTextEn;
+              if (settings?.stats?.recoveredCapitalTextAr) {
+                labelDisplay = getLocalized(settings.stats, 'recoveredCapitalText', lang, labelDisplay);
               }
 
               return (

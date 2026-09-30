@@ -13,6 +13,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { LawFirm } from '../types';
+import { getLocalized } from '../services/i18n';
+import { translateTextSync } from '../services/translator';
 
 interface FirmSuspendedNoticeProps {
   firm: LawFirm;
@@ -32,14 +34,19 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
   onGoToMainSite,
 }) => {
   const isAr = lang === 'ar';
+  const isTr = lang === 'tr';
   const sub = firm.subscription;
 
+  const firmSettings = firm.data?.settings;
+  const rawNameAr = firm.nameAr || firmSettings?.firmNameAr || 'المكتب القانوني';
   const firmName = isAr 
-    ? (firm.nameAr || firm.data?.settings?.firmNameAr || 'المكتب القانوني') 
-    : (firm.nameEn || firm.data?.settings?.firmNameEn || 'Law Firm');
+    ? rawNameAr
+    : firmSettings
+    ? getLocalized(firmSettings, 'firmName', lang, firm.nameEn || rawNameAr)
+    : getLocalized(firm, 'name', lang, rawNameAr);
 
   const expiryDate = sub?.endDate 
-    ? new Date(sub.endDate).toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
+    ? new Date(sub.endDate).toLocaleDateString(isAr ? 'ar-SA' : isTr ? 'tr-TR' : 'en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -49,12 +56,12 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
   const getReasonTitle = () => {
     switch (reason) {
       case 'EXPIRED':
-        return isAr ? 'انتهت فترة الاشتراك السنوي لهذا الموقع' : 'Annual Subscription Expired';
+        return isAr ? 'انتهت فترة الاشتراك السنوي لهذا الموقع' : isTr ? 'Bu Sitenin Yıllık Abonelik Süresi Doldu' : 'Annual Subscription Expired';
       case 'SUSPENDED':
-        return isAr ? 'الموقع معلق مؤقتاً من قبل إدارة المنصة' : 'Website Suspended by Administration';
+        return isAr ? 'الموقع معلق مؤقتاً من قبل إدارة المنصة' : isTr ? 'Web Sitesi Platform Yönetimi Tarafından Askıya Alındı' : 'Website Suspended by Administration';
       case 'SITE_DEACTIVATED':
       default:
-        return isAr ? 'هذا الموقع متوقف مؤقتاً أو بانتظار التفعيل' : 'Website Temporarily Inactive or Awaiting Activation';
+        return isAr ? 'هذا الموقع متوقف مؤقتاً أو بانتظار التفعيل' : isTr ? 'Web Sitesi Geçici Olarak Devre Dışı veya Aktivasyon Bekliyor' : 'Website Temporarily Inactive or Awaiting Activation';
     }
   };
 
@@ -63,15 +70,21 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
       case 'EXPIRED':
         return isAr 
           ? `نعتذر لزوارنا الكرام، انتهت فترة الاشتراك والترخيص السنوي الخاص بموقع "${firmName}". يرجى من إدارة المكتب أو المحامي تجديد الاشتراك لاستئناف النشر فوراً.`
+          : isTr
+          ? `"${firmName}" için yıllık lisans ve abonelik süresi dolmuştur. Yayına devam etmek için lütfen aboneliği yenileyin.`
           : `The annual license and subscription for "${firmName}" has reached its expiration date. Please renew to restore live publication.`;
       case 'SUSPENDED':
         return isAr
           ? `الموقع الإلكتروني الخاص بـ "${firmName}" معلق حالياً لأسباب إدارية أو بانتظار تسوية التجديد السنوي.`
+          : isTr
+          ? `"${firmName}" web sitesi şu anda idari inceleme veya yıllık yenileme nedeniyle askıya alınmıştır.`
           : `The website for "${firmName}" is currently suspended for administrative review or pending renewal.`;
       case 'SITE_DEACTIVATED':
       default:
         return isAr
           ? `موقع "${firmName}" محفوظ وجاهز، لكنه في وضع الإيقاف المؤقت حالياً من قبل مالك المنصة أو المحامي. يمكن للمحامي أو مدير المكتب تسجيل الدخول لتفعيل الموقع فوراً.`
+          : isTr
+          ? `"${firmName}" web sitesi şu anda aktif değildir. Büro yöneticisi veya platform yöneticisi siteyi etkinleştirmek için giriş yapabilir.`
           : `The website for "${firmName}" is currently inactive. The firm manager or platform admin can log in to activate it.`;
     }
   };
@@ -108,23 +121,23 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
         {sub && (
           <div className="bg-slate-950/70 border border-slate-800/90 rounded-2xl p-4 mb-6 text-start text-xs sm:text-sm space-y-2">
             <div className="flex items-center justify-between text-slate-400">
-              <span>{isAr ? 'الباقة السنوية:' : 'Annual Plan:'}</span>
-              <span className="font-semibold text-white">{isAr ? sub.planNameAr : sub.planNameEn}</span>
+              <span>{isAr ? 'الباقة السنوية:' : isTr ? 'Yıllık Paket:' : 'Annual Plan:'}</span>
+              <span className="font-semibold text-white">{isAr ? sub.planNameAr : isTr ? translateTextSync(sub.planNameAr || sub.planNameEn, 'tr') : sub.planNameEn}</span>
             </div>
             {expiryDate && (
               <div className="flex items-center justify-between text-slate-400">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                  {isAr ? 'تاريخ انتهاء الاشتراك السنوي:' : 'Annual Expiry Date:'}
+                  {isAr ? 'تاريخ انتهاء الاشتراك السنوي:' : isTr ? 'Yıllık Bitiş Tarihi:' : 'Annual Expiry Date:'}
                 </span>
                 <span className="font-mono text-amber-300 font-bold">{expiryDate}</span>
               </div>
             )}
             <div className="flex items-center justify-between text-slate-400">
-              <span>{isAr ? 'حالة الموقع الحالية:' : 'Site Live Status:'}</span>
+              <span>{isAr ? 'حالة الموقع الحالية:' : isTr ? 'Mevcut Site Durumu:' : 'Site Live Status:'}</span>
               <span className="inline-flex items-center gap-1 text-rose-400 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
-                {isAr ? 'معلق / غير نشط' : 'Suspended / Inactive'}
+                {isAr ? 'معلق / غير نشط' : isTr ? 'Askıda / Devre Dışı' : 'Suspended / Inactive'}
               </span>
             </div>
           </div>
@@ -138,7 +151,7 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
             className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm sm:text-base transition-all duration-200 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
           >
             <LogIn className="w-4 h-4" />
-            <span>{isAr ? 'دخول مدير المكتب لتفعيل الموقع وتجديد الاشتراك' : 'Firm Manager Login (Activate & Renew)'}</span>
+            <span>{isAr ? 'دخول مدير المكتب لتفعيل الموقع وتجديد الاشتراك' : isTr ? 'Büro Yöneticisi Girişi (Etkinleştir & Yenile)' : 'Firm Manager Login (Activate & Renew)'}</span>
           </button>
 
           {/* Contact Firm or Support via WhatsApp */}
@@ -147,6 +160,8 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
               href={`https://wa.me/${firm.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
                 isAr 
                   ? `السلام عليكم، أود الاستفسار بخصوص خدمات مكتب ${firmName}.` 
+                  : isTr
+                  ? `Merhaba, ${firmName} bürosunun hizmetleri hakkında bilgi almak istiyorum.`
                   : `Hello, I would like to inquire about services from ${firmName}.`
               )}`}
               target="_blank"
@@ -154,7 +169,7 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
               className="w-full py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer"
             >
               <PhoneCall className="w-4 h-4 text-emerald-400" />
-              <span>{isAr ? `الاتصال المباشر بالمكتب (${firm.phone})` : `Contact Firm (${firm.phone})`}</span>
+              <span>{isAr ? `الاتصال المباشر بالمكتب (${firm.phone})` : isTr ? `Büro ile İletişime Geç (${firm.phone})` : `Contact Firm (${firm.phone})`}</span>
             </a>
           )}
 
@@ -166,7 +181,7 @@ export const FirmSuspendedNotice: React.FC<FirmSuspendedNoticeProps> = ({
                 className="hover:text-amber-300 opacity-60 hover:opacity-100 cursor-pointer transition flex items-center gap-1 text-[11px]"
               >
                 <ShieldCheck className="w-3 h-3 text-amber-400" />
-                <span>{isAr ? 'بوابة الإدارة والتجديد' : 'Administration & Renewal Portal'}</span>
+                <span>{isAr ? 'بوابة الإدارة والتجديد' : isTr ? 'Yönetim ve Yenileme Portalı' : 'Administration & Renewal Portal'}</span>
               </button>
             )}
           </div>

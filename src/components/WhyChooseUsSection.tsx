@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { Language, SiteSettings, WhyChooseUsPillar } from '../types';
 import { DEFAULT_WHY_PILLARS } from '../data/initialData';
-import { useTranslation } from '../services/i18n';
+import { useTranslation, getLocalized } from '../services/i18n';
 
 interface WhyChooseUsProps {
   lang: Language;
@@ -58,26 +58,9 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsProps> = React.memo(({ lang
       ? settings.whyPillars
       : DEFAULT_WHY_PILLARS;
 
-  const badgeText =
-    lang === 'tr'
-      ? settings?.whyBadgeTr || settings?.whyBadgeEn || t.whyBadge
-      : lang === 'en'
-      ? settings?.whyBadgeEn || t.whyBadge
-      : settings?.whyBadgeAr || t.whyBadge;
-
-  const subtitleText =
-    lang === 'tr'
-      ? settings?.whySubtitleTr || settings?.whySubtitleEn || t.whySubtitle
-      : lang === 'en'
-      ? settings?.whySubtitleEn || t.whySubtitle
-      : settings?.whySubtitleAr || t.whySubtitle;
-
-  const customHeading =
-    lang === 'tr'
-      ? settings?.whyHeadingTr || settings?.whyHeadingEn
-      : lang === 'en'
-      ? settings?.whyHeadingEn
-      : settings?.whyHeadingAr;
+  const badgeText = getLocalized(settings, 'whyBadge', lang, t.whyBadge);
+  const subtitleText = getLocalized(settings, 'whySubtitle', lang, t.whySubtitle);
+  const customHeading = settings?.whyHeadingAr ? getLocalized(settings, 'whyHeading', lang, '') : '';
 
   const defaultHeadingAr = 'لماذا تضع كبرى الشركات ثقتها المطلقة في مكتبنا؟';
   const defaultHeadingEn = 'Why Global Corporations Entrust Us With Their Critical Stakes';
@@ -126,18 +109,8 @@ export const WhyChooseUsSection: React.FC<WhyChooseUsProps> = React.memo(({ lang
         {/* Pillars Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {pillars.map((pillar, idx) => {
-            const title =
-              lang === 'tr'
-                ? pillar.titleTr || pillar.titleEn || pillar.titleAr
-                : lang === 'en'
-                ? pillar.titleEn || pillar.titleAr
-                : pillar.titleAr;
-            const desc =
-              lang === 'tr'
-                ? pillar.descTr || pillar.descEn || pillar.descAr
-                : lang === 'en'
-                ? pillar.descEn || pillar.descAr
-                : pillar.descAr;
+            const title = getLocalized(pillar, 'title', lang, pillar.titleAr);
+            const desc = getLocalized(pillar, 'desc', lang, pillar.descAr);
 
             return (
               <div

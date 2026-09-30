@@ -94,6 +94,8 @@ export interface CaseStudy {
   summaryTr?: string;
   year: string;
   value?: string;
+  valueEn?: string;
+  valueTr?: string;
   highlight: string;
   highlightEn?: string;
   highlightTr?: string;
