@@ -583,7 +583,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                       </span>
                       {activeOffice.isHeadquarter && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#b38a38]/20 text-[#87641d] font-bold">
-                          {isAr ? 'المقر الرئيسي' : 'Headquarters'}
+                          {isAr ? 'المقر الرئيسي' : isTr ? 'Genel Merkez' : 'Headquarters'}
                         </span>
                       )}
                     </div>

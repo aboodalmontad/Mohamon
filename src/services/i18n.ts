@@ -1,5 +1,5 @@
 import { Language } from '../types';
-import { translateTextSync, hasArabicChars } from './translator';
+import { translateTextSync, hasArabicChars, sanitizeNoArabic } from './translator';
 
 export const UI_TRANSLATIONS = {
   ar: {
@@ -407,19 +407,27 @@ export const getLocalized = (
   lang: Language,
   fallback = ''
 ): string => {
+  if (lang === 'ar') {
+    if (!item) return fallback;
+    const arKey = `${fieldPrefix}Ar`;
+    return item[arKey] || item[fieldPrefix] || fallback;
+  }
+
+  const targetLang = lang === 'tr' ? 'tr' : 'en';
+
   if (!item) {
-    if (lang !== 'ar' && fallback && hasArabicChars(fallback)) {
-      return translateTextSync(fallback, lang === 'tr' ? 'tr' : 'en', fallback);
+    if (fallback && hasArabicChars(fallback)) {
+      return sanitizeNoArabic(translateTextSync(fallback, targetLang), targetLang);
     }
-    return fallback;
+    return sanitizeNoArabic(fallback, targetLang);
   }
 
   const arKey = `${fieldPrefix}Ar`;
   const enKey = `${fieldPrefix}En`;
   const trKey = `${fieldPrefix}Tr`;
-  const arSource = item[arKey] || item[fieldPrefix] || fallback;
+  const arSource = item[arKey] || item[fieldPrefix] || (hasArabicChars(fallback) ? fallback : '');
 
-  if (lang === 'tr') {
+  if (targetLang === 'tr') {
     const trVal = item[trKey];
     if (trVal && typeof trVal === 'string' && trVal.trim() !== '' && !hasArabicChars(trVal)) {
       return trVal;
@@ -427,39 +435,44 @@ export const getLocalized = (
     const enVal = item[enKey];
     const validEnFallback = (enVal && typeof enVal === 'string' && !hasArabicChars(enVal)) ? enVal : undefined;
     if (arSource && hasArabicChars(arSource)) {
-      return translateTextSync(arSource, 'tr', validEnFallback);
+      const res = translateTextSync(arSource, 'tr', validEnFallback);
+      return sanitizeNoArabic(res, 'tr');
     }
-    return validEnFallback || trVal || arSource || fallback;
+    const rawVal = validEnFallback || trVal || fallback;
+    return sanitizeNoArabic(rawVal, 'tr');
   }
 
-  if (lang === 'en') {
-    const enVal = item[enKey];
-    if (enVal && typeof enVal === 'string' && enVal.trim() !== '' && !hasArabicChars(enVal)) {
-      return enVal;
-    }
-    if (arSource && hasArabicChars(arSource)) {
-      return translateTextSync(arSource, 'en', (!hasArabicChars(fallback) ? fallback : undefined));
-    }
-    return enVal || arSource || fallback;
+  // targetLang === 'en'
+  const enVal = item[enKey];
+  if (enVal && typeof enVal === 'string' && enVal.trim() !== '' && !hasArabicChars(enVal)) {
+    return enVal;
   }
-
-  // Arabic default
-  return item[arKey] || item[fieldPrefix] || fallback;
+  const cleanFallback = !hasArabicChars(fallback) ? fallback : undefined;
+  if (arSource && hasArabicChars(arSource)) {
+    const res = translateTextSync(arSource, 'en', cleanFallback);
+    return sanitizeNoArabic(res, 'en');
+  }
+  const rawVal = enVal || fallback;
+  return sanitizeNoArabic(rawVal, 'en');
 };
 
 export const getLocalizedArray = (
   item: any,
   fieldPrefix: string,
-  lang: Language
+  lang: Language,
+  fallback: string[] = []
 ): string[] => {
-  if (!item) return [];
-  const baseArr: string[] = Array.isArray(item[fieldPrefix]) ? item[fieldPrefix].filter(Boolean) : [];
+  const targetLang = lang === 'tr' ? 'tr' : 'en';
+  if (!item) return (fallback || []).map(s => sanitizeNoArabic(s, targetLang));
+  const baseArr: string[] = Array.isArray(item[fieldPrefix]) && item[fieldPrefix].length > 0 
+    ? item[fieldPrefix].filter(Boolean) 
+    : (fallback || []);
   if (lang === 'ar') return baseArr;
 
   const enArr: string[] = Array.isArray(item[`${fieldPrefix}En`]) ? item[`${fieldPrefix}En`] : [];
   const trArr: string[] = Array.isArray(item[`${fieldPrefix}Tr`]) ? item[`${fieldPrefix}Tr`] : [];
 
-  const maxLen = Math.max(baseArr.length, lang === 'tr' ? trArr.length : enArr.length);
+  const maxLen = Math.max(baseArr.length, targetLang === 'tr' ? trArr.length : enArr.length);
   const result: string[] = [];
 
   for (let i = 0; i < maxLen; i++) {
@@ -467,21 +480,23 @@ export const getLocalizedArray = (
     const enItem = enArr[i] || '';
     const trItem = trArr[i] || '';
 
-    if (lang === 'tr') {
+    if (targetLang === 'tr') {
       if (trItem && trItem.trim() !== '' && !hasArabicChars(trItem)) {
         result.push(trItem);
       } else {
         const validEn = enItem && !hasArabicChars(enItem) ? enItem : undefined;
-        result.push(arItem ? translateTextSync(arItem, 'tr', validEn) : (validEn || trItem));
+        const res = arItem ? translateTextSync(arItem, 'tr', validEn) : (validEn || trItem);
+        result.push(sanitizeNoArabic(res, 'tr'));
       }
     } else {
       if (enItem && enItem.trim() !== '' && !hasArabicChars(enItem)) {
         result.push(enItem);
       } else {
-        result.push(arItem ? translateTextSync(arItem, 'en') : enItem);
+        const res = arItem ? translateTextSync(arItem, 'en') : enItem;
+        result.push(sanitizeNoArabic(res, 'en'));
       }
     }
   }
 
-  return result.filter(Boolean);
+  return result.map(s => sanitizeNoArabic(s, targetLang)).filter(Boolean);
 };

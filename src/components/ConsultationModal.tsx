@@ -65,7 +65,7 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
       const selectedPractice = practiceAreas.find(p => p.id === formData.practiceId);
 
       const notes = [
-        selectedPartner ? `Partner: ${selectedPartner.name}` : '',
+        selectedPartner ? `Partner: ${getLocalized(selectedPartner, 'name', lang, selectedPartner.name)}` : '',
         `Time Slot: ${formData.timeSlot}`,
         formData.message
       ].filter(Boolean).join('\n---\n');

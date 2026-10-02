@@ -4,6 +4,7 @@ import {
   initialSiteSettings, 
 } from '../data/initialData';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID, formatSupabaseError } from '../lib/supabase';
+import { translateTextSync, hasArabicChars, sanitizeNoArabic } from './translator';
 
 const STORAGE_KEY_FIRMS = 'aladl_multi_firms_v2';
 const STORAGE_KEY_ACTIVE_SLUG = 'aladl_active_firm_slug_v1';
@@ -97,11 +98,28 @@ export function ensureFirmSubscription(firm: LawFirm): LawFirm {
   if (!firm.nameEn && firm.data?.settings?.firmNameEn) {
     firm.nameEn = firm.data.settings.firmNameEn;
   }
+  if (!firm.nameTr && firm.data?.settings?.firmNameTr) {
+    firm.nameTr = firm.data.settings.firmNameTr;
+  }
+  if (!firm.nameEn || hasArabicChars(firm.nameEn)) {
+    firm.nameEn = sanitizeNoArabic(translateTextSync(firm.nameAr, 'en'), 'en');
+  }
+  if (!firm.nameTr || hasArabicChars(firm.nameTr)) {
+    firm.nameTr = sanitizeNoArabic(translateTextSync(firm.nameAr, 'tr'), 'tr');
+  }
   if (!firm.cityAr && (firm.data as any)?.offices?.[0]?.cityAr) {
     firm.cityAr = (firm.data as any).offices[0].cityAr;
   }
   if (!firm.taglineAr && firm.data?.settings?.sloganAr) {
     firm.taglineAr = firm.data.settings.sloganAr;
+  }
+  if (firm.taglineAr) {
+    if (!firm.taglineEn || hasArabicChars(firm.taglineEn)) {
+      firm.taglineEn = sanitizeNoArabic(translateTextSync(firm.taglineAr, 'en'), 'en');
+    }
+    if (!firm.taglineTr || hasArabicChars(firm.taglineTr)) {
+      firm.taglineTr = sanitizeNoArabic(translateTextSync(firm.taglineAr, 'tr'), 'tr');
+    }
   }
   if (!firm.logoUrl && (firm.data?.settings as any)?.customLogoUrl) {
     firm.logoUrl = (firm.data?.settings as any).customLogoUrl;

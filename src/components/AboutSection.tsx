@@ -39,7 +39,7 @@ export const AboutSection: React.FC<AboutSectionProps> = React.memo(({ settings,
   const rankingTitle = getLocalized(settings, 'aboutRankingTitle', lang, settings.aboutRankingTitleAr || t.aboutRankingTitle);
   const rankingDesc = getLocalized(settings, 'aboutRankingDesc', lang, settings.aboutRankingDescAr || t.aboutRankingDesc);
   const ctaText = getLocalized(settings, 'aboutCtaText', lang, settings.aboutCtaTextAr || t.aboutBookMeeting);
-  const sectionImage = settings.aboutImageUrl || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000";
+  const sectionImage = (settings.aboutImageUrl && settings.aboutImageUrl.trim()) || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1000";
 
   return (
     <section id="about" className="py-24 bg-[#f7f2e8] relative overflow-hidden border-t border-[#e6ddcc]">

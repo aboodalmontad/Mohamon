@@ -289,24 +289,8 @@ export default function App() {
 
     if (needsAutoTranslate) {
       let cancelled = false;
-      autoTranslateAllSiteData({
-        settings: firmData.settings,
-        partners: firmData.partners,
-        practiceAreas: firmData.practiceAreas,
-        caseStudies: firmData.caseStudies,
-        testimonials: firmData.testimonials,
-        blogPosts: firmData.blogPosts,
-        offices: firmData.offices,
-        forceAll: false,
-      }).then((translated) => {
+      autoTranslateAllSiteData(undefined, false).then(() => {
         if (cancelled) return;
-        storageService.saveSettings(translated.settings);
-        storageService.savePartners(translated.partners);
-        storageService.savePracticeAreas(translated.practiceAreas);
-        storageService.saveCaseStudies(translated.caseStudies);
-        storageService.saveTestimonials(translated.testimonials);
-        storageService.saveBlogPosts(translated.blogPosts);
-        storageService.saveOffices(translated.offices);
         refreshData();
       }).catch(() => {});
       return () => {
@@ -362,7 +346,7 @@ export default function App() {
       <div className="min-h-screen bg-[#181512] flex items-center justify-center flex-col gap-4">
         <div className="w-12 h-12 border-4 border-[#c5a869] border-t-transparent rounded-full animate-spin"></div>
         <p className="text-[#c5a869] font-serif text-lg tracking-widest animate-pulse text-center px-4">
-          جاري تحميل المكاتب المسجلة في المنصة...
+          {lang === 'ar' ? 'جاري تحميل المكاتب المسجلة في المنصة...' : lang === 'tr' ? 'Platformdaki kayıtlı hukuk büroları yükleniyor...' : 'Loading registered law firms...'}
         </p>
       </div>
     );
@@ -374,6 +358,7 @@ export default function App() {
         <PlatformLanding 
           onAdminClick={() => setIsSuperAdminOpen(true)}
           lang={lang}
+          onChangeLang={handleChangeLang}
           onSelectFirm={(firmSlug: string) => {
             window.history.pushState({}, '', `/?firm=${firmSlug}`);
             firmService.setActiveFirmSlug(firmSlug, false);

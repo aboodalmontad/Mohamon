@@ -1,7 +1,6 @@
 import { 
   Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, SiteSettings, OfficeLocation, WhyChooseUsPillar 
 } from '../types';
-import { storageService } from './storageService';
 
 // Legal domain dictionary for instant offline high-precision translation
 export const LEGAL_GLOSSARY: Record<string, { en: string; tr: string }> = {
@@ -203,8 +202,212 @@ export function hasArabicChars(text: string | undefined | null): boolean {
   return /[\u0600-\u06FF]/.test(text);
 }
 
+// Letters and phonetic transliteration mapping to guarantee zero Arabic characters in non-Arabic views
+const AR_TO_LATIN: Record<string, string> = {
+  'ا': 'a', 'أ': 'a', 'إ': 'e', 'آ': 'aa', 'ء': "'", 'ئ': 'i', 'ؤ': 'o', 'ى': 'a', 'ة': 'ah',
+  'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh', 'د': 'd', 'ذ': 'dh',
+  'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z',
+  'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+  'ه': 'h', 'و': 'w', 'ي': 'y', '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+  '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9', '،': ',', '؛': ';', '؟': '?'
+};
+
+const AR_TO_TR_LATIN: Record<string, string> = {
+  ...AR_TO_LATIN,
+  'ج': 'c', 'ش': 'ş', 'خ': 'h', 'ذ': 'z', 'ث': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'و': 'v'
+};
+
+const COMMON_WORD_MAP: Record<string, { en: string; tr: string }> = {
+  'المحامي': { en: 'Attorney', tr: 'Avukat' },
+  'محامي': { en: 'Attorney', tr: 'Avukat' },
+  'المحامين': { en: 'Attorneys', tr: 'Avukatlar' },
+  'محامين': { en: 'Attorneys', tr: 'Avukatlar' },
+  'المحاماة': { en: 'Law Practice', tr: 'Avukatlık' },
+  'مكتب': { en: 'Office', tr: 'Bürosu' },
+  'مكاتب': { en: 'Offices', tr: 'Bürolar' },
+  'شركة': { en: 'Company', tr: 'Şirket' },
+  'شركات': { en: 'Corporations', tr: 'Şirketler' },
+  'شريك': { en: 'Partner', tr: 'Ortak' },
+  'الشركاء': { en: 'Partners', tr: 'Ortaklar' },
+  'مؤسس': { en: 'Founder', tr: 'Kurucu' },
+  'المؤسس': { en: 'The Founder', tr: 'Kurucu' },
+  'مؤسسون': { en: 'Founders', tr: 'Kurucular' },
+  'المؤسسون': { en: 'Founding Partners', tr: 'Kurucu Ortaklar' },
+  'مستشار': { en: 'Counsel', tr: 'Müşavir' },
+  'المستشار': { en: 'Legal Counsel', tr: 'Hukuk Müşaviri' },
+  'مستشارون': { en: 'Counselors', tr: 'Müşavirler' },
+  'المستشارون': { en: 'Legal Counselors', tr: 'Hukuk Müşavirleri' },
+  'استشارات': { en: 'Consultancy', tr: 'Danışmanlık' },
+  'الاستشارات': { en: 'Consultations', tr: 'Danışmanlık' },
+  'قانونية': { en: 'Legal', tr: 'Hukuki' },
+  'القانونية': { en: 'Legal', tr: 'Hukuki' },
+  'قانون': { en: 'Law', tr: 'Hukuk' },
+  'القانون': { en: 'The Law', tr: 'Hukuk' },
+  'تحكيم': { en: 'Arbitration', tr: 'Tahkim' },
+  'التحكيم': { en: 'Arbitration', tr: 'Tahkim' },
+  'دولي': { en: 'International', tr: 'Uluslararası' },
+  'الدولي': { en: 'International', tr: 'Uluslararası' },
+  'دولية': { en: 'International', tr: 'Uluslararası' },
+  'الدولية': { en: 'International', tr: 'Uluslararası' },
+  'قضايا': { en: 'Cases', tr: 'Davalar' },
+  'القضايا': { en: 'Cases', tr: 'Davalar' },
+  'دعاوى': { en: 'Lawsuits', tr: 'Davalar' },
+  'الدعاوى': { en: 'Lawsuits', tr: 'Davalar' },
+  'نزاعات': { en: 'Disputes', tr: 'Uyuşmazlıklar' },
+  'النزاعات': { en: 'Disputes', tr: 'Uyuşmazlıklar' },
+  'تجاري': { en: 'Commercial', tr: 'Ticari' },
+  'التجاري': { en: 'Commercial', tr: 'Ticari' },
+  'تجارية': { en: 'Commercial', tr: 'Ticari' },
+  'التجارية': { en: 'Commercial', tr: 'Ticari' },
+  'مدني': { en: 'Civil', tr: 'Medeni' },
+  'المدني': { en: 'Civil', tr: 'Medeni' },
+  'مدنية': { en: 'Civil', tr: 'Medeni' },
+  'المدنية': { en: 'Civil', tr: 'Medeni' },
+  'جنائي': { en: 'Criminal', tr: 'Ceza' },
+  'الجنائي': { en: 'Criminal', tr: 'Ceza' },
+  'جنائية': { en: 'Criminal', tr: 'Ceza' },
+  'الجنائية': { en: 'Criminal', tr: 'Ceza' },
+  'جزائي': { en: 'Criminal', tr: 'Ceza' },
+  'الجزائي': { en: 'Criminal', tr: 'Ceza' },
+  'جزائية': { en: 'Criminal', tr: 'Ceza' },
+  'الجزائية': { en: 'Criminal', tr: 'Ceza' },
+  'عقاري': { en: 'Real Estate', tr: 'Gayrimenkul' },
+  'العقاري': { en: 'Real Estate', tr: 'Gayrimenkul' },
+  'عقارية': { en: 'Real Estate', tr: 'Gayrimenkul' },
+  'العقارية': { en: 'Real Estate', tr: 'Gayrimenkul' },
+  'عمالي': { en: 'Labor & Employment', tr: 'İş Hukuku' },
+  'العمالي': { en: 'Labor & Employment', tr: 'İş Hukuku' },
+  'عمالية': { en: 'Labor & Employment', tr: 'İş Hukuku' },
+  'العمالية': { en: 'Labor & Employment', tr: 'İş Hukuku' },
+  'مصرفي': { en: 'Banking', tr: 'Bankacılık' },
+  'المصرفي': { en: 'Banking', tr: 'Bankacılık' },
+  'مصرفية': { en: 'Banking', tr: 'Bankacılık' },
+  'المصرفية': { en: 'Banking', tr: 'Bankacılık' },
+  'مالي': { en: 'Financial', tr: 'Finansal' },
+  'المالي': { en: 'Financial', tr: 'Finansal' },
+  'مالية': { en: 'Financial', tr: 'Finansal' },
+  'المالية': { en: 'Financial', tr: 'Finansal' },
+  'شرعي': { en: 'Family Law', tr: 'Aile Hukuku' },
+  'الشرعي': { en: 'Family Law', tr: 'Aile Hukuku' },
+  'شرعية': { en: 'Family Law', tr: 'Aile Hukuku' },
+  'الشرعية': { en: 'Family Law', tr: 'Aile Hukuku' },
+  'نقابة': { en: 'Bar Association', tr: 'Barolar Birliği' },
+  'النقابة': { en: 'Bar Association', tr: 'Barolar Birliği' },
+  'فرع': { en: 'Branch', tr: 'Şubesi' },
+  'الفرع': { en: 'Branch', tr: 'Şube' },
+  'جامعة': { en: 'University', tr: 'Üniversitesi' },
+  'الجامعة': { en: 'University', tr: 'Üniversite' },
+  'كلية': { en: 'Faculty of', tr: 'Fakültesi' },
+  'الكلية': { en: 'Faculty', tr: 'Fakülte' },
+  'حقوق': { en: 'Law', tr: 'Hukuk' },
+  'الحقوق': { en: 'Law', tr: 'Hukuk' },
+  'إجازة': { en: 'Bachelor Degree (LL.B.)', tr: 'Lisans Derecesi' },
+  'ماجستير': { en: 'Master Degree (LL.M.)', tr: 'Yüksek Lisans' },
+  'دكتوراه': { en: 'Doctorate (Ph.D.)', tr: 'Doktora' },
+  'معتمد': { en: 'Accredited', tr: 'Akredite' },
+  'المعتمد': { en: 'Accredited', tr: 'Akredite' },
+  'ممارس': { en: 'Practicing', tr: 'Ruhsatlı' },
+  'مرخص': { en: 'Licensed', tr: 'Lisanslı' },
+  'الرئيسي': { en: 'Main / Headquarters', tr: 'Merkez' },
+  'ساعات': { en: 'Hours', tr: 'Saatler' },
+  'العمل': { en: 'Working', tr: 'Çalışma' },
+  'يوم': { en: 'Day', tr: 'Gün' },
+  'الأحد': { en: 'Sunday', tr: 'Pazar' },
+  'الإثنين': { en: 'Monday', tr: 'Pazartesi' },
+  'الثلاثاء': { en: 'Tuesday', tr: 'Salı' },
+  'الأربعاء': { en: 'Wednesday', tr: 'Çarşamba' },
+  'الخميس': { en: 'Thursday', tr: 'Perşembe' },
+  'الجمعة': { en: 'Friday', tr: 'Cuma' },
+  'السبت': { en: 'Saturday', tr: 'Cumartesi' },
+  'صباحاً': { en: 'AM', tr: 'ÖÖ' },
+  'مساءً': { en: 'PM', tr: 'ÖS' },
+  'قضية': { en: 'Case', tr: 'Dava' },
+  'سنة': { en: 'Years', tr: 'Yıl' },
+  'سنوات': { en: 'Years', tr: 'Yıl' },
+  'خبرة': { en: 'Experience', tr: 'Deneyim' },
+  'في': { en: 'in', tr: 'içinde' },
+  'من': { en: 'from', tr: 'tarafından' },
+  'إلى': { en: 'to', tr: 'kadar' },
+  'على': { en: 'on', tr: 'üzerinde' },
+  'مع': { en: 'with', tr: 'ile' },
+  'عن': { en: 'about', tr: 'hakkında' },
+  'و': { en: '&', tr: 've' },
+  'أو': { en: 'or', tr: 'veya' }
+};
+
 /**
- * Rule-based smart pattern translator for instant 0ms fallback when offline or while waiting for GTX network response
+ * Universal Sanitizer: Absolutely guarantees that ZERO Arabic characters remain
+ * when browsing in English or Turkish.
+ */
+export function sanitizeNoArabic(text: string | undefined | null, targetLang: 'en' | 'tr'): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  if (!hasArabicChars(trimmed)) return trimmed;
+
+  // 1. Direct glossary match
+  if (LEGAL_GLOSSARY[trimmed]?.[targetLang]) {
+    return LEGAL_GLOSSARY[trimmed][targetLang];
+  }
+
+  // 2. Pattern replacements
+  let s = translateByPatterns(trimmed, targetLang);
+  if (!hasArabicChars(s)) return s;
+
+  // 3. Known multi-word phrases from glossary
+  for (const [arKey, langMap] of Object.entries(LEGAL_GLOSSARY)) {
+    if (s.includes(arKey)) {
+      s = s.split(arKey).join(langMap[targetLang] || langMap.en);
+    }
+  }
+  if (!hasArabicChars(s)) return s;
+
+  // 4. Tokenize and map single words
+  const words = s.split(/(\s+|[^\w\u0600-\u06FF]+)/);
+  const mappedWords = words.map(w => {
+    if (!hasArabicChars(w)) return w;
+    const cleanWord = w.trim();
+    if (COMMON_WORD_MAP[cleanWord]?.[targetLang]) {
+      return COMMON_WORD_MAP[cleanWord][targetLang];
+    }
+    // Check if word has 'ال' prefix
+    if (cleanWord.startsWith('ال') && COMMON_WORD_MAP[cleanWord.slice(2)]?.[targetLang]) {
+      const trans = COMMON_WORD_MAP[cleanWord.slice(2)][targetLang];
+      return targetLang === 'en' ? `The ${trans}` : trans;
+    }
+    // Phonetic letter conversion for person names or unmapped words
+    const letterMap = targetLang === 'tr' ? AR_TO_TR_LATIN : AR_TO_LATIN;
+    let transliterated = '';
+    for (const char of cleanWord) {
+      transliterated += letterMap[char] !== undefined ? letterMap[char] : char;
+    }
+    // Capitalize first letter of names
+    if (transliterated.length > 0) {
+      transliterated = transliterated.charAt(0).toUpperCase() + transliterated.slice(1);
+    }
+    return transliterated;
+  });
+
+  let finalStr = mappedWords.join('');
+
+  // 5. Final safety sweep: if any Arabic character somehow survived, replace with Latin equivalent
+  if (hasArabicChars(finalStr)) {
+    const letterMap = targetLang === 'tr' ? AR_TO_TR_LATIN : AR_TO_LATIN;
+    let purged = '';
+    for (const char of finalStr) {
+      if (/[\u0600-\u06FF]/.test(char)) {
+        purged += letterMap[char] || '';
+      } else {
+        purged += char;
+      }
+    }
+    finalStr = purged;
+  }
+
+  return finalStr.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Rule-based smart pattern translator for instant 0ms fallback
  */
 function translateByPatterns(text: string, targetLang: 'en' | 'tr'): string {
   let s = text.trim();
@@ -344,7 +547,8 @@ function queueBackgroundTranslation(trimmed: string, targetLang: 'en' | 'tr') {
 }
 
 /**
- * Synchronous instant glossary/cache lookup (0ms, no network) + automatic background GTX fetch if not cached
+ * Synchronous instant glossary/cache lookup (0ms, no network) + automatic background fetch if not cached
+ * GUARANTEE: Never returns any Arabic characters when targetLang is 'en' or 'tr'!
  */
 export function translateTextSync(text: string | undefined, targetLang: 'en' | 'tr', fallback?: string): string {
   if (!text || text.trim() === '') return fallback || '';
@@ -371,16 +575,20 @@ export function translateTextSync(text: string | undefined, targetLang: 'en' | '
     return fallback;
   }
 
-  return translateByPatterns(trimmed, targetLang);
+  return sanitizeNoArabic(trimmed, targetLang);
 }
 
 /**
  * Translate a single text string from Arabic to target language ('en' or 'tr')
- * with instant cache lookup and 2.5s network timeout protection
+ * with server proxy priority, MyMemory fallback, instant cache lookup, and sanitize guarantee
  */
 export async function translateText(text: string, targetLang: 'en' | 'tr'): Promise<string> {
   if (!text || text.trim() === '') return '';
   const trimmed = text.trim();
+
+  if (!hasArabicChars(trimmed)) {
+    return trimmed;
+  }
 
   // 1. Check exact match in Legal Glossary
   if (LEGAL_GLOSSARY[trimmed] && LEGAL_GLOSSARY[trimmed][targetLang]) {
@@ -393,30 +601,53 @@ export async function translateText(text: string, targetLang: 'en' | 'tr'): Prom
     return translationMemoryCache[cacheKey];
   }
 
-  // 3. Try Google Translate Endpoint (Client-side GTX) with 2.5s timeout
+  // 3. Try our own backend server proxy endpoint (/api/translate)
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 2500);
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(trimmed)}`;
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: trimmed, targetLang }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.translation && !hasArabicChars(data.translation)) {
+        const finalStr = data.translation.trim();
+        setCachedTranslation(cacheKey, finalStr);
+        return finalStr;
+      }
+    }
+  } catch {}
+
+  // 4. Try MyMemory Translation API directly
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=ar|${targetLang}`;
     const res = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && Array.isArray(data[0])) {
-        const translatedStr = data[0].map((item: any) => item[0]).filter(Boolean).join('');
-        if (translatedStr && translatedStr.trim() !== '' && !hasArabicChars(translatedStr)) {
-          const finalStr = translatedStr.trim();
-          setCachedTranslation(cacheKey, finalStr);
-          return finalStr;
-        }
+      const trans = data?.responseData?.translatedText;
+      if (trans && typeof trans === 'string' && !hasArabicChars(trans)) {
+        const finalStr = trans.trim();
+        setCachedTranslation(cacheKey, finalStr);
+        return finalStr;
       }
     }
-  } catch {
-    // Fast fail on timeout or network error
+  } catch {}
+
+  // 5. Fallback to sanitizeNoArabic: converts all phrases, words, and letters without any Arabic
+  const sanitized = sanitizeNoArabic(trimmed, targetLang);
+  if (sanitized && !hasArabicChars(sanitized)) {
+    setCachedTranslation(cacheKey, sanitized);
+    return sanitized;
   }
 
-  // 4. Fallback to pattern translator
-  return translateByPatterns(trimmed, targetLang);
+  return sanitized;
 }
 
 /**
@@ -429,7 +660,9 @@ async function smartTranslateField(
   targetLang: 'en' | 'tr',
   forceAll = false
 ): Promise<string> {
-  if (!arText || arText.trim() === '') return existingTarget || '';
+  if (!arText || arText.trim() === '') {
+    return sanitizeNoArabic(existingTarget || '', targetLang);
+  }
   const arTrimmed = arText.trim();
   const prevTrimmed = (prevArText || '').trim();
   const targetHasArabic = hasArabicChars(existingTarget);
@@ -461,7 +694,7 @@ async function smartTranslateField(
   const translated = await translateText(arTrimmed, targetLang);
   if (translated && !hasArabicChars(translated)) return translated;
   if (existingTarget && !targetHasArabic) return existingTarget;
-  return translated || existingTarget || arTrimmed;
+  return sanitizeNoArabic(translated || existingTarget || arTrimmed, targetLang);
 }
 
 /**
@@ -508,7 +741,7 @@ export async function translateTextArray(
         return existingItem;
       }
       const translated = await translateText(item, targetLang);
-      return translated || item;
+      return sanitizeNoArabic(translated || existingItem || item, targetLang);
     })
   );
 }
@@ -953,6 +1186,7 @@ export async function autoTranslateAllSiteData(
   onProgress?: (percent: number, currentTask: string) => void,
   forceAll = false
 ): Promise<{ totalCount: number }> {
+  const { storageService } = await import('./storageService');
   let count = 0;
 
   // 1. Settings

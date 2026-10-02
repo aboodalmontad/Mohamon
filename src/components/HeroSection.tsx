@@ -24,7 +24,7 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
   const subSlogan = getLocalized(settings, 'subSlogan', lang, settings.subSloganAr);
   const officialDomain = firmService.getFirmDisplayDomain();
 
-  const heroBannerSrc = settings.customBannerUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920';
+  const heroBannerSrc = (settings.customBannerUrl && settings.customBannerUrl.trim()) || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920';
   const heroOpacity = typeof settings.heroBannerOpacity === 'number' ? settings.heroBannerOpacity / 100 : 0.18;
   const heroBlurClass = settings.heroBannerBlur === 'md' ? 'blur-md' : settings.heroBannerBlur === 'sm' ? 'blur-sm' : '';
 
@@ -60,7 +60,7 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
       }`}>
         {/* Firm Custom Logo or Prestige Badge */}
         {settings.logoSizeHero !== 'hidden' && (
-          settings.customLogoUrl ? (
+          settings.customLogoUrl && settings.customLogoUrl.trim() ? (
             <div className={`flex flex-col mb-6 animate-fade-in ${
               settings.heroAlignment === 'start' ? 'items-start' : 'items-center'
             }`}>
@@ -92,7 +92,7 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
                 if (settings.logoShape === 'transparent') {
                   return (
                     <div className={`${sizeClass} flex items-center justify-center overflow-hidden hover:scale-105 transition-transform duration-300`}>
-                      <img src={settings.customLogoUrl} alt={firmName} className="w-full h-full object-contain" />
+                      <img src={settings.customLogoUrl.trim()} alt={firmName} className="w-full h-full object-contain" />
                     </div>
                   );
                 }
@@ -100,7 +100,7 @@ export const HeroSection: React.FC<HeroSectionProps> = React.memo(({
                 return (
                   <div className={`${sizeClass} ${shapeClass} bg-gradient-to-br from-[#c5a869] to-[#8d6f2c] p-1 shadow-2xl hover:scale-105 transition-transform duration-300`}>
                     <div className={`w-full h-full bg-[#fbf8f2] ${innerShapeClass} flex items-center justify-center overflow-hidden p-1.5`}>
-                      <img src={settings.customLogoUrl} alt={firmName} className="w-full h-full object-contain" />
+                      <img src={settings.customLogoUrl.trim()} alt={firmName} className="w-full h-full object-contain" />
                     </div>
                   </div>
                 );

@@ -3,8 +3,8 @@
     "id": "851652c1-2951-44bb-a482-de7e77ec229e",
     "slug": "almhamy-ahmd-bdwy",
     "nameAr": "المحامي أحمد بدوي",
-    "nameEn": "المحامي أحمد بدوي",
-    "nameTr": "",
+    "nameEn": "Attorney Ahmad Badawi",
+    "nameTr": "Avukat Ahmed Bedevi",
     "taglineAr": "حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية",
     "taglineEn": "Distinguished Legal Consultancy & Judicial Representation",
     "cityAr": "الرياض",
@@ -40,7 +40,7 @@
       "isDefaultPublic": false,
       "settings": {
         "firmNameAr": "المحامي أحمد بدوي",
-        "firmNameEn": "المحامي أحمد بدوي",
+        "firmNameEn": "Attorney Ahmad Badawi",
         "sloganAr": "حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية",
         "sloganEn": "Distinguished Legal Consultancy & Judicial Representation",
         "subSloganAr": "مستشار قانوني ومحكم دولي معتمد لدى غرفة التجارة الدولية في باريس (ICC) والمركز السعودي للتحكيم التجاري (SCCA). ترافع وأدار نزاعات استثمارية وتجارية كبرى تجاوزت قيمتها الإجمالية 4 مليارات دولار.",
@@ -70,7 +70,18 @@
           "linkedin": "https://linkedin.com",
           "twitter": "https://twitter.com",
           "youtube": "https://youtube.com"
-        }
+        },
+        "firmNameTr": "Avukat Ahmed Bedevi",
+        "sloganTr": "Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir",
+        "subSloganTr": "Paris'teki Uluslararası Ticaret Odası (ICC) ve Suudi Ticari Tahkim Merkezi'ne (SCCA) akredite edilmiş hukuk danışmanı ve uluslararası hakem. Toplam 4 milyar dolardan fazla büyük yatırım ve ticari anlaşmazlıkları savundu ve yönetti.",
+        "aboutTextTr": "Avukat Ahmed Badawi — Paris'teki Uluslararası Ticaret Odası (ICC) ve Suudi Ticari Tahkim Merkezi'ne (SCCA) akredite edilmiş Hukuk Danışmanı ve Uluslararası Hakem. Toplam 4 milyar dolardan fazla büyük yatırım ve ticari anlaşmazlıkları savundu ve yönetti.",
+        "aboutHeadingEn": "",
+        "aboutHeadingTr": "",
+        "aboutBadgeEn": "",
+        "aboutBadgeTr": "",
+        "addressTr": "Krallık Kulesi, 42. Kat, Kral Fahad Yolu, Olaya Bölgesi",
+        "cityTr": "Riyad",
+        "workingHoursTr": "Pazar - Perşembe: 09:00 - 18:00"
       },
       "partners": [
         {
@@ -103,7 +114,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Dr. Abdurrahman El-Hilal",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Paris'teki Uluslararası Ticaret Odası (ICC) ve Suudi Ticari Tahkim Merkezi'ne (SCCA) akredite edilmiş hukuk danışmanı ve uluslararası hakem. Toplam 4 milyar dolardan fazla büyük yatırım ve ticari anlaşmazlıkları savundu ve yönetti.",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         },
         {
           "id": "9a68e5ce-fe48-4420-a8b1-fe4841f09a68",
@@ -135,7 +154,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Prof. Dr. Nura bint Fehd El-Haşimi",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Körfez ve Orta Doğu pazarlarında 180 'den fazla birleşme, satın alma ve ilk halka arzı (IPO) yönetmiştir ve büyük devlet varlık fonları ve aile holding şirketlerine sertifikalı bir danışmandır.",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         },
         {
           "id": "148a39d9-8107-458d-a591-810783a3148a",
@@ -167,7 +194,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Hukuk Müşaviri Tarık bin İbrahim Es-Saadi",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Ticaret mahkemeleri, Yargıtay ve bankacılık ve finans uyuşmazlık çözüm organları nezdinde kapsamlı yargı ve savunma deneyimi, yerleşik yargı emsallerini oluşturan tarihi kararların elde edilmesi.",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         },
         {
           "id": "21a8f734-6562-44ca-a70b-6562332421a8",
@@ -199,7 +234,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Dr. Faysal bin Halid El-Kahtani",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Milyar şirketin maddi olmayan duran varlıklarının korunması, uluslararası patent tescili, yazılım ve yapay zeka lisans sözleşmelerinin hazırlanması ve dijital sistemlere uyum konularında uzman.",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         },
         {
           "id": "2e00e0bb-b00d-4e0d-ae0e-b00d74c22e00",
@@ -231,7 +274,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Sara bint Abdülaziz El-Mansur",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Uluslararası ticari sözleşmelerin hazırlanması ve gözden geçirilmesi, yabancı yatırım yapan şirketlerin kurulması ve hızlı büyüyen girişimler için mevzuata uyumun yönetilmesi konusunda uzmanlaşmış lisanslı bir avukat.",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         },
         {
           "id": "cf27f8d2-fde2-42c5-ad0a-fde27366cf27",
@@ -263,7 +314,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Hukuk Müşaviri Kerim bin Hatim Et-Temimi",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Büyük çok uluslu şirketler için karmaşık iş uyuşmazlıklarının çözümünde, iş düzenlemelerinin denetlenmesinde ve mahkeme kararlarının zorunlu olarak uygulanmasına yönelik prosedürlerde uzman bir hukuk danışmanı.",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         }
       ],
       "practiceAreas": [
@@ -289,7 +348,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Şirketler Hukuku, Birleşme ve Devralmalar",
+          "shortDescTr": "Şirketler hukuku, birleşme ve devralmalar konusunda uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Şirketler hukuku, birleşme ve devralmalar alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "e6ab0c52-6076-46dd-a721-607662ece6ab",
@@ -313,7 +375,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Ticari Tahkim ve Uluslararası Uyuşmazlıklar",
+          "shortDescTr": "Ticari tahkim ve uluslararası uyuşmazlıklarda uzmanlaşmış entegre hukuki hizmetler ve adli temsil",
+          "fullDescTr": "Ticari tahkim ve uluslararası anlaşmazlıklar alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "cff887b0-6d55-42ad-ad4e-6d55d6e1cff8",
@@ -337,7 +402,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Yüksek Mahkemelerde Dava ve Temsil",
+          "shortDescTr": "Yüksek Mahkemeler nezdinde dava ve savunma konusunda uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "En yüksek mesleki standartlara göre Yüksek Mahkemeler nezdinde dava ve savunma alanında uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "c787e02b-738d-440a-ab15-738d6624c787",
@@ -361,7 +429,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Fikri Mülkiyet, Yapay Zekâ ve Teknoloji Hukuku",
+          "shortDescTr": "Fikri mülkiyet, yapay zeka ve teknoloji konusunda uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Fikri mülkiyet, yapay zeka ve teknoloji alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "1842b652-efe2-47a0-a825-efe2dc5c1842",
@@ -385,7 +456,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Banka Finansmanı ve Sermaye Piyasaları",
+          "shortDescTr": "Bankacılık finansmanı ve finansal piyasalarda uzmanlaşmış entegre hukuki hizmetler ve adli temsil",
+          "fullDescTr": "Bankacılık finansmanı ve finansal piyasalar alanında en yüksek profesyonel standartlarda uzman hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "2e4608ac-f773-4935-a5b9-f773c4c92e46",
@@ -409,7 +483,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Gayrimenkul ve İnşaat Devi Projeler",
+          "shortDescTr": "Gayrimenkul ve dev inşaat projelerinde uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Gayrimenkul ve dev inşaat projeleri alanında en yüksek mesleki standartlara göre uzman hukuki danışmanlık ve üst düzey adli temsilcilik sağlıyoruz."
         }
       ],
       "offices": [
@@ -424,7 +501,13 @@
           "phone": "+966 11 456 7890",
           "email": "riyadh@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3624.472719266854!2d46.67185367605963!3d24.711429950541768!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e2f032641a9657b%3A0xb35a0f12c1b8dc4a!2sKingdom%20Centre!5e0!3m2!1sen!2ssa!4v1700000000000",
-          "isHeadquarter": true
+          "isHeadquarter": true,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Riyad",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         },
         {
           "id": "754e50d9-5601-434f-ab4f-5601ab49754e",
@@ -437,7 +520,13 @@
           "phone": "+90 212 385 9200",
           "email": "istanbul@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3008.232352843477!2d29.00947607659223!3d41.07923791533615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab65d448408a3%3A0x6b4594119d658c89!2sLevent%2C%20Be%C5%9Fikta%C5%9F%2F%C4%B0stanbul!5e0!3m2!1str!2str!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "İSTANBUL",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         },
         {
           "id": "0824ad55-a917-4133-a13c-a917d24e0824",
@@ -450,7 +539,13 @@
           "phone": "+971 4 321 9876",
           "email": "dubai@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3609.7366367353974!2d55.2798836760731!3d25.21210873099951!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f429671d18f59%3A0x6b9d1e57c6cb6bb3!2sDubai%20International%20Financial%20Centre!5e0!3m2!1sen!2sae!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Dubai",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         },
         {
           "id": "dce177f7-d78f-4b6e-a471-d78ff630dce1",
@@ -463,7 +558,13 @@
           "phone": "+44 20 7946 0912",
           "email": "london@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2482.9080786968037!2d-0.08331162382124505!3d51.51488661016832!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48761cb287661b0d%3A0x7d0ea6df2881cf45!2sSalesforce%20Tower%20(110%20Bishopsgate)!5e0!3m2!1sen!2suk!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Londra",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "caseStudies": [
@@ -479,7 +580,11 @@
           "summaryEn": "Meticulous defense spanning two years before commercial circuits and the Supreme Court.",
           "year": "2024",
           "value": "450000000",
-          "highlight": "صدور حكم نهائي من المحكمة العليا بتثبيت الملكية وبطلان ادعاءات الخصوم"
+          "highlight": "صدور حكم نهائي من المحكمة العليا بتثبيت الملكية وبطلان ادعاءات الخصوم",
+          "titleTr": "Büyük bir gayrimenkul yatırım portföyünün mülkiyetinin korunması ve istikrara kavuşturulması",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Davacıların iddialarının mülkiyetini ve geçersizliğini teyit etmek için Yargıtay tarafından nihai bir karar verilmesi"
         },
         {
           "id": "1a13a12e-3301-4912-ad15-33016c471a13",
@@ -493,7 +598,11 @@
           "summaryEn": "Led comprehensive legal due diligence, share purchase agreements, and antitrust compliance.",
           "year": "2024",
           "value": "185000000",
-          "highlight": "استيفاء كافة الموافقات التنظيمية من هيئة السوق وهيئة المنافسة بسلاسة"
+          "highlight": "استيفاء كافة الموافقات التنظيمية من هيئة السوق وهيئة المنافسة بسلاسة",
+          "titleTr": "Listelenen bir lojistik şirketinin tamamen satın alınması",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Piyasa Otoritesi ve Rekabet Otoritesinden gelen tüm düzenleyici onayların sorunsuz bir şekilde tamamlanması"
         },
         {
           "id": "d2093a31-a432-463b-a63c-a432eed5d209",
@@ -507,7 +616,11 @@
           "summaryEn": "Represented a global energy consortium in a high-stakes concession and concession dispute before the ICC in Paris.",
           "year": "2025",
           "value": "320000000",
-          "highlight": "حكم تحكيمي نهائي لصالح موكلنا بمبلغ 320 مليون دولار مع إلزام الخصم بكافة المصاريف"
+          "highlight": "حكم تحكيمي نهائي لصالح موكلنا بمبلغ 320 مليون دولار مع إلزام الخصم بكافة المصاريف",
+          "titleTr": "Enerji ve altyapı sektöründe uluslararası bir tahkim anlaşmazlığının çözülmesi",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Müvekkilimiz lehine tüm giderlerin mahsup edilmesi yükümlülüğü ile 320 milyon $ tutarında kesin hakem kararı"
         }
       ],
       "blogPosts": [
@@ -530,7 +643,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "قانون الشركات"
-          ]
+          ],
+          "titleTr": "Yeni Kurumsal Sisteme Yönelik Stratejik Kılavuz: Dönüşümler ve Yatırım Fırsatları",
+          "excerptTr": "Şirketler için yeni sistem, basitleştirilmiş anonim şirketlere benzeri görülmemiş bir esneklik ve meşrulaştırılmış çalışma kotaları ve koşulları sağladığı için iş ortamının yasal ve düzenleyici ortamında niteliksel bir sıçrama oluşturuyor...",
+          "contentTr": "Şirketler için yeni sistem, basitleştirilmiş anonim şirketlere eşi benzeri görülmemiş bir esneklik sağladığı için iş ortamının yasal ve düzenleyici ortamında niteliksel bir sıçrama ve şirketlerin koruma sağlamak ve yeni faydalardan yararlanmak için kuruluş sözleşmelerini ve iç düzenlemelerini uyumlu hale getirmelerini gerektiren meşrulaştırılmış işgücü kotaları ve tercihli koşullar oluşturmaktadır."
         },
         {
           "id": "63c5ad69-549e-475b-a864-549ec3c563c5",
@@ -551,7 +667,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "التحكيم الدولي"
-          ]
+          ],
+          "titleTr": "Uluslararası sözleşmelerde tahkim şartlarının hazırlanmasının ve ölümcül boşlukların önlenmesinin önemi",
+          "excerptTr": "Tahkim şartı, herhangi bir uluslararası yatırım veya ticari sözleşme için emniyet vanasıdır. Tahkim kurumunun, tahkim yerinin, dilin veya geçerli maddi hukukun belirlenmesindeki herhangi bir belirsizlik...",
+          "contentTr": "Tahkim şartı, herhangi bir uluslararası yatırım veya ticari sözleşme için emniyet vanasıdır. Tahkim kurumunun, tahkim yerinin, dilin veya geçerli maddi hukukun belirlenmesindeki herhangi bir belirsizlik, anlaşmazlığı taraflara milyonlarca dolara mal olan bir usul sarmalına dönüştürebilir. Burada benimsenen tipik formülasyonları gözden geçiriyoruz."
         },
         {
           "id": "f0be38a3-51dc-4162-a29a-51dc9caef0be",
@@ -572,7 +691,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "التقنية والذكاء الاصطناعي"
-          ]
+          ],
+          "titleTr": "Yapay Zeka ve Yasal Sorumluluk: Mevzuat Zorlukları ve Mülkiyetin Korunması",
+          "excerptTr": "Hassas ve finansal çalışma ortamlarında üretken yapay zeka sistemlerinin hızla benimsenmesiyle, ticari sırların korunması, başkalarının haklarının ihlal edilme riskleri ve koşullar hakkında acil sorular ortaya çıkıyor...",
+          "contentTr": "Hassas ve finansal çalışma ortamlarında üretken yapay zeka sistemlerinin benimsenmesinin hızlanmasıyla, ticari sırların korunması, başkalarının haklarının ihlal edilme riskleri ve kişisel verilerin korunmasına yönelik modern sistemlere uygun olarak verilerin güvenli kullanımına ilişkin koşullar hakkında acil sorular ortaya çıkmaktadır."
         }
       ],
       "testimonials": [],
@@ -592,14 +714,16 @@
       "planNameEn": "Standard Annual Plan",
       "isSiteActive": true,
       "paymentStatus": "paid"
-    }
+    },
+    "taglineTr": "Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir",
+    "cityTr": "Riyad"
   },
   {
     "id": "7db61dfd-7110-499e-8e4a-546e268fe694",
     "slug": "mohamon-com-zien",
     "nameAr": "المحامي محمد زين",
     "nameEn": "zien",
-    "nameTr": "",
+    "nameTr": "Avukat Muhammed Zeyn",
     "taglineAr": "حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية",
     "taglineEn": "Distinguished Legal Consultancy & Judicial Representation",
     "cityAr": "حلب",
@@ -665,7 +789,18 @@
           "linkedin": "https://linkedin.com",
           "twitter": "https://twitter.com",
           "youtube": "https://youtube.com"
-        }
+        },
+        "firmNameTr": "Avukat Muhammed Zeyn",
+        "sloganTr": "Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir",
+        "subSloganTr": "Gayrimenkul, medeni, şeriat ve medeni hal davalarında uzmanlaşmış dört yıldan fazla avukat",
+        "aboutTextTr": "Avukat Mohamed Zain — Gayrimenkul, medeni, Şeriat ve medeni durum davalarında uzmanlaşmış dört yıldan uzun süredir avukat",
+        "aboutHeadingEn": "",
+        "aboutHeadingTr": "",
+        "aboutBadgeEn": "",
+        "aboutBadgeTr": "",
+        "addressTr": "Corniche Yolu, Plaj Kulesi, 15. Kat",
+        "cityTr": "Halep",
+        "workingHoursTr": "Pazar - Perşembe: 09:00 - 18:00"
       },
       "partners": [
         {
@@ -698,7 +833,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Avukat Muhammed Zeyn",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Gayrimenkul, medeni, şeriat ve medeni hal davalarında uzmanlaşmış dört yıldan fazla avukat",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         }
       ],
       "practiceAreas": [],
@@ -714,7 +857,13 @@
           "phone": "00963965311652",
           "email": "mzien721@gmail.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d238130.158784!2d39.172778!3d21.543333!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x15c3d01fb1137e59%3A0xe059579737b118db!2sJeddah!5e0!3m2!1sen!2ssa!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Halep",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "caseStudies": [],
@@ -736,14 +885,16 @@
       "planNameEn": "Enterprise Diamond Plan",
       "isSiteActive": true,
       "paymentStatus": "paid"
-    }
+    },
+    "taglineTr": "Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir",
+    "cityTr": "Halep"
   },
   {
     "id": "58332ead-7678-4024-a8fd-dee5f78ffaba",
     "slug": "shwra-llmhamah-walastsharat-alqanwnyh",
     "nameAr": "شورى  للمحاماة والاستشارات القانونية",
-    "nameEn": "",
-    "nameTr": "",
+    "nameEn": "Shura Law Firm & Legal Consultations",
+    "nameTr": "Şura Hukuk Bürosu ve Hukuki Danışmanlık",
     "taglineAr": "شورى للمحاماة والاستشارات القانونية",
     "taglineEn": "Shura Law Firm and Legal Consultations",
     "cityAr": "حلب",
@@ -776,7 +927,11 @@
           "countryEn": "Syrian Arab Republic",
           "countryTr": "Suriye Arap Cumhuriyeti",
           "mapEmbedUrl": "https://maps.app.goo.gl/C3REpG7JJvQ1zwxf8",
-          "isHeadquarter": true
+          "isHeadquarter": true,
+          "nameEn": "",
+          "nameTr": "",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "savedAt": "2026-09-25T19:53:43.840Z",
@@ -812,7 +967,9 @@
           "casesWonCount": 4,
           "barAdmissionEn": "Saudi Bar Association (Licensed Practicing Attorney)",
           "barAdmissionTr": "Suudi Arabistan Barolar Birliği (Ruhsatlı Avukat)",
-          "experienceYears": 2
+          "experienceYears": 2,
+          "educationEn": [],
+          "educationTr": []
         },
         {
           "id": "counsel-1787421441457",
@@ -1057,7 +1214,8 @@
         "aboutConfidentialityPoint1Tr": "Mesleki gizlilik anlaşmaları",
         "aboutConfidentialityPoint2Ar": "إتفاقية أتعاب واضحة ومكتوبة ",
         "aboutConfidentialityPoint2En": "A clear, written fee agreement",
-        "aboutConfidentialityPoint2Tr": "Açık ve yazılı bir ücret sözleşmesi"
+        "aboutConfidentialityPoint2Tr": "Açık ve yazılı bir ücret sözleşmesi",
+        "cityTr": "Halep"
       },
       "blogPosts": [
         {
@@ -1090,7 +1248,9 @@
           "authorRole": "الشريك الإداري ورئيسة قسم الشركات",
           "categoryTr": "Şirketler hukuku",
           "readTimeTr": "6 dakika okuma",
-          "authorRoleTr": "Yönetici Ortak ve Kurumsal Departman Başkanı"
+          "authorRoleTr": "Yönetici Ortak ve Kurumsal Departman Başkanı",
+          "excerptEn": "A comprehensive review of the most significant amendments to the types of companies, shareholder agreements, and facilitating the attraction of venture capital.",
+          "contentEn": "The new system for companies constitutes a qualitative leap in the legislative and regulatory environment of the business environment, as it granted unprecedented flexibility to simplified joint stock companies, and legitimized labor quotas and preferential conditions, which requires companies to harmonize their founding contracts and internal regulations to ensure protection and benefit from new benefits."
         },
         {
           "id": "blog-2",
@@ -1116,13 +1276,15 @@
           "titleTr": "Uluslararası sözleşmelerde tahkim şartlarının hazırlanmasının ve ölümcül boşluklardan kaçınılmasının önemi",
           "category": "التحكيم الدولي",
           "readTime": "8 دقائق قراءة",
-          "contentTr": "# كيف تضمن شرط تحكيم صحيحاً وقابلاً للتنفيذ دولياً دون الوقوع في معضلات تنازع القوانين وعدم الاختصاص؟\n\n## مقدمة\n\nلا يكفي، في العقود الدولية، أن يكتب الأطراف عبارة عامة من قبيل: «أي نزاع ينشأ عن هذا العقد يُحال إلى التحكيم». فقد يكون الشرط، رغم بساطته، بداية لسلسلة من المنازعات التمهيدية حول صحته، والقانون الواجب التطبيق عليه، ومقر التحكيم، واختصاص الهيئة، والمحكمة المختصة بالتدخل في الإجراءات، ثم قابلية الحكم للتحويل إلى حق فعلي قابل للتنفيذ في دولة أخرى.\n\nوتنبع أهمية الصياغة الدقيقة من أن التحكيم الدولي يقوم على أكثر من علاقة قانونية واحدة. فهناك **العقد الأصلي**، و**اتفاق التحكيم**، و**الإجراءات التحكيمية**، و**الحكم التحكيمي**، ثم مرحلة الاعتراف بالحكم وتنفيذه. ولكل مرحلة قوانين وقواعد قد تختلف عن المرحلة الأخرى.\n\nوتؤكد اتفاقية نيويورك لعام 1958 أن الغاية الأساسية من النظام الدولي للتحكيم هي إعطاء اتفاقات التحكيم أثراً فعلياً والاعتراف بالأحكام التحكيمية الأجنبية وتنفيذها، مع وضع حالات محددة يمكن فيها رفض الاعتراف أو التنفيذ. ([UNCITRAL][1])\n\nومن هنا، فإن **الشرط التحكيمي الدولي الجيد لا ينبغي أن يجيب فقط عن سؤال: هل نريد التحكيم؟ بل يجب أن يجيب مسبقاً عن: من يحكم؟ وأين؟ وبأي قواعد؟ وبأي قانون؟ وما القانون الذي يحكم اتفاق التحكيم ذاته؟ وأمام أي محاكم يمكن طلب المساعدة أو الرقابة أو التنفيذ؟**\n\n---\n\n## أولاً: التمييز بين القوانين الأربعة المرتبطة بالتحكيم\n\nمن أكثر أسباب النزاع في التحكيم الدولي الخلط بين القوانين المختلفة التي يمكن أن تدخل في العملية.\n\n### 1. القانون الموضوعي للعقد\n\nوهو القانون الذي يحكم الحقوق والالتزامات الناشئة عن العقد، مثل:\n\n* تفسير الالتزامات؛\n* الإخلال بالعقد؛\n* المسؤولية والتعويض؛\n* الفسخ؛\n* آثار القوة القاهرة؛\n* الالتزامات المالية.\n\nومن الأفضل تحديده صراحة في العقد.\n\nوتؤكد مبادئ لاهاي بشأن اختيار القانون في العقود التجارية الدولية مبدأ استقلال إرادة الأطراف في اختيار القانون الذي يحكم العقد، مع بقاء قيود تتعلق بالقواعد الآمرة والنظام العام. ([HCCH][2])\n\n### 2. القانون الذي يحكم اتفاق التحكيم\n\nوهذا مختلف عن قانون العقد.\n\nفالسؤال هنا ليس: ما القانون الذي يحكم الالتزام التعاقدي؟\n\nبل:\n\n**ما القانون الذي يحدد ما إذا كان اتفاق التحكيم صحيحاً وملزماً للأطراف؟**\n\nوقد تظهر أهمية هذا الفرق، مثلاً، عندما يكون العقد خاضعاً لقانون دولة، بينما يكون مقر التحكيم في دولة ثانية، ويكون التنفيذ متوقعاً في دولة ثالثة.\n\nولهذا توصي غرفة التجارة الدولية ICC بأن يحدد الأطراف، عند الحاجة، القانون الذي يحكم اتفاق التحكيم بصورة مستقلة عن القانون الذي يحكم العقد. ([ICC - International Chamber of Commerce][3])\n\n### 3. قانون مقر التحكيم\n\nوهو ما يسمى غالباً **القانون الإجرائي للتحكيم أو Lex Arbitri**.\n\nولا يعني مقر التحكيم بالضرورة أن جلسات الهيئة يجب أن تعقد فعلياً في ذلك المكان في كل مرة. فالمقر يمثل المركز القانوني للتحكيم ويحدد الإطار القضائي الذي تخضع له الإجراءات والرقابة القضائية عليها.\n\nوفي قواعد ICC الحالية، إذا لم يتفق الأطراف على مكان التحكيم، تتولى المحكمة تحديده، كما تميز القواعد بين مكان التحكيم وبين الأماكن التي يمكن أن تعقد فيها الاجتماعات والجلسات. ([ICC - International Chamber of Commerce][4])\n\n### 4. قانون دولة التنفيذ\n\nقد يصدر الحكم في دولة، لكن أموال المحكوم عليه موجودة في دولة أخرى.\n\nوهنا تظهر مسألة **الاعتراف بالحكم وتنفيذه** في الدولة التي توجد فيها الأصول.\n\nوهذه نقطة جوهرية؛ لأن صحة التحكيم في دولة المقر لا تعني تلقائياً أن التنفيذ في كل دولة أخرى سيكون مضموناً.\n\n---\n\n# ثانياً: لماذا ينبغي تحديد قانون اتفاق التحكيم صراحة؟\n\nهذه ربما تكون أهم نقطة في صياغة الشرط التحكيمي الدولي.\n\nفإذا كتب العقد:\n\n> «يخضع هذا العقد لقانون الدولة X، وأي نزاع يحال إلى التحكيم في الدولة Y»\n\nفقد يبقى سؤال مهم بلا إجابة:\n\n**هل قانون الدولة X يحكم اتفاق التحكيم نفسه، أم أن قانون مقر التحكيم Y هو الذي يحكمه؟**\n\nوقد يؤدي ترك هذا السؤال للمحكمة المختصة إلى نزاع مستقل قبل الوصول حتى إلى موضوع القضية.\n\nويظهر ذلك بوضوح في الاجتهاد المقارن؛ ففي قضية **Enka v Chubb** تناولت المحكمة العليا البريطانية مسألة القانون الواجب التطبيق على اتفاق التحكيم، وبيّنت أهمية البحث في وجود اختيار صريح، ثم الاختيار الضمني، ثم النظام القانوني الأكثر اتصالاً باتفاق التحكيم. ([Courts and Tribunals Judiciary][5])\n\nلذلك، إذا كان الهدف تقليل النزاع، فالأفضل عدم ترك المسألة للاستنتاج.\n\nوالصياغة الأكثر وضوحاً هي مثلاً:\n\n> «يخضع هذا العقد لقانون X، ويخضع اتفاق التحكيم الوارد في هذا البند لقانون Y.»\n\nوبذلك يفصل العقد بين القانون الموضوعي والقانون الذي يحكم اتفاق التحكيم.\n\n---\n\n# ثالثاً: اختيار مقر التحكيم ليس مجرد اختيار مدينة\n\nمن الأخطاء الشائعة اعتبار مقر التحكيم مجرد مكان جغرافي مناسب للاجتماعات.\n\nوالأدق أن ننظر إلى **المقر باعتباره اختياراً لنظام قانوني للتحكيم**.\n\nفعند اختيار مقر معين ينبغي دراسة:\n\n1. قانون التحكيم في تلك الدولة؛\n2. مدى اعترافه باستقلال اتفاق التحكيم؛\n3. مدى اعترافه بمبدأ اختصاص الهيئة بالفصل في اختصاصها؛\n4. حدود تدخل القضاء الوطني؛\n5. القواعد المتعلقة بتعيين المحكمين وعزلهم؛\n6. إمكانية اتخاذ التدابير الوقتية؛\n7. أسباب إبطال الحكم؛\n8. موقف الدولة من اتفاقية نيويورك؛\n9. القواعد الآمرة المتعلقة بالموضوع محل النزاع.\n\nوقد صُمم قانون الأونسيترال النموذجي للتحكيم التجاري الدولي ليغطي هذه المسائل، من اتفاق التحكيم وتشكيل الهيئة واختصاصها إلى الإجراءات والتدخل القضائي والاعتراف بالحكم وتنفيذه. ([UNCITRAL][6])\n\nلذلك لا ينبغي اختيار مقر التحكيم بناءً على قربه الجغرافي أو انخفاض تكاليف السفر فقط.\n\n---\n\n# رابعاً: ضرورة اختيار مؤسسة تحكيم واضحة\n\nالشرط التحكيمي الذي يقول:\n\n> «تتم تسوية النزاع عن طريق التحكيم الدولي»\n\nقد يكون قابلاً للتفسير في بعض الأنظمة القانونية، ولكنه يترك أسئلة مهمة:\n\n* من يعين المحكم؟\n* كم عدد المحكمين؟\n* ما القواعد الإجرائية؟\n* ماذا يحدث إذا رفض أحد الأطراف التعاون؟\n* من يفصل في مسائل تعيين المحكمين؟\n* كيف تتم إدارة الدعوى؟\n\nولهذا يكون من الأفضل، في كثير من العقود الدولية، الإحالة إلى مؤسسة تحكيم معروفة وقواعدها الإجرائية.\n\nفـ ICC، على سبيل المثال، تنشر شرطاً نموذجياً ينص على إحالة المنازعات إلى التحكيم وفق قواعد غرفة التجارة الدولية، مع تعيين المحكمين وفق تلك القواعد. كما تحذر صراحة من أن الصياغة الغامضة قد تؤدي إلى عدم اليقين والتأخير، بل قد تؤثر في عملية التحكيم نفسها. ([ICC - International Chamber of Commerce][3])\n\nومن ثم يمكن أن يكون اختيار مؤسسة التحكيم وسيلة مهمة لتقليل النزاع حول الإجراءات.\n\n---\n\n# خامساً: تحديد عدد المحكمين\n\nيجب تحديد ما إذا كان النزاع سينظر فيه:\n\n* محكم واحد؛ أم\n* ثلاثة محكمين.\n\nوهذا القرار له أثر مباشر على التكلفة والسرعة وطريقة تشكيل الهيئة.\n\nوفي النزاعات ذات القيمة الكبيرة أو التعقيد الفني والقانوني، قد يكون تشكيل هيئة من ثلاثة محكمين أكثر ملاءمة، بينما قد يكون المحكم الفرد أكثر كفاءة في النزاعات الأقل تعقيداً.\n\nالمهم هو ألا تترك الصياغة تناقضاً بين العقد وقواعد المؤسسة المختارة.\n\nوتوصي ICC بإمكان تحديد عدد المحكمين صراحة في الشرط، مع مراعاة القواعد المؤسسية المختارة. ([ICC - International Chamber of Commerce][3])\n\n---\n\n# سادساً: تحديد لغة التحكيم\n\nقد يكون العقد باللغة العربية، والمراسلات بالإنجليزية، ومقر التحكيم في دولة أوروبية، وأحد الأطراف شركة آسيوية.\n\nإذا لم تحدد اللغة، فقد تنشأ منازعة إجرائية حول اللغة المناسبة.\n\nلذلك يفضل النص صراحة على:\n\n> «تكون لغة التحكيم هي اللغة الإنجليزية.»\n\nأو:\n\n> «تكون لغة التحكيم هي اللغة العربية، ويجوز للهيئة قبول المستندات باللغة الإنجليزية دون ترجمة ما لم تقرر خلاف ذلك.»\n\nوتنظم قواعد ICC مسألة اللغة، وتسمح للأطراف بتحديدها، وإلا تحددها الهيئة وفق الظروف ذات الصلة. ([ICC - International Chamber of Commerce][4])\n\n---\n\n# سابعاً: تحديد نطاق الشرط التحكيمي بدقة\n\nمن الأفضل أن يكون الشرط واسعاً بما يكفي ليشمل المنازعات المرتبطة بالعقد، دون خلق غموض.\n\nومن الصياغات الشائعة دولياً:\n\n> «كل نزاع ينشأ عن هذا العقد أو يتعلق به، بما في ذلك أي نزاع بشأن وجوده أو صحته أو تفسيره أو تنفيذه أو إنهائه، يحال نهائياً إلى التحكيم...»\n\nميزة هذه الصياغة أنها لا تحصر التحكيم في المنازعات المتعلقة بـ«تنفيذ العقد» فقط، بل تشمل أيضاً المنازعات المتعلقة بصحته وتفسيره وإنهائه.\n\nوهذا مهم بصفة خاصة عندما يحاول أحد الأطراف لاحقاً القول إن النزاع يتعلق بصحة العقد، وبالتالي لا يدخل في نطاق شرط التحكيم.\n\n---\n\n# ثامناً: استقلال شرط التحكيم عن العقد الأصلي\n\nمن المبادئ الأساسية في التحكيم الدولي أن شرط التحكيم يمكن أن تكون له شخصية قانونية مستقلة عن العقد الذي ورد فيه.\n\nوهذا يعني أن الطعن في العقد الأصلي لا يؤدي بالضرورة إلى سقوط شرط التحكيم تلقائياً.\n\nويظهر هذا المبدأ في الأنظمة الحديثة للتحكيم، بما فيها قانون الأونسيترال النموذجي، الذي يتناول استقلال اتفاق التحكيم ومبدأ اختصاص الهيئة بالفصل في اختصاصها. ([UNCITRAL][6])\n\nولهذا من المفيد أن تتضمن الصياغة عبارة صريحة مثل:\n\n> «يُعد اتفاق التحكيم الوارد في هذا البند اتفاقاً مستقلاً عن باقي أحكام العقد، ولا يؤثر بطلان العقد أو فسخه أو إنهاؤه، بذاته، في صحة اتفاق التحكيم.»\n\nهذه العبارة لا تحل وحدها جميع مسائل القانون الواجب التطبيق، لكنها تعزز وضوح إرادة الأطراف.\n\n---\n\n# تاسعاً: مبدأ الاختصاص بالاختصاص\n\nينبغي أن تكون الصياغة متوافقة مع مبدأ أن هيئة التحكيم تملك سلطة الفصل في اختصاصها، بما في ذلك الاعتراضات المتعلقة بوجود اتفاق التحكيم أو صحته، مع مراعاة الرقابة القضائية التي يقررها قانون مقر التحكيم.\n\nوهذا يقلل من خطر أن يتحول كل اعتراض على الاختصاص إلى دعوى قضائية مستقلة قبل بدء التحكيم.\n\nلكن يجب الانتباه إلى أن **الاختصاص بالاختصاص لا يعني أن المحاكم الوطنية تفقد جميع صلاحياتها**؛ فقانون مقر التحكيم قد يمنح القضاء أدواراً معينة، مثل تعيين المحكمين في حالات محددة أو النظر في طلبات الإبطال.\n\n---\n\n# عاشراً: لا تخلط بين التحكيم والاختصاص القضائي\n\nمن الأخطاء الصياغية أن يجمع العقد بين:\n\n> «تخضع جميع المنازعات للاختصاص الحصري لمحاكم الدولة X»\n\nوفي الوقت نفسه:\n\n> «تحل جميع المنازعات عن طريق التحكيم في الدولة Y».\n\nفقد ينشأ السؤال: هل الاختصاص للمحاكم أم لهيئة التحكيم؟\n\nصحيح أن المحكمة قد تكون مختصة ببعض المسائل المرتبطة بالتحكيم، ولكن يجب التمييز بين:\n\n* المحكمة المختصة بنظر أصل النزاع؛\n* محاكم مقر التحكيم؛\n* المحكمة المختصة بالمساعدة القضائية؛\n* المحكمة المختصة بطلب إبطال الحكم؛\n* المحكمة المختصة بتنفيذ الحكم.\n\nوالصياغة الدقيقة يجب أن تمنع التداخل غير المقصود.\n\n---\n\n# الحادي عشر: التفكير في التنفيذ منذ لحظة صياغة العقد\n\nالخطأ الأكبر هو أن يركز المحامي على السؤال:\n\n**«أين سنجري التحكيم؟»**\n\nوينسى السؤال الأهم:\n\n**«أين سننفذ الحكم؟»**\n\nفاتفاقية نيويورك تلزم الدول الأطراف، من حيث الأصل، بالاعتراف بالأحكام التحكيمية الأجنبية وتنفيذها وفق شروط الاتفاقية، لكنها تتضمن أسباباً يمكن على أساسها رفض الاعتراف أو التنفيذ. ومن هذه الأسباب مسائل تتعلق بصحة اتفاق التحكيم، وحقوق الدفاع، وتجاوز نطاق الاتفاق، وتشكيل الهيئة أو الإجراءات، وإبطال الحكم أو وقفه، فضلاً عن بعض الاعتبارات المرتبطة بقانون الدولة المطلوب فيها التنفيذ. ([UNCITRAL][7])\n\nولهذا يجب قبل توقيع العقد تحديد:\n\n**أين توجد أصول الطرف المقابل التي يمكن التنفيذ عليها؟**\n\nثم دراسة قانون تلك الدولة واتفاقياتها وموقفها من التحكيم الدولي.\n\nفقد يكون اختيار مقر ممتاز للتحكيم، لكن التنفيذ في الدولة المستهدفة قد يواجه عوائق خاصة.\n\n---\n\n# الثاني عشر: الصياغة الأفضل هي الصياغة متعددة الطبقات\n\nفي العقود الدولية المهمة، يمكن بناء شرط التحكيم على طبقات واضحة:\n\n### الطبقة الأولى: الالتزام بالتحكيم\n\nتحديد أن المنازعات تحسم نهائياً عن طريق التحكيم.\n\n### الطبقة الثانية: المؤسسة والقواعد\n\nتحديد المؤسسة التحكيمية وقواعدها.\n\n### الطبقة الثالثة: نطاق المنازعات\n\nتحديد أن الشرط يشمل المنازعات الناشئة عن العقد أو المتعلقة به، بما في ذلك وجوده وصحته وتفسيره وإنهاؤه.\n\n### الطبقة الرابعة: مقر التحكيم\n\nتحديد المدينة والدولة.\n\n### الطبقة الخامسة: عدد المحكمين\n\nمحكم واحد أو ثلاثة.\n\n### الطبقة السادسة: اللغة\n\nتحديد لغة التحكيم.\n\n### الطبقة السابعة: القانون الموضوعي\n\nتحديد القانون الذي يحكم العقد.\n\n### الطبقة الثامنة: قانون اتفاق التحكيم\n\nتحديد القانون الذي يحكم اتفاق التحكيم نفسه.\n\nوهذه الطبقة الأخيرة هي التي يتم إغفالها كثيراً رغم أهميتها العملية.\n\n---\n\n# نموذج لصياغة أكثر إحكاماً\n\nفي عقد تجاري دولي، يمكن أن تكون الصياغة الهيكلية، بحسب ظروف الصفقة والقوانين ذات الصلة، على النحو الآتي:\n\n> **«كل نزاع أو خلاف أو مطالبة تنشأ عن هذا العقد أو تتعلق به، بما في ذلك وجوده أو صحته أو تفسيره أو تنفيذه أو الإخلال به أو إنهاؤه أو بطلانه، تتم تسويته نهائياً عن طريق التحكيم وفق قواعد [اسم مؤسسة التحكيم] السارية وقت بدء التحكيم.**\n>\n> **يكون مقر التحكيم في [المدينة، الدولة]، وتكون لغة التحكيم [اللغة]. ويكون عدد المحكمين [محكماً واحداً/ثلاثة محكمين]، ويتم تعيينهم وفق القواعد المذكورة.**\n>\n> **يخضع هذا العقد وحقوق والتزامات الأطراف الناشئة عنه لقانون [الدولة].**\n>\n> **ويخضع اتفاق التحكيم الوارد في هذا البند لقانون [الدولة].**\n>\n> **ويكون حكم هيئة التحكيم نهائياً وملزماً للطرفين، ويجوز طلب الاعتراف به وتنفيذه أمام أي محكمة مختصة. ويظل اتفاق التحكيم مستقلاً عن باقي أحكام العقد، ولا يؤثر بطلان العقد أو فسخه أو إنهاؤه، بذاته، في صحة اتفاق التحكيم.»**\n\nهذه ليست «صيغة سحرية» تصلح لكل عقد وكل دولة؛ بل يجب تكييفها وفق القانون الواجب التطبيق، ومقر التحكيم، وطبيعة النشاط، والدولة أو الدول المتوقع التنفيذ فيها. وتوصي ICC نفسها، عند تكييف الشرط النموذجي، بمراعاة المتطلبات الإلزامية في مكان التحكيم وفي أماكن التنفيذ المتوقعة. ([ICC - International Chamber of Commerce][3])\n\n---\n\n# الثالث عشر: لماذا لا يمكن ضمان التنفيذ بنسبة 100%؟\n\nحتى أفضل شرط تحكيمي لا يستطيع أن يلغي القواعد الآمرة أو النظام العام أو المتطلبات القانونية في دولة التنفيذ.\n\nفالمبدأ الصحيح ليس:\n\n**«كيف أكتب شرطاً يضمن التنفيذ مهما حدث؟»**\n\nبل:\n\n**«كيف أصمم شرطاً يقلل إلى أقصى حد ممكن أسباب بطلانه أو رفض تنفيذه؟»**\n\nوهذا الفرق مهم جداً.\n\nفالمادة الخامسة من اتفاقية نيويورك تضع حالات محددة يمكن فيها رفض الاعتراف والتنفيذ، ومنها عدم أهلية الأطراف أو عدم صحة اتفاق التحكيم وفق القانون المنطبق عليه، وعدم تمكين الطرف من عرض دفاعه، وتجاوز الهيئة حدود الاتفاق، ومخالفات تتعلق بتشكيل الهيئة أو الإجراءات، إضافة إلى حالات أخرى نصت عليها الاتفاقية. ([UNCITRAL][7])\n\n---\n\n# الرابع عشر: قائمة فحص للمحامي قبل اعتماد الشرط\n\nقبل توقيع أي عقد دولي يتضمن تحكيماً، ينبغي طرح الأسئلة الآتية:\n\n1. **ما القانون الذي يحكم العقد؟**\n2. **ما القانون الذي يحكم اتفاق التحكيم؟**\n3. **ما مقر التحكيم؟**\n4. **هل الدولة المختارة للتحكيم لديها نظام تحكيم حديث وفعال؟**\n5. **هل الدولة طرف في اتفاقية نيويورك؟**\n6. **أين توجد أصول الطرف الآخر؟**\n7. **هل دولة التنفيذ طرف في اتفاقية نيويورك؟**\n8. **هل توجد تحفظات أو إعلانات خاصة تؤثر في التطبيق؟**\n9. **ما مؤسسة التحكيم المختارة؟**\n10. **ما قواعدها السارية؟**\n11. **هل الشرط يحدد عدد المحكمين؟**\n12. **هل يحدد لغة التحكيم؟**\n13. **هل يحدد مقر التحكيم بدقة؟**\n14. **هل نطاق الشرط يشمل المنازعات المتعلقة بصحة العقد وإنهائه؟**\n15. **هل توجد إحالات متناقضة إلى القضاء والتحكيم؟**\n16. **هل طريقة إبرام اتفاق التحكيم تستوفي المتطلبات الشكلية للقانون المحتمل التطبيق؟**\n17. **هل الأشخاص الذين وقعوا العقد يملكون سلطة إلزام الشركة بالتحكيم؟**\n18. **هل توجد قواعد آمرة تمنع التحكيم في موضوع النزاع؟**\n19. **هل توجد اعتبارات تتعلق بالنظام العام في دولة التنفيذ؟**\n20. **هل صياغة الشرط متوافقة مع قواعد المؤسسة المختارة؟**\n\n---\n\n# الخلاصة\n\nالشرط التحكيمي الدولي الناجح ليس مجرد جملة تحيل النزاع إلى التحكيم، وإنما هو **تصميم قانوني متكامل لمسار النزاع من لحظة نشوئه حتى لحظة تنفيذ الحكم**.\n\nوالقاعدة العملية الأهم هي أن يفصل المحامي بوضوح بين أربعة أمور:\n\n**قانون العقد → قانون اتفاق التحكيم → قانون مقر التحكيم → قانون دولة التنفيذ.**\n\nثم يحدد بوضوح:\n\n**المؤسسة التحكيمية + القواعد + المقر + عدد المحكمين + اللغة + نطاق التحكيم + القانون الموضوعي + قانون اتفاق التحكيم.**\n\nوهذه الطريقة لا تلغي تنازع القوانين بصورة مطلقة، ولا تمنح ضماناً مطلقاً للتنفيذ؛ لكنها تقلل مساحة النزاع التفسيري وتمنح المحكمة أو هيئة التحكيم خريطة قانونية واضحة لإرادة الأطراف.\n\nوتظل اتفاقية نيويورك وقانون التحكيم في دولة المقر وقانون دولة التنفيذ هي الإطار الذي يجب اختباره عليه قبل اعتماد أي شرط تحكيمي دولي. وتعد اتفاقية نيويورك، بحسب الأونسيترال، حجر الزاوية في نظام التحكيم التجاري الدولي، بينما يوفر قانون الأونسيترال النموذجي إطاراً متكاملاً لمختلف مراحل التحكيم الدولي. ([UNCITRAL][8])\n\n**وبالتالي، فإن أفضل شرط تحكيمي ليس بالضرورة الأطول، وإنما الأكثر وضوحاً في توزيع الاختصاصات القانونية وتحديد القوانين ذات الصلة، والأكثر انسجاماً مع قوانين مقر التحكيم والدولة التي يُتوقع تنفيذ الحكم فيها.**\n مقالة بالذكاء اللاصطناعي",
+          "contentTr": "# kyf tdmn şrt thkym shyhaً wqablaً lltnfydh dwlyaً dwn alwqwa fy madlat tnaza alqwanyn wadm alakhtsas؟ ## mqdmah la ykfy، fy alaqwd aldwlyah، an yktb alatraf abarah aamah mn qbyl: «ay nzaa ynşa an hdha alaqd yُhal ela althkym». fqd ykwn alşrt، rghm bsatth، bdayah lslslah mn almnazaat altmhydyah hwl shth، walqanwn alwacb alttbyq alyh، wmqr althkym، wakhtsas alhyئah، walmhkmah almkhtsah baltdkhl fy alecra'at، thm qablyah alhkm llthwyl ela hq faly qabl lltnfydh fy dwlah akhra. wtnba ahmyah alsyaghah aldqyqah mn an althkym aldwly yqwm ala akthr mn alaqah qanwnyah wahdah. fhnak **alaqd alasly**، w**atfaq althkym**، w**alecra'at althkymyah**، w**alhkm althkymy**، thm mrhlah alaatraf balhkm wtnfydhh. wlkl mrhlah qwanyn wqwaad qd tkhtlf an almrhlah alakhra. wtؤkd atfaqyah nywywrk laam 1958 an alghayah alasasyah mn alnzam aldwly llthkym hy eata' atfaqat althkym athraً falyaً walaatraf balahkam althkymyah alacnbyah wtnfydhha، ma wda halat mhddah ymkn fyha rfd alaatraf aw altnfydh. ([UNCITRAL][1]) wmn hna، fen **alşrt althkymy aldwly alcyd la ynbghy an ycyb fqt an sؤal: hl nryd althkym؟ bl ycb an ycyb msbqaً an: mn yhkm؟ wayn؟ wbay qwaad؟ wbay qanwn؟ wma alqanwn aldhy yhkm atfaq althkym dhath؟ wamam ay mhakm ymkn tlb almsaadah aw alrqabah aw altnfydh؟** --- ## awlaً: altmyyz byn alqwanyn alarbaah almrtbtah balthkym mn akthr asbab alnzaa fy althkym aldwly alkhlt byn alqwanyn almkhtlfah alty ymkn an tdkhl fy alamlyah. ### 1. alqanwn almwdway llaqd whw alqanwn aldhy yhkm alhqwq walaltzamat alnaşئah an alaqd، mthl: * tfsyr alaltzamat؛ * alekhlal balaqd؛ * almsؤwlyah waltawyd؛ * alfskh؛ * aathar alqwah alqahrah؛ * alaltzamat almalyah. wmn alafdl thdydh srahah fy alaqd. wtؤkd mbadئ lahay bşan akhtyar alqanwn fy alaqwd altcaryah aldwlyah mbda astqlal eradah alatraf fy akhtyar alqanwn aldhy yhkm alaqd، ma bqa' qywd ttalq balqwaad alaamrah walnzam alaam. ([HCCH][2]) ### 2. alqanwn aldhy yhkm atfaq althkym whdha mkhtlf an qanwn alaqd. falsؤal hna lys: ma alqanwn aldhy yhkm alaltzam altaaqdy؟ bl: **ma alqanwn aldhy yhdd ma edha kan atfaq althkym shyhaً wmlzmaً llatraf؟** wqd tzhr ahmyah hdha alfrq، mthlaً، andma ykwn alaqd khadaaً lqanwn dwlah، bynma ykwn mqr althkym fy dwlah thanyah، wykwn altnfydh mtwqaaً fy dwlah thalthah. wlhdha twsy ghrfah altcarah aldwlyah ICC ban yhdd alatraf، and alhacah، alqanwn aldhy yhkm atfaq althkym bswrah mstqlah an alqanwn aldhy yhkm alaqd. ([ICC - International Chamber of Commerce][3]) ### 3. qanwn mqr althkym whw ma ysma ghalbaً **alqanwn alecraئy llthkym aw Lex Arbitri**. wla yany mqr althkym baldrwrah an clsat alhyئah ycb an taqd falyaً fy dhlk almkan fy kl mrah. falmqr ymthl almrkz alqanwny llthkym wyhdd aletar alqdaئy aldhy tkhda lh alecra'at walrqabah alqdaئyah alyha. wfy qwaad ICC alhalyah، edha lm ytfq alatraf ala mkan althkym، ttwla almhkmah thdydh، kma tmyz alqwaad byn mkan althkym wbyn alamakn alty ymkn an taqd fyha alactmaaat walclsat. ([ICC - International Chamber of Commerce][4]) ### 4. qanwn dwlah altnfydh qd ysdr alhkm fy dwlah، lkn amwal almhkwm alyh mwcwdah fy dwlah akhra. whna tzhr msalah **alaatraf balhkm wtnfydhh** fy aldwlah alty twcd fyha alaswl. whdhh nqtah cwhryah؛ lan shah althkym fy dwlah almqr la tany tlqaئyaً an altnfydh fy kl dwlah akhra sykwn mdmwnaً. --- # thanyaً: lmadha ynbghy thdyd qanwn atfaq althkym srahah؟ hdhh rbma tkwn ahm nqtah fy syaghah alşrt althkymy aldwly. fedha ktb alaqd: > «ykhda hdha alaqd lqanwn aldwlah X، way nzaa yhal ela althkym fy aldwlah Y» fqd ybqa sؤal mhm bla ecabah: **hl qanwn aldwlah X yhkm atfaq althkym nfsh، am an qanwn mqr althkym Y hw aldhy yhkmh؟** wqd yؤdy trk hdha alsؤal llmhkmah almkhtsah ela nzaa mstql qbl alwswl hta ela mwdwa alqdyah. wyzhr dhlk bwdwh fy alacthad almqarn؛ ffy qdyah **Enka v Chubb** tnawlt almhkmah alalya albrytanyah msalah alqanwn alwacb alttbyq ala atfaq althkym، wbyّnt ahmyah albhth fy wcwd akhtyar sryh، thm alakhtyar aldmny، thm alnzam alqanwny alakthr atsalaً batfaq althkym. ([Courts and Tribunals Judiciary][5]) ldhlk، edha kan alhdf tqlyl alnzaa، falafdl adm trk almsalah llastntac. walsyaghah alakthr wdwhaً hy mthlaً: > «ykhda hdha alaqd lqanwn X، wykhda atfaq althkym alward fy hdha albnd lqanwn Y.» wbdhlk yfsl alaqd byn alqanwn almwdway walqanwn aldhy yhkm atfaq althkym. --- # thalthaً: akhtyar mqr althkym lys mcrd akhtyar mdynah mn alakhta' alşaئaah aatbar mqr althkym mcrd mkan cghrafy mnasb llactmaaat. waladq an nnzr ela **almqr baatbarh akhtyaraً lnzam qanwny llthkym**. fand akhtyar mqr mayn ynbghy drasah: 1. qanwn althkym fy tlk aldwlah؛ 2. mda aatrafh bastqlal atfaq althkym؛ 3. mda aatrafh bmbda akhtsas alhyئah balfsl fy akhtsasha؛ 4. hdwd tdkhl alqda' alwtny؛ 5. alqwaad almtalqah btayyn almhkmyn wazlhm؛ 6. emkanyah atkhadh altdabyr alwqtyah؛ 7. asbab ebtal alhkm؛ 8. mwqf aldwlah mn atfaqyah nywywrk؛ 9. alqwaad alaamrah almtalqah balmwdwa mhl alnzaa. wqd sُmm qanwn alawnsytral alnmwdhcy llthkym altcary aldwly lyghty hdhh almsaئl، mn atfaq althkym wtşkyl alhyئah wakhtsasha ela alecra'at waltdkhl alqdaئy walaatraf balhkm wtnfydhh. ([UNCITRAL][6]) ldhlk la ynbghy akhtyar mqr althkym bna'ً ala qrbh alcghrafy aw ankhfad tkalyf alsfr fqt. --- # rabaaً: drwrah akhtyar mؤssah thkym wadhah alşrt althkymy aldhy yqwl: > «ttm tswyah alnzaa an tryq althkym aldwly» qd ykwn qablaً lltfsyr fy bad alanzmah alqanwnyah، wlknh ytrk asئlah mhmah: * mn yayn almhkm؟ * km add almhkmyn؟ * ma alqwaad alecraئyah؟ * madha yhdth edha rfd ahd alatraf altaawn؟ * mn yfsl fy msaئl tayyn almhkmyn؟ * kyf ttm edarah aldawa؟ wlhdha ykwn mn alafdl، fy kthyr mn alaqwd aldwlyah، alehalah ela mؤssah thkym marwfah wqwaadha alecraئyah. fـ ICC، ala sbyl almthal، tnşr şrtaً nmwdhcyaً yns ala ehalah almnazaat ela althkym wfq qwaad ghrfah altcarah aldwlyah، ma tayyn almhkmyn wfq tlk alqwaad. kma thdhr srahah mn an alsyaghah alghamdah qd tؤdy ela adm alyqyn waltakhyr، bl qd tؤthr fy amlyah althkym nfsha. ([ICC - International Chamber of Commerce][3]) wmn thm ymkn an ykwn akhtyar mؤssah althkym wsylah mhmah ltqlyl alnzaa hwl alecra'at. --- # khamsaً: thdyd add almhkmyn ycb thdyd ma edha kan alnzaa synzr fyh: * mhkm wahd؛ am * thlathah mhkmyn. whdha alqrar lh athr mbaşr ala altklfah walsraah wtryqah tşkyl alhyئah. wfy alnzaaat dhat alqymah alkbyrah aw altaqyd alfny walqanwny، qd ykwn tşkyl hyئah mn thlathah mhkmyn akthr mla'mah، bynma qd ykwn almhkm alfrd akthr kfa'ah fy alnzaaat alaql taqydaً. almhm hw ala ttrk alsyaghah tnaqdaً byn alaqd wqwaad almؤssah almkhtarah. wtwsy ICC bemkan thdyd add almhkmyn srahah fy alşrt، ma mraaaah alqwaad almؤssyah almkhtarah. ([ICC - International Chamber of Commerce][3]) --- # sadsaً: thdyd lghah althkym qd ykwn alaqd ballghah alarbyah، walmraslat balenclyzyah، wmqr althkym fy dwlah awrwbyah، wahd alatraf şrkah aasywyah. edha lm thdd allghah، fqd tnşa mnazaah ecraئyah hwl allghah almnasbah. ldhlk yfdl alns srahah ala: > «tkwn lghah althkym hy allghah alenclyzyah.» aw: > «tkwn lghah althkym hy allghah alarbyah، wycwz llhyئah qbwl almstndat ballghah alenclyzyah dwn trcmah ma lm tqrr khlaf dhlk.» wtnzm qwaad ICC msalah allghah، wtsmh llatraf bthdydha، wela thddha alhyئah wfq alzrwf dhat alslah. ([ICC - International Chamber of Commerce][4]) --- # sabaaً: thdyd ntaq alşrt althkymy bdqah mn alafdl an ykwn alşrt wasaaً bma ykfy lyşml almnazaat almrtbtah balaqd، dwn khlq ghmwd. wmn alsyaghat alşaئaah dwlyaً: > «kl nzaa ynşa an hdha alaqd aw ytalq bh، bma fy dhlk ay nzaa bşan wcwdh aw shth aw tfsyrh aw tnfydhh aw enhaئh، yhal nhaئyaً ela althkym...» myzah hdhh alsyaghah anha la thsr althkym fy almnazaat almtalqah bـ«tnfydh alaqd» fqt، bl tşml aydaً almnazaat almtalqah bshth wtfsyrh wenhaئh. whdha mhm bsfah khasah andma yhawl ahd alatraf lahqaً alqwl en alnzaa ytalq bshah alaqd، wbaltaly la ydkhl fy ntaq şrt althkym. --- # thamnaً: astqlal şrt althkym an alaqd alasly mn almbadئ alasasyah fy althkym aldwly an şrt althkym ymkn an tkwn lh şkhsyah qanwnyah mstqlah an alaqd aldhy wrd fyh. whdha yany an altan fy alaqd alasly la yؤdy baldrwrah ela sqwt şrt althkym tlqaئyaً. wyzhr hdha almbda fy alanzmah alhdythah llthkym، bma fyha qanwn alawnsytral alnmwdhcy، aldhy ytnawl astqlal atfaq althkym wmbda akhtsas alhyئah balfsl fy akhtsasha. ([UNCITRAL][6]) wlhdha mn almfyd an ttdmn alsyaghah abarah sryhah mthl: > «yُad atfaq althkym alward fy hdha albnd atfaqaً mstqlaً an baqy ahkam alaqd، wla yؤthr btlan alaqd aw fskhh aw enhaؤh، bdhath، fy shah atfaq althkym.» hdhh alabarah la thl whdha cmya msaئl alqanwn alwacb alttbyq، lknha tazz wdwh eradah alatraf. --- # tasaaً: mbda alakhtsas balakhtsas ynbghy an tkwn alsyaghah mtwafqah ma mbda an hyئah althkym tmlk sltah alfsl fy akhtsasha، bma fy dhlk alaatradat almtalqah bwcwd atfaq althkym aw shth، ma mraaaah alrqabah alqdaئyah alty yqrrha qanwn mqr althkym. whdha yqll mn khtr an ythwl kl aatrad ala alakhtsas ela dawa qdaئyah mstqlah qbl bd' althkym. lkn ycb alantbah ela an **alakhtsas balakhtsas la yany an almhakm alwtnyah tfqd cmya slahyatha**؛ fqanwn mqr althkym qd ymnh alqda' adwaraً maynah، mthl tayyn almhkmyn fy halat mhddah aw alnzr fy tlbat alebtal. --- # aaşraً: la tkhlt byn althkym walakhtsas alqdaئy mn alakhta' alsyaghyah an ycma alaqd byn: > «tkhda cmya almnazaat llakhtsas alhsry lmhakm aldwlah X» wfy alwqt nfsh: > «thl cmya almnazaat an tryq althkym fy aldwlah Y». fqd ynşa alsؤal: hl alakhtsas llmhakm am lhyئah althkym؟ shyh an almhkmah qd tkwn mkhtsah bbad almsaئl almrtbtah balthkym، wlkn ycb altmyyz byn: * almhkmah almkhtsah bnzr asl alnzaa؛ * mhakm mqr althkym؛ * almhkmah almkhtsah balmsaadah alqdaئyah؛ * almhkmah almkhtsah btlb ebtal alhkm؛ * almhkmah almkhtsah btnfydh alhkm. walsyaghah aldqyqah ycb an tmna altdakhl ghyr almqswd. --- # alhady aşr: altfkyr fy altnfydh mndh lhzah syaghah alaqd alkhta alakbr hw an yrkz almhamy ala alsؤal: **«ayn sncry althkym؟»** wynsa alsؤal alahm: **«ayn snnfdh alhkm؟»** fatfaqyah nywywrk tlzm aldwl alatraf، mn hyth alasl، balaatraf balahkam althkymyah alacnbyah wtnfydhha wfq şrwt alatfaqyah، lknha ttdmn asbabaً ymkn ala asasha rfd alaatraf aw altnfydh. wmn hdhh alasbab msaئl ttalq bshah atfaq althkym، whqwq aldfaa، wtcawz ntaq alatfaq، wtşkyl alhyئah aw alecra'at، webtal alhkm aw wqfh، fdlaً an bad alaatbarat almrtbtah bqanwn aldwlah almtlwb fyha altnfydh. ([UNCITRAL][7]) wlhdha ycb qbl twqya alaqd thdyd: **ayn twcd aswl altrf almqabl alty ymkn altnfydh alyha؟** thm drasah qanwn tlk aldwlah watfaqyatha wmwqfha mn althkym aldwly. fqd ykwn akhtyar mqr mmtaz llthkym، lkn altnfydh fy aldwlah almsthdfah qd ywach awaئq khasah. --- # althany aşr: alsyaghah alafdl hy alsyaghah mtaddah altbqat fy alaqwd aldwlyah almhmah، ymkn bna' şrt althkym ala tbqat wadhah: ### altbqah alawla: alaltzam balthkym thdyd an almnazaat thsm nhaئyaً an tryq althkym. ### altbqah althanyah: almؤssah walqwaad thdyd almؤssah althkymyah wqwaadha. ### altbqah althalthah: ntaq almnazaat thdyd an alşrt yşml almnazaat alnaşئah an alaqd aw almtalqah bh، bma fy dhlk wcwdh wshth wtfsyrh wenhaؤh. ### altbqah alrabaah: mqr althkym thdyd almdynah waldwlah. ### altbqah alkhamsah: add almhkmyn mhkm wahd aw thlathah. ### altbqah alsadsah: allghah thdyd lghah althkym. ### altbqah alsabaah: alqanwn almwdway thdyd alqanwn aldhy yhkm alaqd. ### altbqah althamnah: qanwn atfaq althkym thdyd alqanwn aldhy yhkm atfaq althkym nfsh. whdhh altbqah alakhyrah hy alty ytm eghfalha kthyraً rghm ahmytha alamlyah. --- # nmwdhc lsyaghah akthr ehkamaً fy aqd tcary dwly، ymkn an tkwn alsyaghah alhyklyah، bhsb zrwf alsfqah walqwanyn dhat alslah، ala alnhw alaaty: > **«kl nzaa aw khlaf aw mtalbah tnşa an hdha alaqd aw ttalq bh، bma fy dhlk wcwdh aw shth aw tfsyrh aw tnfydhh aw alekhlal bh aw enhaؤh aw btlanh، ttm tswyth nhaئyaً an tryq althkym wfq qwaad [asm mؤssah althkym] alsaryah wqt bd' althkym.** > > **ykwn mqr althkym fy [almdynah، aldwlah]، wtkwn lghah althkym [allghah]. wykwn add almhkmyn [mhkmaً wahdaً/thlathah mhkmyn]، wytm tayynhm wfq alqwaad almdhkwrah.** > > **ykhda hdha alaqd whqwq waltzamat alatraf alnaşئah anh lqanwn [aldwlah].** > > **wykhda atfaq althkym alward fy hdha albnd lqanwn [aldwlah].** > > **wykwn hkm hyئah althkym nhaئyaً wmlzmaً lltrfyn، wycwz tlb alaatraf bh wtnfydhh amam ay mhkmah mkhtsah. wyzl atfaq althkym mstqlaً an baqy ahkam alaqd، wla yؤthr btlan alaqd aw fskhh aw enhaؤh، bdhath، fy shah atfaq althkym.»** hdhh lyst «syghah shryah» tslh lkl aqd wkl dwlah؛ bl ycb tkyyfha wfq alqanwn alwacb alttbyq، wmqr althkym، wtbyaah alnşat، waldwlah aw aldwl almtwqa altnfydh fyha. wtwsy ICC nfsha، and tkyyf alşrt alnmwdhcy، bmraaaah almttlbat alelzamyah fy mkan althkym wfy amakn altnfydh almtwqaah. ([ICC - International Chamber of Commerce][3]) --- # althalth aşr: lmadha la ymkn dman altnfydh bnsbah 100%؟ hta afdl şrt thkymy la ysttya an ylghy alqwaad alaamrah aw alnzam alaam aw almttlbat alqanwnyah fy dwlah altnfydh. falmbda alshyh lys: **«kyf aktb şrtaً ydmn altnfydh mhma hdth؟»** bl: **«kyf asmm şrtaً yqll ela aqsa hd mmkn asbab btlanh aw rfd tnfydhh؟»** whdha alfrq mhm cdaً. falmadah alkhamsah mn atfaqyah nywywrk tda halat mhddah ymkn fyha rfd alaatraf waltnfydh، wmnha adm ahlyah alatraf aw adm shah atfaq althkym wfq alqanwn almntbq alyh، wadm tmkyn altrf mn ard dfaah، wtcawz alhyئah hdwd alatfaq، wmkhalfat ttalq btşkyl alhyئah aw alecra'at، edafah ela halat akhra nst alyha alatfaqyah. ([UNCITRAL][7]) --- # alraba aşr: qaئmah fhs llmhamy qbl aatmad alşrt qbl twqya ay aqd dwly ytdmn thkymaً، ynbghy trh alasئlah alaatyah: 1. **ma alqanwn aldhy yhkm alaqd؟** 2. **ma alqanwn aldhy yhkm atfaq althkym؟** 3. **ma mqr althkym؟** 4. **hl aldwlah almkhtarah llthkym ldyha nzam thkym hdyth wfaal؟** 5. **hl aldwlah trf fy atfaqyah nywywrk؟** 6. **ayn twcd aswl altrf alaakhr؟** 7. **hl dwlah altnfydh trf fy atfaqyah nywywrk؟** 8. **hl twcd thfzat aw ealanat khasah tؤthr fy alttbyq؟** 9. **ma mؤssah althkym almkhtarah؟** 10. **ma qwaadha alsaryah؟** 11. **hl alşrt yhdd add almhkmyn؟** 12. **hl yhdd lghah althkym؟** 13. **hl yhdd mqr althkym bdqah؟** 14. **hl ntaq alşrt yşml almnazaat almtalqah bshah alaqd wenhaئh؟** 15. **hl twcd ehalat mtnaqdah ela alqda' walthkym؟** 16. **hl tryqah ebram atfaq althkym tstwfy almttlbat alşklyah llqanwn almhtml alttbyq؟** 17. **hl alaşkhas aldhyn wqawa alaqd ymlkwn sltah elzam alşrkah balthkym؟** 18. **hl twcd qwaad aamrah tmna althkym fy mwdwa alnzaa؟** 19. **hl twcd aatbarat ttalq balnzam alaam fy dwlah altnfydh؟** 20. **hl syaghah alşrt mtwafqah ma qwaad almؤssah almkhtarah؟** --- # alkhlasah alşrt althkymy aldwly alnach lys mcrd cmlah thyl alnzaa ela althkym، wenma hw **tsmym qanwny mtkaml lmsar alnzaa mn lhzah nşwئh hta lhzah tnfydh alhkm**. walqaadah alamlyah alahm hy an yfsl almhamy bwdwh byn arbaah amwr: **qanwn alaqd → qanwn atfaq althkym → qanwn mqr althkym → qanwn dwlah altnfydh.** thm yhdd bwdwh: **almؤssah althkymyah + alqwaad + almqr + add almhkmyn + allghah + ntaq althkym + alqanwn almwdway + qanwn atfaq althkym.** whdhh altryqah la tlghy tnaza alqwanyn bswrah mtlqah، wla tmnh dmanaً mtlqaً lltnfydh؛ lknha tqll msahah alnzaa altfsyry wtmnh almhkmah aw hyئah althkym khrytah qanwnyah wadhah leradah alatraf. wtzl atfaqyah nywywrk wqanwn althkym fy dwlah almqr wqanwn dwlah altnfydh hy aletar aldhy ycb akhtbarh alyh qbl aatmad ay şrt thkymy dwly. wtad atfaqyah nywywrk، bhsb alawnsytral، hcr alzawyah fy nzam althkym altcary aldwly، bynma ywfr qanwn alawnsytral alnmwdhcy etaraً mtkamlaً lmkhtlf mrahl althkym aldwly. ([UNCITRAL][8]) **wbaltaly، fen afdl şrt thkymy lys baldrwrah alatwl، wenma alakthr wdwhaً fy twzya alakhtsasat alqanwnyah wthdyd alqwanyn dhat alslah، walakthr anscamaً ma qwanyn mqr althkym waldwlah alty yُtwqa tnfydh alhkm fyha.** mqalah baldhka' allastnaay",
           "excerptTr": "Kanunlar ihtilafı ve yargı yetkisi eksikliği ikilemiyle karşılaşmadan geçerli ve uluslararası düzeyde uygulanabilir bir tahkim şartının nasıl sağlanacağı.",
           "authorName": "د. عبد الرحمن بن منصور آل هلال",
           "authorRole": "الشريك المؤسس ورئيس هيئة التحكيم",
           "categoryTr": "Uluslararası tahkim",
           "readTimeTr": "8 dakika okuma",
-          "authorRoleTr": "Tahkim heyetinin kurucu ortağı ve başkanı"
+          "authorRoleTr": "Tahkim heyetinin kurucu ortağı ve başkanı",
+          "excerptEn": "How to ensure a valid and internationally enforceable arbitration clause without falling into the dilemmas of conflict of laws and lack of jurisdiction.",
+          "contentEn": "# kyf tdmn shrt thkym shyhaً wqablaً lltnfydh dwlyaً dwn alwqwa fy madlat tnaza alqwanyn wadm alakhtsas؟ ## mqdmah la ykfy، fy alaqwd aldwlyah، an yktb alatraf abarah aamah mn qbyl: «ay nzaa ynsha an hdha alaqd yُhal ela althkym». fqd ykwn alshrt، rghm bsatth، bdayah lslslah mn almnazaat altmhydyah hwl shth، walqanwn alwajb alttbyq alyh، wmqr althkym، wakhtsas alhyئah، walmhkmah almkhtsah baltdkhl fy alejra'at، thm qablyah alhkm llthwyl ela hq faly qabl lltnfydh fy dwlah akhra. wtnba ahmyah alsyaghah aldqyqah mn an althkym aldwly yqwm ala akthr mn alaqah qanwnyah wahdah. fhnak **alaqd alasly**، w**atfaq althkym**، w**alejra'at althkymyah**، w**alhkm althkymy**، thm mrhlah alaatraf balhkm wtnfydhh. wlkl mrhlah qwanyn wqwaad qd tkhtlf an almrhlah alakhra. wtؤkd atfaqyah nywywrk laam 1958 an alghayah alasasyah mn alnzam aldwly llthkym hy eata' atfaqat althkym athraً falyaً walaatraf balahkam althkymyah alajnbyah wtnfydhha، ma wda halat mhddah ymkn fyha rfd alaatraf aw altnfydh. ([UNCITRAL][1]) wmn hna، fen **alshrt althkymy aldwly aljyd la ynbghy an yjyb fqt an sؤal: hl nryd althkym؟ bl yjb an yjyb msbqaً an: mn yhkm؟ wayn؟ wbay qwaad؟ wbay qanwn؟ wma alqanwn aldhy yhkm atfaq althkym dhath؟ wamam ay mhakm ymkn tlb almsaadah aw alrqabah aw altnfydh؟** --- ## awlaً: altmyyz byn alqwanyn alarbaah almrtbtah balthkym mn akthr asbab alnzaa fy althkym aldwly alkhlt byn alqwanyn almkhtlfah alty ymkn an tdkhl fy alamlyah. ### 1. alqanwn almwdway llaqd whw alqanwn aldhy yhkm alhqwq walaltzamat alnashئah an alaqd، mthl: * tfsyr alaltzamat؛ * alekhlal balaqd؛ * almsؤwlyah waltawyd؛ * alfskh؛ * aathar alqwah alqahrah؛ * alaltzamat almalyah. wmn alafdl thdydh srahah fy alaqd. wtؤkd mbadئ lahay bshan akhtyar alqanwn fy alaqwd altjaryah aldwlyah mbda astqlal eradah alatraf fy akhtyar alqanwn aldhy yhkm alaqd، ma bqa' qywd ttalq balqwaad alaamrah walnzam alaam. ([HCCH][2]) ### 2. alqanwn aldhy yhkm atfaq althkym whdha mkhtlf an qanwn alaqd. falsؤal hna lys: ma alqanwn aldhy yhkm alaltzam altaaqdy؟ bl: **ma alqanwn aldhy yhdd ma edha kan atfaq althkym shyhaً wmlzmaً llatraf؟** wqd tzhr ahmyah hdha alfrq، mthlaً، andma ykwn alaqd khadaaً lqanwn dwlah، bynma ykwn mqr althkym fy dwlah thanyah، wykwn altnfydh mtwqaaً fy dwlah thalthah. wlhdha twsy ghrfah altjarah aldwlyah ICC ban yhdd alatraf، and alhajah، alqanwn aldhy yhkm atfaq althkym bswrah mstqlah an alqanwn aldhy yhkm alaqd. ([ICC - International Chamber of Commerce][3]) ### 3. qanwn mqr althkym whw ma ysma ghalbaً **alqanwn alejraئy llthkym aw Lex Arbitri**. wla yany mqr althkym baldrwrah an jlsat alhyئah yjb an taqd falyaً fy dhlk almkan fy kl mrah. falmqr ymthl almrkz alqanwny llthkym wyhdd aletar alqdaئy aldhy tkhda lh alejra'at walrqabah alqdaئyah alyha. wfy qwaad ICC alhalyah، edha lm ytfq alatraf ala mkan althkym، ttwla almhkmah thdydh، kma tmyz alqwaad byn mkan althkym wbyn alamakn alty ymkn an taqd fyha alajtmaaat waljlsat. ([ICC - International Chamber of Commerce][4]) ### 4. qanwn dwlah altnfydh qd ysdr alhkm fy dwlah، lkn amwal almhkwm alyh mwjwdah fy dwlah akhra. whna tzhr msalah **alaatraf balhkm wtnfydhh** fy aldwlah alty twjd fyha alaswl. whdhh nqtah jwhryah؛ lan shah althkym fy dwlah almqr la tany tlqaئyaً an altnfydh fy kl dwlah akhra sykwn mdmwnaً. --- # thanyaً: lmadha ynbghy thdyd qanwn atfaq althkym srahah؟ hdhh rbma tkwn ahm nqtah fy syaghah alshrt althkymy aldwly. fedha ktb alaqd: > «ykhda hdha alaqd lqanwn aldwlah X، way nzaa yhal ela althkym fy aldwlah Y» fqd ybqa sؤal mhm bla ejabah: **hl qanwn aldwlah X yhkm atfaq althkym nfsh، am an qanwn mqr althkym Y hw aldhy yhkmh؟** wqd yؤdy trk hdha alsؤal llmhkmah almkhtsah ela nzaa mstql qbl alwswl hta ela mwdwa alqdyah. wyzhr dhlk bwdwh fy alajthad almqarn؛ ffy qdyah **Enka v Chubb** tnawlt almhkmah alalya albrytanyah msalah alqanwn alwajb alttbyq ala atfaq althkym، wbyّnt ahmyah albhth fy wjwd akhtyar sryh، thm alakhtyar aldmny، thm alnzam alqanwny alakthr atsalaً batfaq althkym. ([Courts and Tribunals Judiciary][5]) ldhlk، edha kan alhdf tqlyl alnzaa، falafdl adm trk almsalah llastntaj. walsyaghah alakthr wdwhaً hy mthlaً: > «ykhda hdha alaqd lqanwn X، wykhda atfaq althkym alward fy hdha albnd lqanwn Y.» wbdhlk yfsl alaqd byn alqanwn almwdway walqanwn aldhy yhkm atfaq althkym. --- # thalthaً: akhtyar mqr althkym lys mjrd akhtyar mdynah mn alakhta' alshaئaah aatbar mqr althkym mjrd mkan jghrafy mnasb llajtmaaat. waladq an nnzr ela **almqr baatbarh akhtyaraً lnzam qanwny llthkym**. fand akhtyar mqr mayn ynbghy drasah: 1. qanwn althkym fy tlk aldwlah؛ 2. mda aatrafh bastqlal atfaq althkym؛ 3. mda aatrafh bmbda akhtsas alhyئah balfsl fy akhtsasha؛ 4. hdwd tdkhl alqda' alwtny؛ 5. alqwaad almtalqah btayyn almhkmyn wazlhm؛ 6. emkanyah atkhadh altdabyr alwqtyah؛ 7. asbab ebtal alhkm؛ 8. mwqf aldwlah mn atfaqyah nywywrk؛ 9. alqwaad alaamrah almtalqah balmwdwa mhl alnzaa. wqd sُmm qanwn alawnsytral alnmwdhjy llthkym altjary aldwly lyghty hdhh almsaئl، mn atfaq althkym wtshkyl alhyئah wakhtsasha ela alejra'at waltdkhl alqdaئy walaatraf balhkm wtnfydhh. ([UNCITRAL][6]) ldhlk la ynbghy akhtyar mqr althkym bna'ً ala qrbh aljghrafy aw ankhfad tkalyf alsfr fqt. --- # rabaaً: drwrah akhtyar mؤssah thkym wadhah alshrt althkymy aldhy yqwl: > «ttm tswyah alnzaa an tryq althkym aldwly» qd ykwn qablaً lltfsyr fy bad alanzmah alqanwnyah، wlknh ytrk asئlah mhmah: * mn yayn almhkm؟ * km add almhkmyn؟ * ma alqwaad alejraئyah؟ * madha yhdth edha rfd ahd alatraf altaawn؟ * mn yfsl fy msaئl tayyn almhkmyn؟ * kyf ttm edarah aldawa؟ wlhdha ykwn mn alafdl، fy kthyr mn alaqwd aldwlyah، alehalah ela mؤssah thkym marwfah wqwaadha alejraئyah. fـ ICC، ala sbyl almthal، tnshr shrtaً nmwdhjyaً yns ala ehalah almnazaat ela althkym wfq qwaad ghrfah altjarah aldwlyah، ma tayyn almhkmyn wfq tlk alqwaad. kma thdhr srahah mn an alsyaghah alghamdah qd tؤdy ela adm alyqyn waltakhyr، bl qd tؤthr fy amlyah althkym nfsha. ([ICC - International Chamber of Commerce][3]) wmn thm ymkn an ykwn akhtyar mؤssah althkym wsylah mhmah ltqlyl alnzaa hwl alejra'at. --- # khamsaً: thdyd add almhkmyn yjb thdyd ma edha kan alnzaa synzr fyh: * mhkm wahd؛ am * thlathah mhkmyn. whdha alqrar lh athr mbashr ala altklfah walsraah wtryqah tshkyl alhyئah. wfy alnzaaat dhat alqymah alkbyrah aw altaqyd alfny walqanwny، qd ykwn tshkyl hyئah mn thlathah mhkmyn akthr mla'mah، bynma qd ykwn almhkm alfrd akthr kfa'ah fy alnzaaat alaql taqydaً. almhm hw ala ttrk alsyaghah tnaqdaً byn alaqd wqwaad almؤssah almkhtarah. wtwsy ICC bemkan thdyd add almhkmyn srahah fy alshrt، ma mraaaah alqwaad almؤssyah almkhtarah. ([ICC - International Chamber of Commerce][3]) --- # sadsaً: thdyd lghah althkym qd ykwn alaqd ballghah alarbyah، walmraslat balenjlyzyah، wmqr althkym fy dwlah awrwbyah، wahd alatraf shrkah aasywyah. edha lm thdd allghah، fqd tnsha mnazaah ejraئyah hwl allghah almnasbah. ldhlk yfdl alns srahah ala: > «tkwn lghah althkym hy allghah alenjlyzyah.» aw: > «tkwn lghah althkym hy allghah alarbyah، wyjwz llhyئah qbwl almstndat ballghah alenjlyzyah dwn trjmah ma lm tqrr khlaf dhlk.» wtnzm qwaad ICC msalah allghah، wtsmh llatraf bthdydha، wela thddha alhyئah wfq alzrwf dhat alslah. ([ICC - International Chamber of Commerce][4]) --- # sabaaً: thdyd ntaq alshrt althkymy bdqah mn alafdl an ykwn alshrt wasaaً bma ykfy lyshml almnazaat almrtbtah balaqd، dwn khlq ghmwd. wmn alsyaghat alshaئaah dwlyaً: > «kl nzaa ynsha an hdha alaqd aw ytalq bh، bma fy dhlk ay nzaa bshan wjwdh aw shth aw tfsyrh aw tnfydhh aw enhaئh، yhal nhaئyaً ela althkym...» myzah hdhh alsyaghah anha la thsr althkym fy almnazaat almtalqah bـ«tnfydh alaqd» fqt، bl tshml aydaً almnazaat almtalqah bshth wtfsyrh wenhaئh. whdha mhm bsfah khasah andma yhawl ahd alatraf lahqaً alqwl en alnzaa ytalq bshah alaqd، wbaltaly la ydkhl fy ntaq shrt althkym. --- # thamnaً: astqlal shrt althkym an alaqd alasly mn almbadئ alasasyah fy althkym aldwly an shrt althkym ymkn an tkwn lh shkhsyah qanwnyah mstqlah an alaqd aldhy wrd fyh. whdha yany an altan fy alaqd alasly la yؤdy baldrwrah ela sqwt shrt althkym tlqaئyaً. wyzhr hdha almbda fy alanzmah alhdythah llthkym، bma fyha qanwn alawnsytral alnmwdhjy، aldhy ytnawl astqlal atfaq althkym wmbda akhtsas alhyئah balfsl fy akhtsasha. ([UNCITRAL][6]) wlhdha mn almfyd an ttdmn alsyaghah abarah sryhah mthl: > «yُad atfaq althkym alward fy hdha albnd atfaqaً mstqlaً an baqy ahkam alaqd، wla yؤthr btlan alaqd aw fskhh aw enhaؤh، bdhath، fy shah atfaq althkym.» hdhh alabarah la thl whdha jmya msaئl alqanwn alwajb alttbyq، lknha tazz wdwh eradah alatraf. --- # tasaaً: mbda alakhtsas balakhtsas ynbghy an tkwn alsyaghah mtwafqah ma mbda an hyئah althkym tmlk sltah alfsl fy akhtsasha، bma fy dhlk alaatradat almtalqah bwjwd atfaq althkym aw shth، ma mraaaah alrqabah alqdaئyah alty yqrrha qanwn mqr althkym. whdha yqll mn khtr an ythwl kl aatrad ala alakhtsas ela dawa qdaئyah mstqlah qbl bd' althkym. lkn yjb alantbah ela an **alakhtsas balakhtsas la yany an almhakm alwtnyah tfqd jmya slahyatha**؛ fqanwn mqr althkym qd ymnh alqda' adwaraً maynah، mthl tayyn almhkmyn fy halat mhddah aw alnzr fy tlbat alebtal. --- # aashraً: la tkhlt byn althkym walakhtsas alqdaئy mn alakhta' alsyaghyah an yjma alaqd byn: > «tkhda jmya almnazaat llakhtsas alhsry lmhakm aldwlah X» wfy alwqt nfsh: > «thl jmya almnazaat an tryq althkym fy aldwlah Y». fqd ynsha alsؤal: hl alakhtsas llmhakm am lhyئah althkym؟ shyh an almhkmah qd tkwn mkhtsah bbad almsaئl almrtbtah balthkym، wlkn yjb altmyyz byn: * almhkmah almkhtsah bnzr asl alnzaa؛ * mhakm mqr althkym؛ * almhkmah almkhtsah balmsaadah alqdaئyah؛ * almhkmah almkhtsah btlb ebtal alhkm؛ * almhkmah almkhtsah btnfydh alhkm. walsyaghah aldqyqah yjb an tmna altdakhl ghyr almqswd. --- # alhady ashr: altfkyr fy altnfydh mndh lhzah syaghah alaqd alkhta alakbr hw an yrkz almhamy ala alsؤal: **«ayn snjry althkym؟»** wynsa alsؤal alahm: **«ayn snnfdh alhkm؟»** fatfaqyah nywywrk tlzm aldwl alatraf، mn hyth alasl، balaatraf balahkam althkymyah alajnbyah wtnfydhha wfq shrwt alatfaqyah، lknha ttdmn asbabaً ymkn ala asasha rfd alaatraf aw altnfydh. wmn hdhh alasbab msaئl ttalq bshah atfaq althkym، whqwq aldfaa، wtjawz ntaq alatfaq، wtshkyl alhyئah aw alejra'at، webtal alhkm aw wqfh، fdlaً an bad alaatbarat almrtbtah bqanwn aldwlah almtlwb fyha altnfydh. ([UNCITRAL][7]) wlhdha yjb qbl twqya alaqd thdyd: **ayn twjd aswl altrf almqabl alty ymkn altnfydh alyha؟** thm drasah qanwn tlk aldwlah watfaqyatha wmwqfha mn althkym aldwly. fqd ykwn akhtyar mqr mmtaz llthkym، lkn altnfydh fy aldwlah almsthdfah qd ywajh awaئq khasah. --- # althany ashr: alsyaghah alafdl hy alsyaghah mtaddah altbqat fy alaqwd aldwlyah almhmah، ymkn bna' shrt althkym ala tbqat wadhah: ### altbqah alawla: alaltzam balthkym thdyd an almnazaat thsm nhaئyaً an tryq althkym. ### altbqah althanyah: almؤssah walqwaad thdyd almؤssah althkymyah wqwaadha. ### altbqah althalthah: ntaq almnazaat thdyd an alshrt yshml almnazaat alnashئah an alaqd aw almtalqah bh، bma fy dhlk wjwdh wshth wtfsyrh wenhaؤh. ### altbqah alrabaah: mqr althkym thdyd almdynah waldwlah. ### altbqah alkhamsah: add almhkmyn mhkm wahd aw thlathah. ### altbqah alsadsah: allghah thdyd lghah althkym. ### altbqah alsabaah: alqanwn almwdway thdyd alqanwn aldhy yhkm alaqd. ### altbqah althamnah: qanwn atfaq althkym thdyd alqanwn aldhy yhkm atfaq althkym nfsh. whdhh altbqah alakhyrah hy alty ytm eghfalha kthyraً rghm ahmytha alamlyah. --- # nmwdhj lsyaghah akthr ehkamaً fy aqd tjary dwly، ymkn an tkwn alsyaghah alhyklyah، bhsb zrwf alsfqah walqwanyn dhat alslah، ala alnhw alaaty: > **«kl nzaa aw khlaf aw mtalbah tnsha an hdha alaqd aw ttalq bh، bma fy dhlk wjwdh aw shth aw tfsyrh aw tnfydhh aw alekhlal bh aw enhaؤh aw btlanh، ttm tswyth nhaئyaً an tryq althkym wfq qwaad [asm mؤssah althkym] alsaryah wqt bd' althkym.** > > **ykwn mqr althkym fy [almdynah، aldwlah]، wtkwn lghah althkym [allghah]. wykwn add almhkmyn [mhkmaً wahdaً/thlathah mhkmyn]، wytm tayynhm wfq alqwaad almdhkwrah.** > > **ykhda hdha alaqd whqwq waltzamat alatraf alnashئah anh lqanwn [aldwlah].** > > **wykhda atfaq althkym alward fy hdha albnd lqanwn [aldwlah].** > > **wykwn hkm hyئah althkym nhaئyaً wmlzmaً lltrfyn، wyjwz tlb alaatraf bh wtnfydhh amam ay mhkmah mkhtsah. wyzl atfaq althkym mstqlaً an baqy ahkam alaqd، wla yؤthr btlan alaqd aw fskhh aw enhaؤh، bdhath، fy shah atfaq althkym.»** hdhh lyst «syghah shryah» tslh lkl aqd wkl dwlah؛ bl yjb tkyyfha wfq alqanwn alwajb alttbyq، wmqr althkym، wtbyaah alnshat، waldwlah aw aldwl almtwqa altnfydh fyha. wtwsy ICC nfsha، and tkyyf alshrt alnmwdhjy، bmraaaah almttlbat alelzamyah fy mkan althkym wfy amakn altnfydh almtwqaah. ([ICC - International Chamber of Commerce][3]) --- # althalth ashr: lmadha la ymkn dman altnfydh bnsbah 100%؟ hta afdl shrt thkymy la ysttya an ylghy alqwaad alaamrah aw alnzam alaam aw almttlbat alqanwnyah fy dwlah altnfydh. falmbda alshyh lys: **«kyf aktb shrtaً ydmn altnfydh mhma hdth؟»** bl: **«kyf asmm shrtaً yqll ela aqsa hd mmkn asbab btlanh aw rfd tnfydhh؟»** whdha alfrq mhm jdaً. falmadah alkhamsah mn atfaqyah nywywrk tda halat mhddah ymkn fyha rfd alaatraf waltnfydh، wmnha adm ahlyah alatraf aw adm shah atfaq althkym wfq alqanwn almntbq alyh، wadm tmkyn altrf mn ard dfaah، wtjawz alhyئah hdwd alatfaq، wmkhalfat ttalq btshkyl alhyئah aw alejra'at، edafah ela halat akhra nst alyha alatfaqyah. ([UNCITRAL][7]) --- # alraba ashr: qaئmah fhs llmhamy qbl aatmad alshrt qbl twqya ay aqd dwly ytdmn thkymaً، ynbghy trh alasئlah alaatyah: 1. **ma alqanwn aldhy yhkm alaqd؟** 2. **ma alqanwn aldhy yhkm atfaq althkym؟** 3. **ma mqr althkym؟** 4. **hl aldwlah almkhtarah llthkym ldyha nzam thkym hdyth wfaal؟** 5. **hl aldwlah trf fy atfaqyah nywywrk؟** 6. **ayn twjd aswl altrf alaakhr؟** 7. **hl dwlah altnfydh trf fy atfaqyah nywywrk؟** 8. **hl twjd thfzat aw ealanat khasah tؤthr fy alttbyq؟** 9. **ma mؤssah althkym almkhtarah؟** 10. **ma qwaadha alsaryah؟** 11. **hl alshrt yhdd add almhkmyn؟** 12. **hl yhdd lghah althkym؟** 13. **hl yhdd mqr althkym bdqah؟** 14. **hl ntaq alshrt yshml almnazaat almtalqah bshah alaqd wenhaئh؟** 15. **hl twjd ehalat mtnaqdah ela alqda' walthkym؟** 16. **hl tryqah ebram atfaq althkym tstwfy almttlbat alshklyah llqanwn almhtml alttbyq؟** 17. **hl alashkhas aldhyn wqawa alaqd ymlkwn sltah elzam alshrkah balthkym؟** 18. **hl twjd qwaad aamrah tmna althkym fy mwdwa alnzaa؟** 19. **hl twjd aatbarat ttalq balnzam alaam fy dwlah altnfydh؟** 20. **hl syaghah alshrt mtwafqah ma qwaad almؤssah almkhtarah؟** --- # alkhlasah alshrt althkymy aldwly alnajh lys mjrd jmlah thyl alnzaa ela althkym، wenma hw **tsmym qanwny mtkaml lmsar alnzaa mn lhzah nshwئh hta lhzah tnfydh alhkm**. walqaadah alamlyah alahm hy an yfsl almhamy bwdwh byn arbaah amwr: **qanwn alaqd → qanwn atfaq althkym → qanwn mqr althkym → qanwn dwlah altnfydh.** thm yhdd bwdwh: **almؤssah althkymyah + alqwaad + almqr + add almhkmyn + allghah + ntaq althkym + alqanwn almwdway + qanwn atfaq althkym.** whdhh altryqah la tlghy tnaza alqwanyn bswrah mtlqah، wla tmnh dmanaً mtlqaً lltnfydh؛ lknha tqll msahah alnzaa altfsyry wtmnh almhkmah aw hyئah althkym khrytah qanwnyah wadhah leradah alatraf. wtzl atfaqyah nywywrk wqanwn althkym fy dwlah almqr wqanwn dwlah altnfydh hy aletar aldhy yjb akhtbarh alyh qbl aatmad ay shrt thkymy dwly. wtad atfaqyah nywywrk، bhsb alawnsytral، hjr alzawyah fy nzam althkym altjary aldwly، bynma ywfr qanwn alawnsytral alnmwdhjy etaraً mtkamlaً lmkhtlf mrahl althkym aldwly. ([UNCITRAL][8]) **wbaltaly، fen afdl shrt thkymy lys baldrwrah alatwl، wenma alakthr wdwhaً fy twzya alakhtsasat alqanwnyah wthdyd alqwanyn dhat alslah، walakthr ansjamaً ma qwanyn mqr althkym waldwlah alty yُtwqa tnfydh alhkm fyha.** mqalah baldhka' allastnaay"
         },
         {
           "id": "blog-3",
@@ -1154,7 +1316,9 @@
           "authorRole": "شريك ورئيس قسم الملكية الفكرية والتقنية",
           "categoryTr": "Teknoloji ve yapay zeka",
           "readTimeTr": "5 dakikalık okuma",
-          "authorRoleTr": "Ortak ve Fikri Mülkiyet ve Teknoloji Bölüm Başkanı"
+          "authorRoleTr": "Ortak ve Fikri Mülkiyet ve Teknoloji Bölüm Başkanı",
+          "excerptEn": "Where is the responsibility in the event of a self-generating software bug? And what are the ownership rights of innovative creative outputs with artificial intelligence?",
+          "contentEn": "With the acceleration of the adoption of generative AI systems in sensitive and financial work environments, urgent questions arise about the protection of trade secrets, the risks of infringement of the rights of others, and the conditions for the safe use of data in accordance with modern systems for the protection of personal data."
         }
       ],
       "caseStudies": [
@@ -1172,7 +1336,10 @@
           "outcomeTr": "Şirketin ruhsatlandırılması, ticaret siciline tescili ve yöneticilerin Ticaret Odasına tescili",
           "summaryTr": "Şirket, ticari şirketlerin doğasının gerektirdiği hız ve esneklikle kurulmuştur.",
           "categoryTr": "Şirketler",
-          "highlightTr": "Uluslararası bankacılık temsilciliği"
+          "highlightTr": "Uluslararası bankacılık temsilciliği",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeEn": "Licensing and publicizing the company in the Commercial Register and registering managers in the Chamber of Commerce"
         },
         {
           "id": "case-1",
@@ -1188,7 +1355,10 @@
           "outcomeTr": "Müvekkilimiz lehine, tam tazminat ve avukatlık ücretlerinin karşılandığı bir tahkim kararı kesinleşmiştir.",
           "summaryTr": "Paris'teki Uluslararası Ticaret Odası (ICC) huzurunda imtiyaz ve işletme sözleşmeleri konusundaki bir anlaşmazlıkta küresel bir enerji konsorsiyumunu temsil etmek.",
           "categoryTr": "Uluslararası tahkim",
-          "highlightTr": "Uygulamada gecikme olmaksızın tüm zararlar telafi edildi"
+          "highlightTr": "Uygulamada gecikme olmaksızın tüm zararlar telafi edildi",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeEn": "A final arbitral award in favor of our client with full compensation and coverage of attorneys' fees"
         },
         {
           "id": "case-2",
@@ -1204,7 +1374,10 @@
           "outcomeTr": "Piyasa Otoritesi ve Rekabet Kurumundan alınan tüm düzenleyici onaylar sorunsuz bir şekilde karşılanmaktadır",
           "summaryTr": "Durum tespiti yapın, hisse satın alma sözleşmesi taslağı hazırlayın ve karmaşık birleşme gerekliliklerine uyun.",
           "categoryTr": "Birleşmeler ve satın almalar",
-          "highlightTr": "Anlaşma 90 gün gibi rekor bir sürede tamamlandı"
+          "highlightTr": "Anlaşma 90 gün gibi rekor bir sürede tamamlandı",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeEn": "Completing all regulatory approvals from the Market Authority and the Competition Authority smoothly"
         },
         {
           "id": "case-3",
@@ -1220,7 +1393,10 @@
           "outcomeTr": "Yüksek Mahkeme tarafından mülkiyeti onaylayan ve muhaliflerin iddialarını geçersiz kılan nihai bir karar verilir.",
           "summaryTr": "Ticaret odaları ve Yargıtay önünde iki yıl süren, ikna edici içtihat belgeleri ve argümanlarla desteklenen ayrıntılı bir savunma.",
           "categoryTr": "Gayrimenkul davaları",
-          "highlightTr": "2,4 milyon metrekareye tapu montajı"
+          "highlightTr": "2,4 milyon metrekareye tapu montajı",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeEn": "Issuance of a final judgment by the Supreme Court to confirm the ownership and invalidity of the claims of the litigants"
         }
       ],
       "customDomain": null,
@@ -1248,7 +1424,11 @@
           "clientNameEn": "Good age",
           "clientNameTr": "İyi yaş",
           "clientRoleEn": "Chairman of the Board of Directors",
-          "clientRoleTr": "Yönetim Kurulu Başkanı"
+          "clientRoleTr": "Yönetim Kurulu Başkanı",
+          "authorEn": "",
+          "authorTr": "",
+          "roleEn": "",
+          "roleTr": ""
         },
         {
           "id": "test-1787424337291",
@@ -1268,7 +1448,11 @@
           "clientNameEn": "Nour Jazmati",
           "clientNameTr": "Nur Jazmati",
           "clientRoleEn": "Chairman of the Board of Directors",
-          "clientRoleTr": "Yönetim Kurulu Başkanı"
+          "clientRoleTr": "Yönetim Kurulu Başkanı",
+          "authorEn": "",
+          "authorTr": "",
+          "roleEn": "",
+          "roleTr": ""
         },
         {
           "id": "test-1787423794171",
@@ -1288,7 +1472,11 @@
           "clientNameEn": "Abdul Basit Najm Al-Din",
           "clientNameTr": "Abdul Basit Necmeddin",
           "clientRoleEn": "Chairman of the Board of Directors",
-          "clientRoleTr": "Yönetim Kurulu Başkanı"
+          "clientRoleTr": "Yönetim Kurulu Başkanı",
+          "authorEn": "",
+          "authorTr": "",
+          "roleEn": "",
+          "roleTr": ""
         }
       ],
       "practiceAreas": [
@@ -1524,8 +1712,8 @@
           "iconName": "Scale",
           "shortDesc": "دعاوى تثبيت الزواج .\n\nدعاوى التفريق والطلاق .\n\nدعاوى المخالعة ؟\n\nدعاوى تثبيت الوفاة والفقد .\n\nدعاوى تثبيت النسب .",
           "casesCount": 85,
-          "fullDescEn": "في النظام القضائي السوري، تُنظر معظم دعاوى الأحوال الشخصية، بما فيها التي ذكرتها، في **المحاكم الشرعية**، وتخضع لأحكام **قانون الأحوال الشخصية السوري رقم 59 لعام 1953** . إليك شرح مبسط لكل منها:\n\n### 📜 دعاوى تثبيت الزواج\nتُرفع هذه الدعوى لتوثيق زواج تمّ بطريقة \"عرفية\" (أو ما يُعرف بـ \"كتاب الشيخ\") ولم يُسجّل رسمياً في المحكمة، وذلك لجعله معترفاً به قانوناً وحفظ حقوق الزوجة والأطفال .\n\n*   **الأسباب الشائعة**: يرتفع عدد هذه الدعاوى في أوقات الأزمات والحرب، حيث يلجأ الكثيرون للزواج العرفي لتجنب الإجراءات الرسمية، أو بسبب النزوح وفقدان الأوراق، أو لتوثيق زواج تم في مناطق خارجة عن سيطرة الدولة .\n*   **الهدف**: يهدف تثبيت الزواج إلى ترتيب كافة آثاره القانونية، وفي مقدمتها **تثبيت نسب الأطفال** المولودين من هذا الزواج، وإثبات حق الزوجة في المهر والنفقة .\n*   **شرط أساسي**: لكي يُثبت الزواج، يجب أن يتوفر دليل عليه، وغالباً ما يكون ذلك بإقرار الطرفين أو بشهادة الشهود. في حال إنكار الزوج للزواج أو غيابه، يصبح الإثبات أكثر صعوبة .\n*   **تحذير**: هناك حالات يُلجأ فيها لتزوير تقارير طبية (مثل إثبات حمل كاذب) لتسهيل تثبيت الزواج، وهو أمر غير قانوني ويعرّض مرتكبيه للمساءلة .\n\n### 💔 دعاوى التفريق والطلاق\nهي الدعاوى التي تهدف إلى إنهاء العلاقة الزوجية.\n\n*   **الطلاق**: هو حق أصيل للزوج، ويمكنه التطليق بإرادته المنفردة .\n*   **التفريق**: هو إنهاء الزواج بحكم قضائي، بناءً على طلب الزوجة أو الزوج، لأسباب معينة يقرها القانون مثل الضرر، أو العيوب، أو الشقاق، أو لعدم الإنفاق وغيرها .\n*   **دور المحكمة**: في دعاوى التفريق، قد تعين المحكمة **حكمين** من أهلي الزوجين أو غيرهما، مهمتهما محاولة الإصلاح بينهما قبل إصدار حكم بالتفريق . ويشترط في هذين الحكمين شروط محددة، كأن يكونا مسلمين (إذا كان الزوجان مسلمين)، وعاقلين، وغير متهمين، لضمان النزاهة .\n\n### 🤝 دعاوى المخالعة\nهي طريقة أخرى لإنهاء الزواج، لكنها تقوم على اتفاق ورضا الطرفين، وتُعرّف بأنها \"إزالة قيد الزوجية باتفاق وإرادة الزوجين معاً مقابل عوض مالي تبذله الزوجة للزوج\" .\n\n*   **الطابع الرضائي**: الفرق الجوهري بينها وبين الطلاق هو أنها لا تتم بإرادة الزوج المنفردة، بل بعقد رضائي بينهما، ولا يمكن إتمامها دون موافقة الزوج .\n*   **البدل المالي**: تدفع الزوجة (أو تتنازل عن حقوقها) مقابل موافقة زوجها على إنهاء الزواج. وهذا البدل يمكن أن يكون إعادة جزء من المهر أو مبلغاً مالياً متفقاً عليه .\n*   **حقوق لا تُسقط**: بموجب القانون، يُعتبر باطلاً أي شرط في عقد المخالعة يتضمن التنازل عن **نفقة الأطفال** أو **حضانتهم**، فهذه حقوق للأطفال لا تسقط باتفاق الزوجين .\n\n### 👤 دعاوى تثبيت الوفاة والفقد\nتُرفع هذه الدعاوى لتسجيل وفاة شخص في السجل المدني عندما يتعذر ذلك بالطرق الإدارية العادية (مثل وجود شهادة وفاة طبية) .\n\n*   **دعوى تثبيت الوفاة**: تُقام لإثبات وفاة شخص متأكد من وفاته ولكن لا يملك وثيقة رسمية تثبت ذلك، وغالباً ما تكون بسبب ظروف الحرب أو الكوارث .\n*   **دعوى اعتبار المفقود ميتاً (الفقد)**: تُرفع عندما يغيب شخص وتنقطع أخباره في ظروف تحفها خطورة (كالحرب أو الزلازل)، ويُشترط لرفعها **مرور أربع سنوات** على فقدانه دون أي أثر له .\n*   **الأهمية**: لتثبيت الوفاة أو الفقد أهمية كبرى، فهي تتيح للورثة استلام حقوقهم (كالمعاشات التقاعدية والتركات)، وتسمح لزوجة المتوفى أو المفقود بالزواج مجدداً بعد أن تثبت حالة \"الترمل\" قانونياً .\n\n### 👪 دعاوى تثبيت النسب\nهي دعاوى تُرفع لإثبات صلة النسب بين الطفل وأبيه، خاصة عندما يكون الأب غير مسجّل في وثيقة ميلاد الطفل لأي سبب .\n\n*   **السبب الرئيسي**: يرتبط هذا النوع من الدعاوى ارتباطاً وثيقاً بدعاوى تثبيت الزواج. فإذا كان الزواج غير موثق، لا يمكن تثبيت نسب الأطفال بسهولة .\n*   **الصعوبات**: تشهد سوريا ارتفاعاً كبيراً في عدد هذه الدعاوى، خاصة بسبب حالات الزواج العرفي والنزوح وفقدان الأوراق خلال سنوات الحرب، مما يضع الأطفال في موقف قانوني صعب وقد يحرمهم من حقوقهم في النسب والإرث .",
-          "fullDescTr": "في النظام القضائي السوري، تُنظر معظم دعاوى الأحوال الشخصية، بما فيها التي ذكرتها، في **المحاكم الشرعية**، وتخضع لأحكام **قانون الأحوال الشخصية السوري رقم 59 لعام 1953** . إليك شرح مبسط لكل منها:\n\n### 📜 دعاوى تثبيت الزواج\nتُرفع هذه الدعوى لتوثيق زواج تمّ بطريقة \"عرفية\" (أو ما يُعرف بـ \"كتاب الشيخ\") ولم يُسجّل رسمياً في المحكمة، وذلك لجعله معترفاً به قانوناً وحفظ حقوق الزوجة والأطفال .\n\n*   **الأسباب الشائعة**: يرتفع عدد هذه الدعاوى في أوقات الأزمات والحرب، حيث يلجأ الكثيرون للزواج العرفي لتجنب الإجراءات الرسمية، أو بسبب النزوح وفقدان الأوراق، أو لتوثيق زواج تم في مناطق خارجة عن سيطرة الدولة .\n*   **الهدف**: يهدف تثبيت الزواج إلى ترتيب كافة آثاره القانونية، وفي مقدمتها **تثبيت نسب الأطفال** المولودين من هذا الزواج، وإثبات حق الزوجة في المهر والنفقة .\n*   **شرط أساسي**: لكي يُثبت الزواج، يجب أن يتوفر دليل عليه، وغالباً ما يكون ذلك بإقرار الطرفين أو بشهادة الشهود. في حال إنكار الزوج للزواج أو غيابه، يصبح الإثبات أكثر صعوبة .\n*   **تحذير**: هناك حالات يُلجأ فيها لتزوير تقارير طبية (مثل إثبات حمل كاذب) لتسهيل تثبيت الزواج، وهو أمر غير قانوني ويعرّض مرتكبيه للمساءلة .\n\n### 💔 دعاوى التفريق والطلاق\nهي الدعاوى التي تهدف إلى إنهاء العلاقة الزوجية.\n\n*   **الطلاق**: هو حق أصيل للزوج، ويمكنه التطليق بإرادته المنفردة .\n*   **التفريق**: هو إنهاء الزواج بحكم قضائي، بناءً على طلب الزوجة أو الزوج، لأسباب معينة يقرها القانون مثل الضرر، أو العيوب، أو الشقاق، أو لعدم الإنفاق وغيرها .\n*   **دور المحكمة**: في دعاوى التفريق، قد تعين المحكمة **حكمين** من أهلي الزوجين أو غيرهما، مهمتهما محاولة الإصلاح بينهما قبل إصدار حكم بالتفريق . ويشترط في هذين الحكمين شروط محددة، كأن يكونا مسلمين (إذا كان الزوجان مسلمين)، وعاقلين، وغير متهمين، لضمان النزاهة .\n\n### 🤝 دعاوى المخالعة\nهي طريقة أخرى لإنهاء الزواج، لكنها تقوم على اتفاق ورضا الطرفين، وتُعرّف بأنها \"إزالة قيد الزوجية باتفاق وإرادة الزوجين معاً مقابل عوض مالي تبذله الزوجة للزوج\" .\n\n*   **الطابع الرضائي**: الفرق الجوهري بينها وبين الطلاق هو أنها لا تتم بإرادة الزوج المنفردة، بل بعقد رضائي بينهما، ولا يمكن إتمامها دون موافقة الزوج .\n*   **البدل المالي**: تدفع الزوجة (أو تتنازل عن حقوقها) مقابل موافقة زوجها على إنهاء الزواج. وهذا البدل يمكن أن يكون إعادة جزء من المهر أو مبلغاً مالياً متفقاً عليه .\n*   **حقوق لا تُسقط**: بموجب القانون، يُعتبر باطلاً أي شرط في عقد المخالعة يتضمن التنازل عن **نفقة الأطفال** أو **حضانتهم**، فهذه حقوق للأطفال لا تسقط باتفاق الزوجين .\n\n### 👤 دعاوى تثبيت الوفاة والفقد\nتُرفع هذه الدعاوى لتسجيل وفاة شخص في السجل المدني عندما يتعذر ذلك بالطرق الإدارية العادية (مثل وجود شهادة وفاة طبية) .\n\n*   **دعوى تثبيت الوفاة**: تُقام لإثبات وفاة شخص متأكد من وفاته ولكن لا يملك وثيقة رسمية تثبت ذلك، وغالباً ما تكون بسبب ظروف الحرب أو الكوارث .\n*   **دعوى اعتبار المفقود ميتاً (الفقد)**: تُرفع عندما يغيب شخص وتنقطع أخباره في ظروف تحفها خطورة (كالحرب أو الزلازل)، ويُشترط لرفعها **مرور أربع سنوات** على فقدانه دون أي أثر له .\n*   **الأهمية**: لتثبيت الوفاة أو الفقد أهمية كبرى، فهي تتيح للورثة استلام حقوقهم (كالمعاشات التقاعدية والتركات)، وتسمح لزوجة المتوفى أو المفقود بالزواج مجدداً بعد أن تثبت حالة \"الترمل\" قانونياً .\n\n### 👪 دعاوى تثبيت النسب\nهي دعاوى تُرفع لإثبات صلة النسب بين الطفل وأبيه، خاصة عندما يكون الأب غير مسجّل في وثيقة ميلاد الطفل لأي سبب .\n\n*   **السبب الرئيسي**: يرتبط هذا النوع من الدعاوى ارتباطاً وثيقاً بدعاوى تثبيت الزواج. فإذا كان الزواج غير موثق، لا يمكن تثبيت نسب الأطفال بسهولة .\n*   **الصعوبات**: تشهد سوريا ارتفاعاً كبيراً في عدد هذه الدعاوى، خاصة بسبب حالات الزواج العرفي والنزوح وفقدان الأوراق خلال سنوات الحرب، مما يضع الأطفال في موقف قانوني صعب وقد يحرمهم من حقوقهم في النسب والإرث .",
+          "fullDescEn": "fy alnzam alqdaئy alswry، tُnzr mazm daawa alahwal alshkhsyah، bma fyha alty dhkrtha، fy **almhakm alshrayah**، wtkhda lahkam **qanwn alahwal alshkhsyah alswry rqm 59 laam 1953** . elyk shrh mbst lkl mnha: ### 📜 daawa tthbyt alzwaj tُrfa hdhh aldawa ltwthyq zwaj tmّ btryqah \"arfyah\" (aw ma yُarf bـ \"ktab alshykh\") wlm yُsjّl rsmyaً fy almhkmah، wdhlk ljalh matrfaً bh qanwnaً whfz hqwq alzwjah walatfal . * **alasbab alshaئaah**: yrtfa add hdhh aldaawa fy awqat alazmat walhrb، hyth ylja alkthyrwn llzwaj alarfy ltjnb alejra'at alrsmyah، aw bsbb alnzwh wfqdan alawraq، aw ltwthyq zwaj tm fy mnatq kharjah an sytrah aldwlah . * **alhdf**: yhdf tthbyt alzwaj ela trtyb kafah aatharh alqanwnyah، wfy mqdmtha **tthbyt nsb alatfal** almwlwdyn mn hdha alzwaj، wethbat hq alzwjah fy almhr walnfqah . * **shrt asasy**: lky yُthbt alzwaj، yjb an ytwfr dlyl alyh، wghalbaً ma ykwn dhlk beqrar altrfyn aw bshhadah alshhwd. fy hal enkar alzwj llzwaj aw ghyabh، ysbh alethbat akthr sawbah . * **thdhyr**: hnak halat yُlja fyha ltzwyr tqaryr tbyah (mthl ethbat hml kadhb) ltshyl tthbyt alzwaj، whw amr ghyr qanwny wyarّd mrtkbyh llmsa'lah . ### 💔 daawa altfryq waltlaq hy aldaawa alty thdf ela enha' alalaqah alzwjyah. * **altlaq**: hw hq asyl llzwj، wymknh alttlyq beradth almnfrdah . * **altfryq**: hw enha' alzwaj bhkm qdaئy، bna'ً ala tlb alzwjah aw alzwj، lasbab maynah yqrha alqanwn mthl aldrr، aw alaywb، aw alshqaq، aw ladm alenfaq wghyrha . * **dwr almhkmah**: fy daawa altfryq، qd tayn almhkmah **hkmyn** mn ahly alzwjyn aw ghyrhma، mhmthma mhawlah aleslah bynhma qbl esdar hkm baltfryq . wyshtrt fy hdhyn alhkmyn shrwt mhddah، kan ykwna mslmyn (edha kan alzwjan mslmyn)، waaqlyn، wghyr mthmyn، ldman alnzahah . ### 🤝 daawa almkhalaah hy tryqah akhra lenha' alzwaj، lknha tqwm ala atfaq wrda altrfyn، wtُarّf banha \"ezalah qyd alzwjyah batfaq weradah alzwjyn maaً mqabl awd maly tbdhlh alzwjah llzwj\" . * **altaba alrdaئy**: alfrq aljwhry bynha wbyn altlaq hw anha la ttm beradah alzwj almnfrdah، bl baqd rdaئy bynhma، wla ymkn etmamha dwn mwafqah alzwj . * **albdl almaly**: tdfa alzwjah (aw ttnazl an hqwqha) mqabl mwafqah zwjha ala enha' alzwaj. whdha albdl ymkn an ykwn eaadah jz' mn almhr aw mblghaً malyaً mtfqaً alyh . * **hqwq la tُsqt**: bmwjb alqanwn، yُatbr batlaً ay shrt fy aqd almkhalaah ytdmn altnazl an **nfqah alatfal** aw **hdanthm**، fhdhh hqwq llatfal la tsqt batfaq alzwjyn . ### 👤 daawa tthbyt alwfaah walfqd tُrfa hdhh aldaawa ltsjyl wfaah shkhs fy alsjl almdny andma ytadhr dhlk baltrq aledaryah alaadyah (mthl wjwd shhadah wfaah tbyah) . * **dawa tthbyt alwfaah**: tُqam lethbat wfaah shkhs mtakd mn wfath wlkn la ymlk wthyqah rsmyah tthbt dhlk، wghalbaً ma tkwn bsbb zrwf alhrb aw alkwarth . * **dawa aatbar almfqwd mytaً (alfqd)**: tُrfa andma yghyb shkhs wtnqta akhbarh fy zrwf thfha khtwrah (kalhrb aw alzlazl)، wyُshtrt lrfaha **mrwr arba snwat** ala fqdanh dwn ay athr lh . * **alahmyah**: ltthbyt alwfaah aw alfqd ahmyah kbra، fhy ttyh llwrthah astlam hqwqhm (kalmaashat altqaadyah waltrkat)، wtsmh lzwjah almtwfa aw almfqwd balzwaj mjddaً bad an tthbt halah \"altrml\" qanwnyaً . ### 👪 daawa tthbyt alnsb hy daawa tُrfa lethbat slah alnsb byn altfl wabyh، khasah andma ykwn alab ghyr msjّl fy wthyqah mylad altfl lay sbb . * **alsbb alrئysy**: yrtbt hdha alnwa mn aldaawa artbataً wthyqaً bdaawa tthbyt alzwaj. fedha kan alzwaj ghyr mwthq، la ymkn tthbyt nsb alatfal bshwlah . * **alsawbat**: tshhd swrya artfaaaً kbyraً fy add hdhh aldaawa، khasah bsbb halat alzwaj alarfy walnzwh wfqdan alawraq khlal snwat alhrb، mma yda alatfal fy mwqf qanwny sab wqd yhrmhm mn hqwqhm fy alnsb walerth .",
+          "fullDescTr": "fy alnzam alqdaئy alswry، tُnzr mazm daawa alahwal alşkhsyah، bma fyha alty dhkrtha، fy **almhakm alşrayah**، wtkhda lahkam **qanwn alahwal alşkhsyah alswry rqm 59 laam 1953** . elyk şrh mbst lkl mnha: ### 📜 daawa tthbyt alzwac tُrfa hdhh aldawa ltwthyq zwac tmّ btryqah \"arfyah\" (aw ma yُarf bـ \"ktab alşykh\") wlm yُscّl rsmyaً fy almhkmah، wdhlk lcalh matrfaً bh qanwnaً whfz hqwq alzwcah walatfal . * **alasbab alşaئaah**: yrtfa add hdhh aldaawa fy awqat alazmat walhrb، hyth ylca alkthyrwn llzwac alarfy ltcnb alecra'at alrsmyah، aw bsbb alnzwh wfqdan alawraq، aw ltwthyq zwac tm fy mnatq kharcah an sytrah aldwlah . * **alhdf**: yhdf tthbyt alzwac ela trtyb kafah aatharh alqanwnyah، wfy mqdmtha **tthbyt nsb alatfal** almwlwdyn mn hdha alzwac، wethbat hq alzwcah fy almhr walnfqah . * **şrt asasy**: lky yُthbt alzwac، ycb an ytwfr dlyl alyh، wghalbaً ma ykwn dhlk beqrar altrfyn aw bşhadah alşhwd. fy hal enkar alzwc llzwac aw ghyabh، ysbh alethbat akthr sawbah . * **thdhyr**: hnak halat yُlca fyha ltzwyr tqaryr tbyah (mthl ethbat hml kadhb) ltshyl tthbyt alzwac، whw amr ghyr qanwny wyarّd mrtkbyh llmsa'lah . ### 💔 daawa altfryq waltlaq hy aldaawa alty thdf ela enha' alalaqah alzwcyah. * **altlaq**: hw hq asyl llzwc، wymknh alttlyq beradth almnfrdah . * **altfryq**: hw enha' alzwac bhkm qdaئy، bna'ً ala tlb alzwcah aw alzwc، lasbab maynah yqrha alqanwn mthl aldrr، aw alaywb، aw alşqaq، aw ladm alenfaq wghyrha . * **dwr almhkmah**: fy daawa altfryq، qd tayn almhkmah **hkmyn** mn ahly alzwcyn aw ghyrhma، mhmthma mhawlah aleslah bynhma qbl esdar hkm baltfryq . wyştrt fy hdhyn alhkmyn şrwt mhddah، kan ykwna mslmyn (edha kan alzwcan mslmyn)، waaqlyn، wghyr mthmyn، ldman alnzahah . ### 🤝 daawa almkhalaah hy tryqah akhra lenha' alzwac، lknha tqwm ala atfaq wrda altrfyn، wtُarّf banha \"ezalah qyd alzwcyah batfaq weradah alzwcyn maaً mqabl awd maly tbdhlh alzwcah llzwc\" . * **altaba alrdaئy**: alfrq alcwhry bynha wbyn altlaq hw anha la ttm beradah alzwc almnfrdah، bl baqd rdaئy bynhma، wla ymkn etmamha dwn mwafqah alzwc . * **albdl almaly**: tdfa alzwcah (aw ttnazl an hqwqha) mqabl mwafqah zwcha ala enha' alzwac. whdha albdl ymkn an ykwn eaadah cz' mn almhr aw mblghaً malyaً mtfqaً alyh . * **hqwq la tُsqt**: bmwcb alqanwn، yُatbr batlaً ay şrt fy aqd almkhalaah ytdmn altnazl an **nfqah alatfal** aw **hdanthm**، fhdhh hqwq llatfal la tsqt batfaq alzwcyn . ### 👤 daawa tthbyt alwfaah walfqd tُrfa hdhh aldaawa ltscyl wfaah şkhs fy alscl almdny andma ytadhr dhlk baltrq aledaryah alaadyah (mthl wcwd şhadah wfaah tbyah) . * **dawa tthbyt alwfaah**: tُqam lethbat wfaah şkhs mtakd mn wfath wlkn la ymlk wthyqah rsmyah tthbt dhlk، wghalbaً ma tkwn bsbb zrwf alhrb aw alkwarth . * **dawa aatbar almfqwd mytaً (alfqd)**: tُrfa andma yghyb şkhs wtnqta akhbarh fy zrwf thfha khtwrah (kalhrb aw alzlazl)، wyُştrt lrfaha **mrwr arba snwat** ala fqdanh dwn ay athr lh . * **alahmyah**: ltthbyt alwfaah aw alfqd ahmyah kbra، fhy ttyh llwrthah astlam hqwqhm (kalmaaşat altqaadyah waltrkat)، wtsmh lzwcah almtwfa aw almfqwd balzwac mcddaً bad an tthbt halah \"altrml\" qanwnyaً . ### 👪 daawa tthbyt alnsb hy daawa tُrfa lethbat slah alnsb byn altfl wabyh، khasah andma ykwn alab ghyr mscّl fy wthyqah mylad altfl lay sbb . * **alsbb alrئysy**: yrtbt hdha alnwa mn aldaawa artbataً wthyqaً bdaawa tthbyt alzwac. fedha kan alzwac ghyr mwthq، la ymkn tthbyt nsb alatfal bshwlah . * **alsawbat**: tşhd swrya artfaaaً kbyraً fy add hdhh aldaawa، khasah bsbb halat alzwac alarfy walnzwh wfqdan alawraq khlal snwat alhrb، mma yda alatfal fy mwqf qanwny sab wqd yhrmhm mn hqwqhm fy alnsb walerth .",
           "keyServices": [
             "صياغة وتدقيق العقود والاتفاقيات",
             "التمثيل أمام الهيئات القضائية والتحكيمية",
@@ -1555,14 +1743,16 @@
       "status": "active",
       "planTier": "professional",
       "isSiteActive": true
-    }
+    },
+    "taglineTr": "Şura Hukuk Bürosu ve Hukuki Danışmanlık",
+    "cityTr": "Halep"
   },
   {
     "id": "6e40d0c0-15a0-4be0-a3e0-15a027426e40",
     "slug": "law-firm-counsel-1",
     "nameAr": "المحامي عبد الرحمن نحوي",
     "nameEn": "Lawyer Abdul Rahman Nahwi",
-    "nameTr": "",
+    "nameTr": "Avukat Abdurrahman Nahvi",
     "taglineAr": "خبرة قضائية عريقة واستشارات قانونية استراتيجية متميزة",
     "taglineEn": "Distinguished Legal Consultancy & Judicial Representation",
     "cityAr": "حلب",
@@ -1628,7 +1818,18 @@
           "linkedin": "https://linkedin.com",
           "twitter": "https://twitter.com",
           "youtube": "https://youtube.com"
-        }
+        },
+        "firmNameTr": "Avukat Abdurrahman Nahvi",
+        "sloganTr": "Uzun süredir devam eden adli deneyim ve olağanüstü stratejik hukuki danışmanlık",
+        "subSloganTr": "Mahkemelerde 25 yıllık deneyim",
+        "aboutTextTr": "Avukat Abdul Rahman Nahwi — Mahkemelerde 25 yıllık deneyim",
+        "aboutHeadingEn": "",
+        "aboutHeadingTr": "",
+        "aboutBadgeEn": "",
+        "aboutBadgeTr": "",
+        "addressTr": "GENEL MERKEZ",
+        "cityTr": "Halep",
+        "workingHoursTr": "Pazar - Perşembe: 09:00 - 18:00"
       },
       "partners": [
         {
@@ -1661,7 +1862,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Avukat Abdurrahman Nahvi",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Mahkemelerde 25 yıllık deneyim",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         }
       ],
       "practiceAreas": [
@@ -1687,7 +1896,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Ceza Davaları ve Savunma",
+          "shortDescTr": "Ceza davalarında uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Ceza davaları alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         }
       ],
       "offices": [
@@ -1702,7 +1914,13 @@
           "phone": "0958932922",
           "email": "avocat.nahwi@gmail.com",
           "mapEmbedUrl": "",
-          "isHeadquarter": true
+          "isHeadquarter": true,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Halep",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "caseStudies": [
@@ -1718,7 +1936,11 @@
           "summaryEn": "اتهمت بقتل والدها واولادها وزوجها ....وبرأتها المحكمة",
           "year": "2026",
           "value": "250000000",
-          "highlight": "حكم نهائي لصالح الموكل"
+          "highlight": "حكم نهائي لصالح الموكل",
+          "titleTr": "Mukalla Fadila Al - Mahmoud'un beraatine karar verildi",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Müvekkil lehine kesin hüküm"
         }
       ],
       "blogPosts": [
@@ -1730,9 +1952,9 @@
           "category": "قانون الشركات والاستثمار",
           "categoryEn": "Laws & Regulations",
           "excerpt": "أصل البراءة في المتهم\n\nيُعد مبدأ البراءة من الحقوق التي يحميها الدستور والقانون، ويقصد به أن المتهم يُنظر إليه بأنه بريء ويعامل معاملة البريء في أي اتهام موجّه ...",
-          "excerptEn": "",
+          "excerptEn": "Origin of innocence in the accused\n\nThe principle of innocence is one of the rights protected by the Constitution and the law, and it means that the accused is considered innocent and is treated as innocent in any accusation...",
           "content": "أصل البراءة في المتهم\n\nيُعد مبدأ البراءة من الحقوق التي يحميها الدستور والقانون، ويقصد به أن المتهم يُنظر إليه بأنه بريء ويعامل معاملة البريء في أي اتهام موجّه إليه، بدءاً من إجراءات التحقيق معه من الجهات المختصة وإلى حين ثبوت صحة ذلك الاتهام المسند إليه بصدور حكم بالإدانة من محكمة جزائية مختصة.\nلقد نصت على هذا المبدأ العديد من الدساتير الأجنبية والعربية، ابتداءً نص عليه الإعلان العالمي لحقوق الإنسان لسنة ١٩٤٨، حيث جاء في المادة (١/١١) منه، بأن (كل شخص متهم بجريمة يعتبر بريئاً حتى تثبت إدانته قانوناً بمحاكمة علنية تؤمن له فيها الضمانات للدفاع عنه)، وقد أخذ بهذا المبدأ الدستور العراقي لسنة ٢٠٠٥ حيث جاء في المادة (١٩/خامساً) بأن (المتهم بريء حتى تثبت إدانته في محاكمة قانونية عادلة...) كما نص عليه أيضاً الدستور المصري لعام ٢٠١٤ في المادة (٩٦) منه، حيث جاء فيها بأن (المتهم بريء حتى تثبت إدانته في محاكمة قانونية عادلة تضمن له فيها حق الدفاع...)\nلذلك نرى بأن المقصود من أصل البراءة هو معاملة من وجّه إليه اتهام بارتكاب جريمة من الجرائم التي نص عليها قانون العقوبات باعتباره بريئاً حتى يثبت اتهامه بأدلة قانونية قاطعة من قِبَل محكمة مختصة مستقلة محايدة فهي الفاصل في البقاء على مبدأ أصل البراءة أو نقض هذا المبدأ بحكم جزائي صادر بالإدانة، ويمكن القول هنا بأنه ما دام أن الأصل في المتهم البراءة فإن عبء إثبات خلاف ذلك يقع على من يدعي العكس، وقد قال البعض بأن هذا المبدأ ليس الهدف منه حماية المذنبين، وإنما الهدف منه إبعاد الإنسان البريء عن مخاطر الاتهام، كما قيل عنه بأنه قرينة قانونية.\nومن أهم آثار هذا المبدأ قاعدة قانونية مهمة ألا وهي قاعدة (الشك يفسر لصالح المتهم) وتعني أي أن الحكم يجب أن يبنى على الجزم واليقين لا على الظن والاحتمال، لذلك فإن كل شك في الاقتناع بالإدانة يحتم على القاضي الجنائي أو المحكمة أن تفسره لصالح المتهم كون الأصل في الأخير البراءة.\nإذاً فإن مبدأ أصل البراءة مبدأ دستوري كفلته الدساتير والمواثيق الدولية لحماية الحرية الشخصية كما أنه مبدأ سيادي يهيمن على مراحل الإجراءات الجزائية كافة، لذلك قيل بأن هذا المبدأ لا يتأثر بجسامة الجريمة أو حجم الأدلة مادام لم يصدر حكم بات بالإدانة.\nإلا أن الأخذ بهذا المبدأ لا يعني عدم إمكانية قيام السلطات المختصة باتخاذ بعض الإجراءات الجزائية التي تطلبها القانون عند إسناد تهمة أو جريمة ما للمتهم، مثل إجراءات (القبض والتفتيش والحبس الاحتياطي) حيث يقع على تلك السلطات تحقيق التوازن بين مصلحة المجتمع وبين حقوق وحريات الأفراد وذلك من خلال احترام مبدأ  أصل البراءة في المتهم.\nنستخلص من ذلك :-\n١. إن مبدأ أصل البراءة حق دستوري وهو حق من حقوق الإنسان.\n٢. يقع على الدول أن تحترم مبدأ أصل البراءة في المتهم أو ما يسمى بقرينة البراءة في كل إجراء تتخذه الدولة بحق المتهم سواء في مرحلة جمع الأدلة مروراً بالتحقيق والمحاكمة.\n٣. إن الإجراءات الجزائية كالقبض والتفتيش والحبس الاحتياطي المشروعة قانوناً واجبة التطبيق.\n٤. لا بد من تحقيق التوازن بين مصلحة المجتمع في معاقبة المجرم وبين حقوق وحريات الفرد منعاً من حصول النزاعات.\n٥. يعد الحكم الصادر بالبراءة حكم كاشف وليس منشأ.           \n",
-          "contentEn": "أصل البراءة في المتهم\n\nيُعد مبدأ البراءة من الحقوق التي يحميها الدستور والقانون، ويقصد به أن المتهم يُنظر إليه بأنه بريء ويعامل معاملة البريء في أي اتهام موجّه إليه، بدءاً من إجراءات التحقيق معه من الجهات المختصة وإلى حين ثبوت صحة ذلك الاتهام المسند إليه بصدور حكم بالإدانة من محكمة جزائية مختصة.\nلقد نصت على هذا المبدأ العديد من الدساتير الأجنبية والعربية، ابتداءً نص عليه الإعلان العالمي لحقوق الإنسان لسنة ١٩٤٨، حيث جاء في المادة (١/١١) منه، بأن (كل شخص متهم بجريمة يعتبر بريئاً حتى تثبت إدانته قانوناً بمحاكمة علنية تؤمن له فيها الضمانات للدفاع عنه)، وقد أخذ بهذا المبدأ الدستور العراقي لسنة ٢٠٠٥ حيث جاء في المادة (١٩/خامساً) بأن (المتهم بريء حتى تثبت إدانته في محاكمة قانونية عادلة...) كما نص عليه أيضاً الدستور المصري لعام ٢٠١٤ في المادة (٩٦) منه، حيث جاء فيها بأن (المتهم بريء حتى تثبت إدانته في محاكمة قانونية عادلة تضمن له فيها حق الدفاع...)\nلذلك نرى بأن المقصود من أصل البراءة هو معاملة من وجّه إليه اتهام بارتكاب جريمة من الجرائم التي نص عليها قانون العقوبات باعتباره بريئاً حتى يثبت اتهامه بأدلة قانونية قاطعة من قِبَل محكمة مختصة مستقلة محايدة فهي الفاصل في البقاء على مبدأ أصل البراءة أو نقض هذا المبدأ بحكم جزائي صادر بالإدانة، ويمكن القول هنا بأنه ما دام أن الأصل في المتهم البراءة فإن عبء إثبات خلاف ذلك يقع على من يدعي العكس، وقد قال البعض بأن هذا المبدأ ليس الهدف منه حماية المذنبين، وإنما الهدف منه إبعاد الإنسان البريء عن مخاطر الاتهام، كما قيل عنه بأنه قرينة قانونية.\nومن أهم آثار هذا المبدأ قاعدة قانونية مهمة ألا وهي قاعدة (الشك يفسر لصالح المتهم) وتعني أي أن الحكم يجب أن يبنى على الجزم واليقين لا على الظن والاحتمال، لذلك فإن كل شك في الاقتناع بالإدانة يحتم على القاضي الجنائي أو المحكمة أن تفسره لصالح المتهم كون الأصل في الأخير البراءة.\nإذاً فإن مبدأ أصل البراءة مبدأ دستوري كفلته الدساتير والمواثيق الدولية لحماية الحرية الشخصية كما أنه مبدأ سيادي يهيمن على مراحل الإجراءات الجزائية كافة، لذلك قيل بأن هذا المبدأ لا يتأثر بجسامة الجريمة أو حجم الأدلة مادام لم يصدر حكم بات بالإدانة.\nإلا أن الأخذ بهذا المبدأ لا يعني عدم إمكانية قيام السلطات المختصة باتخاذ بعض الإجراءات الجزائية التي تطلبها القانون عند إسناد تهمة أو جريمة ما للمتهم، مثل إجراءات (القبض والتفتيش والحبس الاحتياطي) حيث يقع على تلك السلطات تحقيق التوازن بين مصلحة المجتمع وبين حقوق وحريات الأفراد وذلك من خلال احترام مبدأ  أصل البراءة في المتهم.\nنستخلص من ذلك :-\n١. إن مبدأ أصل البراءة حق دستوري وهو حق من حقوق الإنسان.\n٢. يقع على الدول أن تحترم مبدأ أصل البراءة في المتهم أو ما يسمى بقرينة البراءة في كل إجراء تتخذه الدولة بحق المتهم سواء في مرحلة جمع الأدلة مروراً بالتحقيق والمحاكمة.\n٣. إن الإجراءات الجزائية كالقبض والتفتيش والحبس الاحتياطي المشروعة قانوناً واجبة التطبيق.\n٤. لا بد من تحقيق التوازن بين مصلحة المجتمع في معاقبة المجرم وبين حقوق وحريات الفرد منعاً من حصول النزاعات.\n٥. يعد الحكم الصادر بالبراءة حكم كاشف وليس منشأ.           \n",
+          "contentEn": "asl albra'ah fy almthm yُad mbda albra'ah mn alhqwq alty yhmyha aldstwr walqanwn، wyqsd bh an almthm yُnzr elyh banh bry' wyaaml maamlah albry' fy ay atham mwjّh elyh، bd'aً mn ejra'at althqyq mah mn aljhat almkhtsah wela hyn thbwt shah dhlk alatham almsnd elyh bsdwr hkm baledanah mn mhkmah jzaئyah mkhtsah. lqd nst ala hdha almbda aladyd mn aldsatyr alajnbyah walarbyah، abtda'ً ns alyh alealan alaalmy lhqwq alensan lsnah 1948، hyth ja' fy almadah (1/11) mnh، ban (kl shkhs mthm bjrymah yatbr bryئaً hta tthbt edanth qanwnaً bmhakmah alnyah tؤmn lh fyha aldmanat lldfaa anh)، wqd akhdh bhdha almbda aldstwr alaraqy lsnah 2005 hyth ja' fy almadah (19/khamsaً) ban (almthm bry' hta tthbt edanth fy mhakmah qanwnyah aadlah...) kma ns alyh aydaً aldstwr almsry laam 2014 fy almadah (96) mnh، hyth ja' fyha ban (almthm bry' hta tthbt edanth fy mhakmah qanwnyah aadlah tdmn lh fyha hq aldfaa...) ldhlk nra ban almqswd mn asl albra'ah hw maamlah mn wjّh elyh atham bartkab jrymah mn aljraئm alty ns alyha qanwn alaqwbat baatbarh bryئaً hta ythbt athamh badlah qanwnyah qataah mn qِbَl mhkmah mkhtsah mstqlah mhaydah fhy alfasl fy albqa' ala mbda asl albra'ah aw nqd hdha almbda bhkm jzaئy sadr baledanah، wymkn alqwl hna banh ma dam an alasl fy almthm albra'ah fen ab' ethbat khlaf dhlk yqa ala mn yday alaks، wqd qal albad ban hdha almbda lys alhdf mnh hmayah almdhnbyn، wenma alhdf mnh ebaad alensan albry' an mkhatr alatham، kma qyl anh banh qrynah qanwnyah. wmn ahm aathar hdha almbda qaadah qanwnyah mhmah ala why qaadah (alshk yfsr lsalh almthm) wtany ay an alhkm yjb an ybna ala aljzm walyqyn la ala alzn walahtmal، ldhlk fen kl shk fy alaqtnaa baledanah yhtm ala alqady aljnaئy aw almhkmah an tfsrh lsalh almthm kwn alasl fy alakhyr albra'ah. edhaً fen mbda asl albra'ah mbda dstwry kflth aldsatyr walmwathyq aldwlyah lhmayah alhryah alshkhsyah kma anh mbda syady yhymn ala mrahl alejra'at aljzaئyah kafah، ldhlk qyl ban hdha almbda la ytathr bjsamah aljrymah aw hjm aladlah madam lm ysdr hkm bat baledanah. ela an alakhdh bhdha almbda la yany adm emkanyah qyam alsltat almkhtsah batkhadh bad alejra'at aljzaئyah alty ttlbha alqanwn and esnad thmah aw jrymah ma llmthm، mthl ejra'at (alqbd waltftysh walhbs alahtyaty) hyth yqa ala tlk alsltat thqyq altwazn byn mslhah almjtma wbyn hqwq whryat alafrad wdhlk mn khlal ahtram mbda asl albra'ah fy almthm. nstkhls mn dhlk :- 1. en mbda asl albra'ah hq dstwry whw hq mn hqwq alensan. 2. yqa ala aldwl an thtrm mbda asl albra'ah fy almthm aw ma ysma bqrynah albra'ah fy kl ejra' ttkhdhh aldwlah bhq almthm swa' fy mrhlah jma aladlah mrwraً balthqyq walmhakmah. 3. en alejra'at aljzaئyah kalqbd waltftysh walhbs alahtyaty almshrwaah qanwnaً wajbah alttbyq. 4. la bd mn thqyq altwazn byn mslhah almjtma fy maaqbah almjrm wbyn hqwq whryat alfrd mnaaً mn hswl alnzaaat. 5. yad alhkm alsadr balbra'ah hkm kashf wlys mnsha.",
           "authorName": "المحامي عبد الرحمن نحوي",
           "authorRole": "محامٍ ومستشار قانوني",
           "date": "2026-09-11",
@@ -1741,7 +1963,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "قانون الشركات والاستثمار"
-          ]
+          ],
+          "titleTr": "Gerçek Masumiyet",
+          "excerptTr": "Sanıkta masumiyetin kökeni\n\nMasumiyet ilkesi, Anayasa ve kanunla korunan haklardan biridir ve sanığın masum sayılması ve herhangi bir suçlamada masum muamelesi görmesi anlamına gelir...",
+          "contentTr": "asl albra'ah fy almthm yُad mbda albra'ah mn alhqwq alty yhmyha aldstwr walqanwn، wyqsd bh an almthm yُnzr elyh banh bry' wyaaml maamlah albry' fy ay atham mwcّh elyh، bd'aً mn ecra'at althqyq mah mn alchat almkhtsah wela hyn thbwt shah dhlk alatham almsnd elyh bsdwr hkm baledanah mn mhkmah czaئyah mkhtsah. lqd nst ala hdha almbda aladyd mn aldsatyr alacnbyah walarbyah، abtda'ً ns alyh alealan alaalmy lhqwq alensan lsnah 1948، hyth ca' fy almadah (1/11) mnh، ban (kl şkhs mthm bcrymah yatbr bryئaً hta tthbt edanth qanwnaً bmhakmah alnyah tؤmn lh fyha aldmanat lldfaa anh)، wqd akhdh bhdha almbda aldstwr alaraqy lsnah 2005 hyth ca' fy almadah (19/khamsaً) ban (almthm bry' hta tthbt edanth fy mhakmah qanwnyah aadlah...) kma ns alyh aydaً aldstwr almsry laam 2014 fy almadah (96) mnh، hyth ca' fyha ban (almthm bry' hta tthbt edanth fy mhakmah qanwnyah aadlah tdmn lh fyha hq aldfaa...) ldhlk nra ban almqswd mn asl albra'ah hw maamlah mn wcّh elyh atham bartkab crymah mn alcraئm alty ns alyha qanwn alaqwbat baatbarh bryئaً hta ythbt athamh badlah qanwnyah qataah mn qِbَl mhkmah mkhtsah mstqlah mhaydah fhy alfasl fy albqa' ala mbda asl albra'ah aw nqd hdha almbda bhkm czaئy sadr baledanah، wymkn alqwl hna banh ma dam an alasl fy almthm albra'ah fen ab' ethbat khlaf dhlk yqa ala mn yday alaks، wqd qal albad ban hdha almbda lys alhdf mnh hmayah almdhnbyn، wenma alhdf mnh ebaad alensan albry' an mkhatr alatham، kma qyl anh banh qrynah qanwnyah. wmn ahm aathar hdha almbda qaadah qanwnyah mhmah ala why qaadah (alşk yfsr lsalh almthm) wtany ay an alhkm ycb an ybna ala alczm walyqyn la ala alzn walahtmal، ldhlk fen kl şk fy alaqtnaa baledanah yhtm ala alqady alcnaئy aw almhkmah an tfsrh lsalh almthm kwn alasl fy alakhyr albra'ah. edhaً fen mbda asl albra'ah mbda dstwry kflth aldsatyr walmwathyq aldwlyah lhmayah alhryah alşkhsyah kma anh mbda syady yhymn ala mrahl alecra'at alczaئyah kafah، ldhlk qyl ban hdha almbda la ytathr bcsamah alcrymah aw hcm aladlah madam lm ysdr hkm bat baledanah. ela an alakhdh bhdha almbda la yany adm emkanyah qyam alsltat almkhtsah batkhadh bad alecra'at alczaئyah alty ttlbha alqanwn and esnad thmah aw crymah ma llmthm، mthl ecra'at (alqbd waltftyş walhbs alahtyaty) hyth yqa ala tlk alsltat thqyq altwazn byn mslhah almctma wbyn hqwq whryat alafrad wdhlk mn khlal ahtram mbda asl albra'ah fy almthm. nstkhls mn dhlk :- 1. en mbda asl albra'ah hq dstwry whw hq mn hqwq alensan. 2. yqa ala aldwl an thtrm mbda asl albra'ah fy almthm aw ma ysma bqrynah albra'ah fy kl ecra' ttkhdhh aldwlah bhq almthm swa' fy mrhlah cma aladlah mrwraً balthqyq walmhakmah. 3. en alecra'at alczaئyah kalqbd waltftyş walhbs alahtyaty almşrwaah qanwnaً wacbah alttbyq. 4. la bd mn thqyq altwazn byn mslhah almctma fy maaqbah almcrm wbyn hqwq whryat alfrd mnaaً mn hswl alnzaaat. 5. yad alhkm alsadr balbra'ah hkm kaşf wlys mnşa."
         }
       ],
       "testimonials": [],
@@ -1761,14 +1986,16 @@
       "planNameEn": "Lawyer Standard Annual Plan",
       "isSiteActive": true,
       "paymentStatus": "paid"
-    }
+    },
+    "taglineTr": "Uzun süredir devam eden adli deneyim ve olağanüstü stratejik hukuki danışmanlık",
+    "cityTr": "Halep"
   },
   {
     "id": "d1976d46-8b6e-481a-9914-9c3759984676",
     "slug": "mktb-almhamy-ahmd-jafr",
     "nameAr": "مكتب المحامي أحمد جعفر",
-    "nameEn": "مكتب المحامي أحمد جعفر",
-    "nameTr": "",
+    "nameEn": "Law Office of Attorney Ahmad Jaafar",
+    "nameTr": "Avukat Ahmed Cafer Hukuk Bürosu",
     "taglineAr": "حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية",
     "taglineEn": "Distinguished Legal Consultancy & Judicial Representation",
     "cityAr": "الرياض",
@@ -1804,7 +2031,7 @@
       "isDefaultPublic": false,
       "settings": {
         "firmNameAr": "مكتب المحامي أحمد جعفر",
-        "firmNameEn": "مكتب المحامي أحمد جعفر",
+        "firmNameEn": "Law Office of Attorney Ahmad Jaafar",
         "sloganAr": "حماية حقوقكم، أولويتنا وصناعة ريادتكم القانونية",
         "sloganEn": "Distinguished Legal Consultancy & Judicial Representation",
         "subSloganAr": "خبرة ٢٥ عاما ",
@@ -1834,7 +2061,18 @@
           "linkedin": "https://linkedin.com",
           "twitter": "https://twitter.com",
           "youtube": "https://youtube.com"
-        }
+        },
+        "firmNameTr": "Avukat Ahmed Cafer Hukuk Bürosu",
+        "sloganTr": "Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir",
+        "subSloganTr": "25 yıllık deneyim",
+        "aboutTextTr": "Avukat Ahmed Jaafar Ofisi — 25 yıllık deneyim",
+        "aboutHeadingEn": "",
+        "aboutHeadingTr": "",
+        "aboutBadgeEn": "",
+        "aboutBadgeTr": "",
+        "addressTr": "Krallık Kulesi, 42. Kat, Kral Fahad Yolu, Olaya Bölgesi",
+        "cityTr": "Riyad",
+        "workingHoursTr": "Pazar - Perşembe: 09:00 - 18:00"
       },
       "partners": [
         {
@@ -1867,7 +2105,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Avukat Ahmed Cafer",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "25 yıllık deneyim",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         }
       ],
       "practiceAreas": [
@@ -1893,7 +2139,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Şirketler Hukuku, Birleşme ve Devralmalar",
+          "shortDescTr": "Şirketler hukuku, birleşme ve devralmalar konusunda uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Şirketler hukuku, birleşme ve devralmalar alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "951483db-0f32-4a26-a447-0f32e9179514",
@@ -1917,7 +2166,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Ticari Tahkim ve Uluslararası Uyuşmazlıklar",
+          "shortDescTr": "Ticari tahkim ve uluslararası uyuşmazlıklarda uzmanlaşmış entegre hukuki hizmetler ve adli temsil",
+          "fullDescTr": "Ticari tahkim ve uluslararası anlaşmazlıklar alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "e32f1b30-606a-4345-a399-606a1b0ce32f",
@@ -1941,7 +2193,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Yüksek Mahkemelerde Dava ve Temsil",
+          "shortDescTr": "Yüksek Mahkemeler nezdinde dava ve savunma konusunda uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "En yüksek mesleki standartlara göre Yüksek Mahkemeler nezdinde dava ve savunma alanında uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "0756dabd-e3d6-4480-ab2d-e3d63a5e0756",
@@ -1965,7 +2220,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Fikri Mülkiyet, Yapay Zekâ ve Teknoloji Hukuku",
+          "shortDescTr": "Fikri mülkiyet, yapay zeka ve teknoloji konusunda uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Fikri mülkiyet, yapay zeka ve teknoloji alanında en yüksek mesleki standartlara göre uzmanlaşmış hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "679f323d-2db7-4a28-a557-2db7f057679f",
@@ -1989,7 +2247,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Banka Finansmanı ve Sermaye Piyasaları",
+          "shortDescTr": "Bankacılık finansmanı ve finansal piyasalarda uzmanlaşmış entegre hukuki hizmetler ve adli temsil",
+          "fullDescTr": "Bankacılık finansmanı ve finansal piyasalar alanında en yüksek profesyonel standartlarda uzman hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         },
         {
           "id": "e3b498c5-2354-40e0-a708-235465abe3b4",
@@ -2013,7 +2274,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Gayrimenkul ve İnşaat Devi Projeler",
+          "shortDescTr": "Gayrimenkul ve dev inşaat projelerinde uzmanlaşmış entegre hukuk hizmetleri ve adli temsil",
+          "fullDescTr": "Gayrimenkul ve dev inşaat projeleri alanında en yüksek mesleki standartlara göre uzman hukuki danışmanlık ve üst düzey adli temsilcilik sağlıyoruz."
         }
       ],
       "offices": [
@@ -2028,7 +2292,13 @@
           "phone": "+966 11 456 7890",
           "email": "riyadh@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3624.472719266854!2d46.67185367605963!3d24.711429950541768!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e2f032641a9657b%3A0xb35a0f12c1b8dc4a!2sKingdom%20Centre!5e0!3m2!1sen!2ssa!4v1700000000000",
-          "isHeadquarter": true
+          "isHeadquarter": true,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Riyad",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         },
         {
           "id": "583b42d4-e16c-4957-a9a7-e16c3e4f583b",
@@ -2041,7 +2311,13 @@
           "phone": "+971 4 321 9876",
           "email": "dubai@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3609.7366367353974!2d55.2798836760731!3d25.21210873099951!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f429671d18f59%3A0x6b9d1e57c6cb6bb3!2sDubai%20International%20Financial%20Centre!5e0!3m2!1sen!2sae!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Dubai",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         },
         {
           "id": "52d861d7-dd6f-4fb7-a047-dd6f8ba452d8",
@@ -2054,7 +2330,13 @@
           "phone": "+44 20 7946 0912",
           "email": "london@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2482.9080786968037!2d-0.08331162382124505!3d51.51488661016832!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48761cb287661b0d%3A0x7d0ea6df2881cf45!2sSalesforce%20Tower%20(110%20Bishopsgate)!5e0!3m2!1sen!2suk!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Londra",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         },
         {
           "id": "b5d02059-a374-46a4-a944-a3741641b5d0",
@@ -2067,7 +2349,13 @@
           "phone": "+90 212 385 9200",
           "email": "istanbul@aladllaw.com",
           "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3008.232352843477!2d29.00947607659223!3d41.07923791533615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab65d448408a3%3A0x6b4594119d658c89!2sLevent%2C%20Be%C5%9Fikta%C5%9F%2F%C4%B0stanbul!5e0!3m2!1str!2str!4v1700000000000",
-          "isHeadquarter": false
+          "isHeadquarter": false,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "İSTANBUL",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "caseStudies": [
@@ -2083,7 +2371,11 @@
           "summaryEn": "Represented a global energy consortium in a high-stakes concession and concession dispute before the ICC in Paris.",
           "year": "2025",
           "value": "320000000",
-          "highlight": "حكم تحكيمي نهائي لصالح موكلنا بمبلغ 320 مليون دولار مع إلزام الخصم بكافة المصاريف"
+          "highlight": "حكم تحكيمي نهائي لصالح موكلنا بمبلغ 320 مليون دولار مع إلزام الخصم بكافة المصاريف",
+          "titleTr": "Enerji ve altyapı sektöründe uluslararası bir tahkim anlaşmazlığının çözülmesi",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Müvekkilimiz lehine tüm giderlerin mahsup edilmesi yükümlülüğü ile 320 milyon $ tutarında kesin hakem kararı"
         },
         {
           "id": "78f339c5-01fd-490e-aaf0-01fd0ea678f3",
@@ -2097,7 +2389,11 @@
           "summaryEn": "Led comprehensive legal due diligence, share purchase agreements, and antitrust compliance.",
           "year": "2024",
           "value": "185000000",
-          "highlight": "استيفاء كافة الموافقات التنظيمية من هيئة السوق وهيئة المنافسة بسلاسة"
+          "highlight": "استيفاء كافة الموافقات التنظيمية من هيئة السوق وهيئة المنافسة بسلاسة",
+          "titleTr": "Listelenen bir lojistik şirketinin tamamen satın alınması",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Piyasa Otoritesi ve Rekabet Otoritesinden gelen tüm düzenleyici onayların sorunsuz bir şekilde tamamlanması"
         },
         {
           "id": "c287d510-777b-45fc-aa02-777b0ec4c287",
@@ -2111,7 +2407,11 @@
           "summaryEn": "Meticulous defense spanning two years before commercial circuits and the Supreme Court.",
           "year": "2024",
           "value": "450000000",
-          "highlight": "صدور حكم نهائي من المحكمة العليا بتثبيت الملكية وبطلان ادعاءات الخصوم"
+          "highlight": "صدور حكم نهائي من المحكمة العليا بتثبيت الملكية وبطلان ادعاءات الخصوم",
+          "titleTr": "Büyük bir gayrimenkul yatırım portföyünün mülkiyetinin korunması ve istikrara kavuşturulması",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Davacıların iddialarının mülkiyetini ve geçersizliğini teyit etmek için Yargıtay tarafından nihai bir karar verilmesi"
         }
       ],
       "blogPosts": [
@@ -2134,7 +2434,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "قانون الشركات"
-          ]
+          ],
+          "titleTr": "Yeni Kurumsal Sisteme Yönelik Stratejik Kılavuz: Dönüşümler ve Yatırım Fırsatları",
+          "excerptTr": "Şirketler için yeni sistem, basitleştirilmiş anonim şirketlere benzeri görülmemiş bir esneklik ve meşrulaştırılmış çalışma kotaları ve koşulları sağladığı için iş ortamının yasal ve düzenleyici ortamında niteliksel bir sıçrama oluşturuyor...",
+          "contentTr": "Şirketler için yeni sistem, basitleştirilmiş anonim şirketlere eşi benzeri görülmemiş bir esneklik sağladığı için iş ortamının yasal ve düzenleyici ortamında niteliksel bir sıçrama ve şirketlerin koruma sağlamak ve yeni faydalardan yararlanmak için kuruluş sözleşmelerini ve iç düzenlemelerini uyumlu hale getirmelerini gerektiren meşrulaştırılmış işgücü kotaları ve tercihli koşullar oluşturmaktadır."
         },
         {
           "id": "ea0bece3-6db9-47b2-a7c5-6db9d44bea0b",
@@ -2155,7 +2458,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "التقنية والذكاء الاصطناعي"
-          ]
+          ],
+          "titleTr": "Yapay Zeka ve Yasal Sorumluluk: Mevzuat Zorlukları ve Mülkiyetin Korunması",
+          "excerptTr": "Hassas ve finansal çalışma ortamlarında üretken yapay zeka sistemlerinin hızla benimsenmesiyle, ticari sırların korunması, başkalarının haklarının ihlal edilme riskleri ve koşullar hakkında acil sorular ortaya çıkıyor...",
+          "contentTr": "Hassas ve finansal çalışma ortamlarında üretken yapay zeka sistemlerinin benimsenmesinin hızlanmasıyla, ticari sırların korunması, başkalarının haklarının ihlal edilme riskleri ve kişisel verilerin korunmasına yönelik modern sistemlere uygun olarak verilerin güvenli kullanımına ilişkin koşullar hakkında acil sorular ortaya çıkmaktadır."
         },
         {
           "id": "f9972fcd-d3bb-4a2c-ad53-d3bbd1e1f997",
@@ -2176,7 +2482,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "التحكيم الدولي"
-          ]
+          ],
+          "titleTr": "Uluslararası sözleşmelerde tahkim şartlarının hazırlanmasının ve ölümcül boşlukların önlenmesinin önemi",
+          "excerptTr": "Tahkim şartı, herhangi bir uluslararası yatırım veya ticari sözleşme için emniyet vanasıdır. Tahkim kurumunun, tahkim yerinin, dilin veya geçerli maddi hukukun belirlenmesindeki herhangi bir belirsizlik...",
+          "contentTr": "Tahkim şartı, herhangi bir uluslararası yatırım veya ticari sözleşme için emniyet vanasıdır. Tahkim kurumunun, tahkim yerinin, dilin veya geçerli maddi hukukun belirlenmesindeki herhangi bir belirsizlik, anlaşmazlığı taraflara milyonlarca dolara mal olan bir usul sarmalına dönüştürebilir. Burada benimsenen tipik formülasyonları gözden geçiriyoruz."
         }
       ],
       "testimonials": [],
@@ -2196,14 +2505,16 @@
       "planNameEn": "Professional (Trial)",
       "isSiteActive": true,
       "paymentStatus": "paid"
-    }
+    },
+    "taglineTr": "Haklarınızı Korumak Önceliğimiz, Hukuki Liderliğinizi İnşa Etmek Görevimizdir",
+    "cityTr": "Riyad"
   },
   {
     "id": "fbb0a6be-5328-4898-aed8-5328436ffbb0",
     "slug": "ahmad-nadaf",
     "nameAr": "احمد نداف",
     "nameEn": "Ahmad nadaf",
-    "nameTr": "",
+    "nameTr": "Ahmed Neddaf",
     "taglineAr": "الجمارك اختصاصنا",
     "taglineEn": "Distinguished Legal Consultancy & Judicial Representation",
     "cityAr": "حلب",
@@ -2269,7 +2580,18 @@
           "linkedin": "https://linkedin.com",
           "twitter": "https://twitter.com",
           "youtube": "https://youtube.com"
-        }
+        },
+        "firmNameTr": "Ahmed Neddaf",
+        "sloganTr": "Gümrük bizim uzmanlık alanımızdır",
+        "subSloganTr": "Gümrük davalarında uzman avukat",
+        "aboutTextTr": "Ahmed Naddaf — Gümrük davalarında uzman avukat",
+        "aboutHeadingEn": "",
+        "aboutHeadingTr": "",
+        "aboutBadgeEn": "",
+        "aboutBadgeTr": "",
+        "addressTr": "GENEL MERKEZ",
+        "cityTr": "Halep",
+        "workingHoursTr": "Pazar - Perşembe: 09:00 - 18:00"
       },
       "partners": [
         {
@@ -2302,7 +2624,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Avukat Ahmed Neddaf",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Gümrük davalarında uzman avukat",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         }
       ],
       "practiceAreas": [],
@@ -2318,7 +2648,13 @@
           "phone": "0958111111",
           "email": "ahmadnadaf@gmail.com",
           "mapEmbedUrl": "",
-          "isHeadquarter": true
+          "isHeadquarter": true,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Halep",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "caseStudies": [],
@@ -2340,14 +2676,16 @@
       "planNameEn": "Lawyer Standard Annual Plan",
       "isSiteActive": true,
       "paymentStatus": "paid"
-    }
+    },
+    "taglineTr": "Gümrük bizim uzmanlık alanımızdır",
+    "cityTr": "Halep"
   },
   {
     "id": "7c722813-7098-4cea-ad0a-70981f5b7c72",
     "slug": "law-firm-counsel",
     "nameAr": "المحامي محمد بركات",
     "nameEn": "Law Firm & Counsel",
-    "nameTr": "",
+    "nameTr": "Avukat Muhammed Berekat",
     "taglineAr": "خبرة قضائية عريقة واستشارات قانونية استراتيجية متميزة",
     "taglineEn": "Distinguished Legal Consultancy & Judicial Representation",
     "cityAr": "حلب بوابة القصب",
@@ -2413,7 +2751,18 @@
           "linkedin": "https://linkedin.com",
           "twitter": "https://twitter.com",
           "youtube": "https://youtube.com"
-        }
+        },
+        "firmNameTr": "Avukat Muhammed Berekat",
+        "sloganTr": "Uzun süredir devam eden adli deneyim ve olağanüstü stratejik hukuki danışmanlık",
+        "subSloganTr": "Uzun Süreli Avukat",
+        "aboutTextTr": "Avukat Mohamed Barakat — uzun süredir avukatlık yapıyor",
+        "aboutHeadingEn": "",
+        "aboutHeadingTr": "",
+        "aboutBadgeEn": "",
+        "aboutBadgeTr": "",
+        "addressTr": "GENEL MERKEZ",
+        "cityTr": "Halep, Kasap Kapısı",
+        "workingHoursTr": "Pazar - Perşembe: 09:00 - 18:00"
       },
       "partners": [
         {
@@ -2446,7 +2795,15 @@
           ],
           "casesWonCount": 120,
           "isPartner": true,
-          "roleCategory": "managing_partner"
+          "roleCategory": "managing_partner",
+          "nameTr": "Avukat Muhammed Berekat",
+          "titleTr": "Avukat ve Hukuk Danışmanı",
+          "specialtyTr": "Hukuki Danışmanlık ve Dava Takibi",
+          "bioTr": "Uzun Süreli Avukat",
+          "barAdmissionTr": "Kıdemli Ruhsatlı Avukat",
+          "educationTr": [
+            "Hukuk ve Hukuk Bilimleri Lisansı"
+          ]
         }
       ],
       "practiceAreas": [
@@ -2472,7 +2829,10 @@
             "Litigation & Pleadings"
           ],
           "casesCount": 85,
-          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80"
+          "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=800&q=80",
+          "titleTr": "Aile ve Miras Hukuku Davaları",
+          "shortDescTr": "Şeriat davalarında uzmanlaşmış entegre hukuki hizmetler ve adli temsil",
+          "fullDescTr": "Şeriat davaları alanında en yüksek mesleki standartlara göre uzman hukuki danışmanlık ve üst düzey adli temsil sağlıyoruz."
         }
       ],
       "offices": [
@@ -2487,7 +2847,13 @@
           "phone": "534 887 91 16",
           "email": "info@lawfirm.com",
           "mapEmbedUrl": "",
-          "isHeadquarter": true
+          "isHeadquarter": true,
+          "nameEn": "",
+          "nameTr": "",
+          "addressTr": "",
+          "cityTr": "Halep, Kasap Kapısı",
+          "workingHoursEn": "",
+          "workingHoursTr": ""
         }
       ],
       "caseStudies": [
@@ -2503,7 +2869,11 @@
           "summaryEn": "أقنعت ابو محمد انو اذا خلص من ام محمد ليعيش مرتاح واقتنع",
           "year": "2026",
           "value": "250000000",
-          "highlight": "حكم نهائي لصالح الموكل"
+          "highlight": "حكم نهائي لصالح الموكل",
+          "titleTr": "Ebu Muhammed'den Takhlis Umm Muhammad",
+          "clientTypeEn": "",
+          "clientTypeTr": "",
+          "outcomeTr": "Müvekkil lehine kesin hüküm"
         }
       ],
       "blogPosts": [
@@ -2515,9 +2885,9 @@
           "category": "قانون الشركات والاستثمار",
           "categoryEn": "Laws & Regulations",
           "excerpt": "شروط الزواج ...",
-          "excerptEn": "",
+          "excerptEn": "Conditions of Marriage ...",
           "content": "شروط الزواج ",
-          "contentEn": "شروط الزواج ",
+          "contentEn": "Marriage Terms",
           "authorName": "محمد بركات المحامي ",
           "authorRole": "محامٍ ومستشار قانوني",
           "date": "2026-09-11",
@@ -2526,7 +2896,10 @@
           "image": "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=800&q=80",
           "tags": [
             "قانون الشركات والاستثمار"
-          ]
+          ],
+          "titleTr": "Yasal ve yasal olarak evlilik",
+          "excerptTr": "Evlilik Şartları...",
+          "contentTr": "Evlilik Şartları"
         }
       ],
       "testimonials": [],
@@ -2546,6 +2919,8 @@
       "planNameEn": "Lawyer Standard Annual Plan",
       "isSiteActive": true,
       "paymentStatus": "paid"
-    }
+    },
+    "taglineTr": "Uzun süredir devam eden adli deneyim ve olağanüstü stratejik hukuki danışmanlık",
+    "cityTr": "Halep, Kasap Kapısı"
   }
 ]

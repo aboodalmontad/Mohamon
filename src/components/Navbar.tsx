@@ -71,9 +71,9 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
 
   const navLinks = [
     { label: t.navHome, href: '#hero' },
+    { label: t.navPartners, href: '#partners' },
     { label: t.navAbout, href: '#about' },
     { label: t.navPracticeAreas, href: '#practice-areas' },
-    { label: t.navPartners, href: '#partners' },
     { label: t.navWhyUs, href: '#why-us' },
     { label: t.navAchievements, href: '#achievements' },
     { label: t.navTestimonials, href: '#testimonials' },
@@ -247,9 +247,9 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                       ? '' 
                       : 'bg-gradient-to-br from-[#b38a38] via-[#c5a869] to-[#87641d] p-0.5 shadow-md flex items-center justify-center'
                   } group-hover:scale-105 transition-transform flex-shrink-0`}>
-                    {settings.customLogoUrl ? (
+                    {settings.customLogoUrl && settings.customLogoUrl.trim() ? (
                       <img
-                        src={settings.customLogoUrl}
+                        src={settings.customLogoUrl.trim()}
                         alt={currentFirmName}
                         className={`w-full h-full object-contain ${
                           settings.logoShape === 'circle' 

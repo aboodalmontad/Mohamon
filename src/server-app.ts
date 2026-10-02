@@ -128,6 +128,59 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Translation cache in memory for server-side translation proxy
+const serverTranslationCache = new Map<string, string>();
+
+async function serverTranslateOne(text: string, targetLang: 'en' | 'tr'): Promise<string> {
+  const trimmed = (text || '').trim();
+  if (!trimmed) return '';
+  if (!/[\u0600-\u06FF]/.test(trimmed)) return trimmed;
+
+  const key = `${targetLang}:${trimmed}`;
+  if (serverTranslationCache.has(key)) {
+    return serverTranslationCache.get(key)!;
+  }
+
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=ar|${targetLang}`;
+    const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    if (response.ok) {
+      const data = await response.json();
+      const translated = data?.responseData?.translatedText;
+      if (translated && typeof translated === 'string' && !/[\u0600-\u06FF]/.test(translated)) {
+        const clean = translated.trim();
+        serverTranslationCache.set(key, clean);
+        return clean;
+      }
+    }
+  } catch {}
+
+  return '';
+}
+
+app.post('/api/translate', async (req, res) => {
+  try {
+    const { text, texts, targetLang } = req.body;
+    const lang = targetLang === 'tr' ? 'tr' : 'en';
+
+    if (Array.isArray(texts)) {
+      const results = await Promise.all(
+        texts.map(t => serverTranslateOne(t, lang))
+      );
+      return res.json({ success: true, translations: results });
+    }
+
+    if (typeof text === 'string') {
+      const result = await serverTranslateOne(text, lang);
+      return res.json({ success: true, translation: result });
+    }
+
+    return res.status(400).json({ success: false, error: 'text or texts required' });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/site-data', (_req, res) => {
   try {
     if (fs.existsSync(PUBLIC_DATA_PATH)) {

@@ -96,8 +96,8 @@ export const Footer: React.FC<FooterProps> = React.memo(({
                 if (settings.logoShape === 'transparent') {
                   return (
                     <div className="w-10 h-10 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {settings.customLogoUrl ? (
-                        <img src={settings.customLogoUrl} alt={firmName} className="w-full h-full object-contain" />
+                      {settings.customLogoUrl && settings.customLogoUrl.trim() ? (
+                        <img src={settings.customLogoUrl.trim()} alt={firmName} className="w-full h-full object-contain" />
                       ) : (
                         <Scale className="w-6 h-6 text-[#c5a869]" />
                       )}
@@ -108,8 +108,8 @@ export const Footer: React.FC<FooterProps> = React.memo(({
                 return (
                   <div className={`w-11 h-11 ${shapeClass} bg-gradient-to-br from-[#c5a869] to-[#87641d] p-0.5 shadow-lg flex-shrink-0`}>
                     <div className={`w-full h-full bg-[#181512] ${innerShapeClass} flex items-center justify-center overflow-hidden p-0.5`}>
-                      {settings.customLogoUrl ? (
-                        <img src={settings.customLogoUrl} alt={firmName} className="w-full h-full object-contain" />
+                      {settings.customLogoUrl && settings.customLogoUrl.trim() ? (
+                        <img src={settings.customLogoUrl.trim()} alt={firmName} className="w-full h-full object-contain" />
                       ) : (
                         <Scale className="w-6 h-6 text-[#c5a869]" />
                       )}

@@ -11,10 +11,11 @@ import { translateTextSync } from '../services/translator';
 interface PlatformLandingProps {
   onAdminClick: () => void;
   lang: Language;
+  onChangeLang?: (lang: Language) => void;
   onSelectFirm?: (slug: string) => void;
 }
 
-export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, lang, onSelectFirm }) => {
+export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, lang, onChangeLang, onSelectFirm }) => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [activeFirms, setActiveFirms] = useState<LawFirm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,6 +94,35 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             </div>
             
             <div className="flex items-center gap-3 sm:gap-4">
+              {onChangeLang && (
+                <div className="flex items-center gap-1 bg-white/5 border border-white/10 p-1 rounded-xl">
+                  <button
+                    onClick={() => onChangeLang('ar')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      lang === 'ar' ? 'bg-[#c5a869] text-[#181512]' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    العربية
+                  </button>
+                  <button
+                    onClick={() => onChangeLang('en')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      lang === 'en' ? 'bg-[#c5a869] text-[#181512]' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    English
+                  </button>
+                  <button
+                    onClick={() => onChangeLang('tr')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      lang === 'tr' ? 'bg-[#c5a869] text-[#181512]' : 'text-white/60 hover:text-white'
+                    }`}
+                  >
+                    Türkçe
+                  </button>
+                </div>
+              )}
+
               <button 
                 onClick={() => setIsRegistrationOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#c5a869] text-[#181512] font-bold text-sm hover:bg-[#ebd397] transition-all shadow-lg shadow-[#c5a869]/30 cursor-pointer whitespace-nowrap"

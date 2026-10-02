@@ -156,7 +156,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
                 {/* Background image subtle preview */}
                 <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none">
                   <img
-                    src={practice.image}
+                    src={(practice.image && practice.image.trim()) || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1000'}
                     alt={title}
                     className="w-full h-full object-cover filter grayscale"
                     loading="lazy"
@@ -288,7 +288,7 @@ export const PracticeAreasSection: React.FC<PracticeAreasSectionProps> = React.m
             {/* Modal Image */}
             <div className="rounded-xl overflow-hidden h-48 mb-6 border border-[#e6ddcc] relative">
               <img
-                src={selectedPractice.image}
+                src={(selectedPractice.image && selectedPractice.image.trim()) || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1000'}
                 alt={getLocalized(selectedPractice, 'title', lang, selectedPractice.title)}
                 className="w-full h-full object-cover"
                 loading="lazy"

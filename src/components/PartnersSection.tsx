@@ -13,6 +13,9 @@ interface PartnersSectionProps {
   onOpenConsultation: (practiceId?: string, partnerId?: string) => void;
 }
 
+const DEFAULT_PARTNER_IMAGE = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800';
+const getPartnerImage = (img?: string) => (img && img.trim().length > 0 ? img.trim() : DEFAULT_PARTNER_IMAGE);
+
 const formatLanguages = (langs: string[] | undefined, l: Language) => {
   if (!langs || langs.length === 0) return '';
   const dict: Record<string, { en: string; tr: string; ar: string }> = {
@@ -216,7 +219,7 @@ export const PartnersSection: React.FC<PartnersSectionProps> = React.memo(({
                     {/* Large Portrait Image Container for Founding Partner */}
                     <div className="relative h-96 sm:h-[430px] overflow-hidden bg-[#f4eee2]">
                       <img
-                        src={partner.image}
+                        src={getPartnerImage(partner.image)}
                         alt={name}
                         className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
                         loading="lazy"
@@ -412,7 +415,7 @@ export const PartnersSection: React.FC<PartnersSectionProps> = React.memo(({
                     {/* Smaller Portrait Image Container for Non-Partner (h-52 sm:h-56 vs h-96 sm:h-[430px]) */}
                     <div className="relative h-52 sm:h-56 overflow-hidden bg-stone-200">
                       <img
-                        src={partner.image}
+                        src={getPartnerImage(partner.image)}
                         alt={name}
                         className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                         loading="lazy"
@@ -529,7 +532,7 @@ export const PartnersSection: React.FC<PartnersSectionProps> = React.memo(({
                   } rounded-2xl overflow-hidden flex-shrink-0`}
                 >
                   <img
-                    src={activePartner.image}
+                    src={getPartnerImage(activePartner.image)}
                     alt={getLocalized(activePartner, 'name', lang, activePartner.name)}
                     className="w-full h-full object-cover object-top"
                     loading="lazy"

@@ -68,7 +68,7 @@ export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, 
                   {/* Image */}
                   <div className="relative h-48 overflow-hidden bg-[#f4eee2]">
                     <img
-                      src={post.image}
+                      src={(post.image && post.image.trim()) || 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=1000'}
                       alt={title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       loading="lazy"
@@ -181,7 +181,7 @@ export const BlogSection: React.FC<BlogSectionProps> = React.memo(({ blogPosts, 
             {/* Image */}
             <div className="rounded-xl overflow-hidden h-64 mb-6 border border-[#e6ddcc]">
               <img
-                src={selectedPost.image}
+                src={(selectedPost.image && selectedPost.image.trim()) || 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=80&w=1000'}
                 alt={getLocalized(selectedPost, 'title', lang, selectedPost.title)}
                 className="w-full h-full object-cover"
                 loading="lazy"

@@ -3705,7 +3705,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                                     <div className="flex items-start gap-3">
                                       <div className="relative">
                                         <img
-                                          src={partner.image}
+                                          src={(partner.image && partner.image.trim()) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800'}
                                           alt={partner.name}
                                           className="w-16 h-20 rounded-xl object-cover border border-slate-700 flex-shrink-0"
                                         />
@@ -4374,7 +4374,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                                     {leadPartner && (
                                       <div className="p-2 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-center gap-2 mb-2">
                                         <img
-                                          src={leadPartner.image}
+                                          src={(leadPartner.image && leadPartner.image.trim()) || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800'}
                                           alt={leadPartner.name}
                                           className="w-6 h-6 rounded-full object-cover border border-slate-700"
                                         />
@@ -5677,8 +5677,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               if (settings.logoShape === 'transparent') {
                                 return (
                                   <div className={`${logoSizeClass} flex items-center justify-center overflow-hidden flex-shrink-0`}>
-                                    {settings.customLogoUrl ? (
-                                      <img src={settings.customLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                    {settings.customLogoUrl && settings.customLogoUrl.trim() ? (
+                                      <img src={settings.customLogoUrl.trim()} alt="Logo" className="w-full h-full object-contain" />
                                     ) : (
                                       <Scale className="w-full h-full text-[#87641d] p-1" />
                                     )}
@@ -5689,8 +5689,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                               return (
                                 <div className={`${logoSizeClass} ${shapeClass} bg-gradient-to-br from-[#c5a869] to-[#8d6f2c] p-0.5 shadow-sm flex-shrink-0`}>
                                   <div className={`w-full h-full bg-[#fbf8f2] ${innerShapeClass} flex items-center justify-center overflow-hidden p-0.5`}>
-                                    {settings.customLogoUrl ? (
-                                      <img src={settings.customLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                    {settings.customLogoUrl && settings.customLogoUrl.trim() ? (
+                                      <img src={settings.customLogoUrl.trim()} alt="Logo" className="w-full h-full object-contain" />
                                     ) : (
                                       <Scale className="w-5 h-5 text-[#87641d]" />
                                     )}
@@ -6314,7 +6314,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                           style={{ opacity: (settings.heroBannerOpacity ?? 18) / 100 }}
                         >
                           <img
-                            src={settings.customBannerUrl || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920'}
+                            src={(settings.customBannerUrl && settings.customBannerUrl.trim()) || 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1920'}
                             alt="Banner Preview"
                             className={`w-full h-full object-cover ${
                               settings.heroBannerBlur === 'md' ? 'blur-md' : settings.heroBannerBlur === 'sm' ? 'blur-sm' : ''
@@ -6333,8 +6333,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                         <div className="relative z-10 flex flex-col items-center max-w-lg">
                           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#c5a869] to-[#8d6f2c] p-0.5 shadow-sm mb-2">
                             <div className="w-full h-full bg-[#fbf8f2] rounded-[6px] flex items-center justify-center">
-                              {settings.customLogoUrl ? (
-                                <img src={settings.customLogoUrl} alt="Logo" className="w-full h-full object-contain" />
+                              {settings.customLogoUrl && settings.customLogoUrl.trim() ? (
+                                <img src={settings.customLogoUrl.trim()} alt="Logo" className="w-full h-full object-contain" />
                               ) : (
                                 <Scale className="w-4 h-4 text-[#87641d]" />
                               )}

@@ -177,10 +177,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className="space-y-3">
           {/* Banner Preview Frame */}
           <div className="relative w-full h-44 sm:h-56 rounded-2xl overflow-hidden border-2 border-[#c5a869]/50 shadow-xl bg-slate-950 group">
-            {value ? (
+            {value && value.trim() ? (
               <>
                 <img
-                  src={value}
+                  src={value.trim()}
                   alt="Banner Preview"
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                 />
@@ -279,9 +279,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           {/* Preview Thumbnail */}
           <div className="sm:col-span-4 flex items-center justify-center">
             <div className={`relative ${aspectClass} overflow-hidden border-2 border-[#c5a869]/60 shadow-lg bg-slate-950 flex-shrink-0 group`}>
-              {value ? (
+              {value && value.trim() ? (
                 <img
-                  src={value}
+                  src={value.trim()}
                   alt="Preview"
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                 />
@@ -383,7 +383,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {presets.map((presetImg, idx) => {
+            {presets.filter(p => p && p.trim()).map((presetImg, idx) => {
               const isSelected = value === presetImg;
               return (
                 <button

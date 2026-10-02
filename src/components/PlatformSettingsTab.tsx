@@ -284,7 +284,7 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
               dir="ltr"
             />
 
-            {settings.heroBannerUrl && (
+            {settings.heroBannerUrl && settings.heroBannerUrl.trim() && (
               <button
                 type="button"
                 onClick={handleRemoveImage}
@@ -298,9 +298,9 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
           </div>
         </div>
         
-        {settings.heroBannerUrl && (
+        {settings.heroBannerUrl && settings.heroBannerUrl.trim() && (
           <div className="mt-3 relative h-48 rounded-xl overflow-hidden border border-slate-800 bg-slate-950 group">
-            <img src={settings.heroBannerUrl} alt="Preview" className="w-full h-full object-cover" />
+            <img src={settings.heroBannerUrl.trim()} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end justify-between p-3">
               <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
                 {isAr ? 'معاينة البانر المحدد حالياً' : 'Currently Selected Banner Preview'}

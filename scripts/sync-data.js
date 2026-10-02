@@ -27,34 +27,70 @@ async function sync() {
     const { data: rows, error } = await client.from('law_firms').select('*').order('created_at', { ascending: false });
     
     if (!error && Array.isArray(rows) && rows.length > 0) {
-      const firms = rows.map(r => ({
-        id: r.id,
-        slug: r.slug,
-        nameAr: r.name_ar,
-        nameEn: r.name_en || '',
-        nameTr: r.name_tr || '',
-        taglineAr: r.tagline_ar || '',
-        taglineEn: r.tagline_en || '',
-        cityAr: r.city_ar || '',
-        cityEn: r.city_en || '',
-        phone: r.phone || '',
-        email: r.email || '',
-        licenseNumber: r.license_number || '',
-        adminPassword: r.admin_password || '123456',
-        isVerified: r.is_verified ?? true,
-        featured: r.featured ?? false,
-        isDefaultPublic: r.is_default_public ?? false,
-        themeColor: r.theme_color || '#c5a869',
-        createdAt: r.created_at || new Date().toISOString(),
-        updatedAt: r.updated_at || new Date().toISOString(),
-        data: r.data || {},
-        subscription: r.subscription || r.data?.subscription || {
-          planTier: 'enterprise',
-          planNameAr: 'الباقة الماسية الشاملة',
-          status: 'active',
-          isSiteActive: true,
-        }
-      }));
+      let existingFirmsMap = new Map();
+      if (fs.existsSync(firmsPath)) {
+        try {
+          const oldList = JSON.parse(fs.readFileSync(firmsPath, 'utf8'));
+          if (Array.isArray(oldList)) {
+            oldList.forEach(f => existingFirmsMap.set(f.slug, f));
+          }
+        } catch {}
+      }
+
+      const firms = rows.map(r => {
+        const existing = existingFirmsMap.get(r.slug) || {};
+        const exData = existing.data || {};
+        const rData = r.data || {};
+
+        const hasAr = (str) => /[\u0600-\u06FF]/.test(str || '');
+        const validNameEn = (r.name_en && !hasAr(r.name_en)) ? r.name_en : (existing.nameEn || '');
+        const validNameTr = (r.name_tr && !hasAr(r.name_tr)) ? r.name_tr : (existing.nameTr || '');
+        const validTaglineEn = (r.tagline_en && !hasAr(r.tagline_en)) ? r.tagline_en : (existing.taglineEn || '');
+        const validTaglineTr = (r.tagline_tr && !hasAr(r.tagline_tr)) ? r.tagline_tr : (existing.taglineTr || '');
+
+        // Merge inner settings if Supabase data has missing translations
+        const mergedSettings = {
+          ...(exData.settings || {}),
+          ...(rData.settings || {}),
+        };
+        if (hasAr(mergedSettings.firmNameEn) && existing.nameEn) mergedSettings.firmNameEn = existing.nameEn;
+        if (!mergedSettings.firmNameTr && existing.nameTr) mergedSettings.firmNameTr = existing.nameTr;
+
+        return {
+          id: r.id,
+          slug: r.slug,
+          nameAr: r.name_ar,
+          nameEn: validNameEn,
+          nameTr: validNameTr,
+          taglineAr: r.tagline_ar || '',
+          taglineEn: validTaglineEn,
+          taglineTr: validTaglineTr,
+          cityAr: r.city_ar || '',
+          cityEn: r.city_en || existing.cityEn || '',
+          cityTr: existing.cityTr || '',
+          phone: r.phone || '',
+          email: r.email || '',
+          licenseNumber: r.license_number || '',
+          adminPassword: r.admin_password || '123456',
+          isVerified: r.is_verified ?? true,
+          featured: r.featured ?? false,
+          isDefaultPublic: r.is_default_public ?? false,
+          themeColor: r.theme_color || '#c5a869',
+          createdAt: r.created_at || new Date().toISOString(),
+          updatedAt: r.updated_at || new Date().toISOString(),
+          data: {
+            ...exData,
+            ...rData,
+            settings: mergedSettings,
+          },
+          subscription: r.subscription || r.data?.subscription || existing.subscription || {
+            planTier: 'enterprise',
+            planNameAr: 'الباقة الماسية الشاملة',
+            status: 'active',
+            isSiteActive: true,
+          }
+        };
+      });
 
       fs.writeFileSync(firmsPath, JSON.stringify(firms, null, 2), 'utf-8');
       console.log(`[sync-data] Successfully wrote ${firms.length} firms to public/firms_data.json`);

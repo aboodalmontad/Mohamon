@@ -98,7 +98,7 @@ export const TestimonialsSection: React.FC<TestimonialsSectionProps> = React.mem
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-[#e6ddcc]/80">
                   <div className="flex items-center gap-4">
                     <img
-                      src={item.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'}
+                      src={(item.avatar && item.avatar.trim()) || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'}
                       alt={clientName}
                       className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-[#b38a38]/50 shadow-sm"
                       loading="lazy"
