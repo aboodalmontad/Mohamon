@@ -29,7 +29,7 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
   onRefreshFirms
 }) => {
   // Navigation inside Finance
-  const [subTab, setSubTab] = useState<'overview' | 'revenue' | 'expenses' | 'statement'>('overview');
+  const [subTab, setSubTab] = useState<'journal' | 'overview' | 'revenue' | 'expenses' | 'statement'>('journal');
   
   // Service states
   const [expenses, setExpenses] = useState<PlatformExpense[]>(() => platformFinanceService.getExpenses());
@@ -39,10 +39,23 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
 
   // Modals
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<PlatformExpense | null>(null);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState<PlatformTransaction | null>(null);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
+  // Delete confirmation modal state
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<{
+    type: 'expense' | 'transaction';
+    id: string;
+    title: string;
+    amount?: number;
+    currency?: string;
+  } | null>(null);
+
   // Search & Filter
+  const [journalFilter, setJournalFilter] = useState<'all' | 'revenue' | 'expense'>('all');
+  const [journalSearch, setJournalSearch] = useState('');
   const [expenseSearch, setExpenseSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [txSearch, setTxSearch] = useState('');
@@ -104,61 +117,83 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
     setConfig(platformFinanceService.getConfig());
   };
 
+  React.useEffect(() => {
+    refreshData();
+    const handleFinanceUpdated = () => refreshData();
+    window.addEventListener('aladl_finance_updated', handleFinanceUpdated);
+    window.addEventListener('aladl_firms_updated', handleFinanceUpdated);
+    return () => {
+      window.removeEventListener('aladl_finance_updated', handleFinanceUpdated);
+      window.removeEventListener('aladl_firms_updated', handleFinanceUpdated);
+    };
+  }, [firms]);
+
   // -------------------------------------------------------------
-  // FINANCIAL CALCULATIONS & INTELLIGENCE ENGINE
+  // FINANCIAL CALCULATIONS & INTELLIGENCE ENGINE (STRICTLY REAL DATA)
   // -------------------------------------------------------------
   const analytics = useMemo(() => {
     const reportingCur = config.reportingCurrency;
     const usdToSyp = config.usdToSypRate || 15000;
 
-    // 1. Calculate Revenue from Active Firm Subscriptions
+    // 1. Calculate Real Collected Revenue directly from Real Transactions in the General Ledger
+    let totalRevenueUSD = 0;
+    let completedTxCount = 0;
     let firmSubscriptionsTotalUSD = 0;
-    let firmPaidCount = 0;
-    let firmTrialCount = 0;
-    let firmOverdueCount = 0;
+    let manualTxTotalUSD = 0;
 
-    const planStats = {
-      basic: { count: 0, revenueUSD: 0 },
-      professional: { count: 0, revenueUSD: 0 },
-      enterprise: { count: 0, revenueUSD: 0 },
-      custom: { count: 0, revenueUSD: 0 },
-    };
-
-    firms.forEach(firm => {
-      const sub = firm.subscription;
-      const annualFee = sub?.annualFee ?? 3500;
-      const feeCur = sub?.currency || 'SAR';
-      const feeUSD = platformFinanceService.convertToUSD(annualFee, feeCur);
-
-      if (sub?.paymentStatus === 'paid') {
-        firmSubscriptionsTotalUSD += feeUSD;
-        firmPaidCount++;
-      } else if (sub?.status === 'trial' || sub?.paymentStatus === 'pending') {
-        firmTrialCount++;
-      } else {
-        firmOverdueCount++;
-      }
-
-      const planKey = (sub?.planTier as keyof typeof planStats) || 'professional';
-      if (planStats[planKey]) {
-        planStats[planKey].count++;
-        if (sub?.paymentStatus === 'paid') {
-          planStats[planKey].revenueUSD += feeUSD;
+    transactions.forEach(tx => {
+      if (tx.status === 'completed' || !tx.status) {
+        const valUSD = platformFinanceService.convertToUSD(tx.amount, tx.currency);
+        totalRevenueUSD += valUSD;
+        completedTxCount++;
+        if (tx.type === 'subscription_new' || tx.type === 'subscription_renewal') {
+          firmSubscriptionsTotalUSD += valUSD;
+        } else {
+          manualTxTotalUSD += valUSD;
         }
       }
     });
 
-    // 2. Calculate Additional Transactions Revenue
-    let manualTxTotalUSD = 0;
-    transactions.forEach(tx => {
-      if (tx.status === 'completed') {
-        manualTxTotalUSD += platformFinanceService.convertToUSD(tx.amount, tx.currency);
+    // 2. Calculate Subscriptions status and contracted value across firms
+    let contractedSubscriptionsTotalUSD = 0;
+    let firmPendingAmountUSD = 0;
+    let firmPaidCount = 0;
+    let firmWaivedCount = 0;
+    let firmPendingCount = 0;
+
+    const planStats: Record<string, { count: number; revenueUSD: number; labelAr: string; labelEn: string }> = {
+      starter: { count: 0, revenueUSD: 0, labelAr: 'الباقة القياسية (Starter)', labelEn: 'Standard Starter' },
+      basic: { count: 0, revenueUSD: 0, labelAr: 'الباقة الأساسية (Basic)', labelEn: 'Basic Plan' },
+      professional: { count: 0, revenueUSD: 0, labelAr: 'الباقة الاحترافية (Professional)', labelEn: 'Professional' },
+      enterprise: { count: 0, revenueUSD: 0, labelAr: 'الباقة الماسية والمؤسسات (Enterprise)', labelEn: 'Enterprise' },
+      custom: { count: 0, revenueUSD: 0, labelAr: 'باقة مخصصة (Custom)', labelEn: 'Custom Plan' },
+    };
+
+    firms.forEach(firm => {
+      const sub = firm.subscription;
+      const annualFee = typeof sub?.annualFee === 'number' ? sub.annualFee : 0;
+      const feeCur = sub?.currency || 'SAR';
+      const feeUSD = platformFinanceService.convertToUSD(annualFee, feeCur);
+
+      const planKey = (sub?.planTier as string) || 'professional';
+      if (!planStats[planKey]) {
+        planStats[planKey] = { count: 0, revenueUSD: 0, labelAr: sub?.planNameAr || planKey, labelEn: sub?.planNameEn || planKey };
+      }
+      planStats[planKey].count++;
+
+      if (sub?.paymentStatus === 'paid') {
+        contractedSubscriptionsTotalUSD += feeUSD;
+        firmPaidCount++;
+        planStats[planKey].revenueUSD += feeUSD;
+      } else if (sub?.paymentStatus === 'waived') {
+        firmWaivedCount++;
+      } else {
+        firmPendingCount++;
+        firmPendingAmountUSD += feeUSD;
       }
     });
 
-    const totalRevenueUSD = firmSubscriptionsTotalUSD + manualTxTotalUSD;
-
-    // 3. Calculate Expenses
+    // 3. Calculate Real Operating Expenses (from actual entered expenses in the journal)
     let totalExpensesUSD = 0;
     const expenseByCategory: Record<ExpenseCategory, number> = {
       servers: 0,
@@ -181,10 +216,16 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
       }
     });
 
-    // 4. Net Profit & Metrics
+    // Determine highest expense category dynamically
+    const sortedCategories = (Object.keys(expenseByCategory) as ExpenseCategory[])
+      .filter(cat => expenseByCategory[cat] > 0)
+      .sort((a, b) => expenseByCategory[b] - expenseByCategory[a]);
+    const majorCategory = sortedCategories.length > 0 ? sortedCategories[0] : null;
+
+    // 4. Net Profit & Financial KPIs
     const netProfitUSD = totalRevenueUSD - totalExpensesUSD;
     const profitMargin = totalRevenueUSD > 0 ? (netProfitUSD / totalRevenueUSD) * 100 : 0;
-    const activeFirmsCount = firms.filter(f => f.status === 'active').length;
+    const activeFirmsCount = firms.filter(f => f.status === 'active' || f.subscription?.isSiteActive !== false).length;
     const arpuUSD = activeFirmsCount > 0 ? totalRevenueUSD / activeFirmsCount : 0;
     const mrrUSD = totalRevenueUSD / 12;
     const arrUSD = totalRevenueUSD;
@@ -197,7 +238,10 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
     return {
       totalRevenueUSD,
       totalRevenueDisplay: totalRevenueUSD * mult,
+      completedTxCount,
       firmSubscriptionsTotalUSD,
+      contractedSubscriptionsTotalUSD,
+      firmPendingAmountUSD,
       manualTxTotalUSD,
       totalExpensesUSD,
       totalExpensesDisplay: totalExpensesUSD * mult,
@@ -212,9 +256,10 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
       arrDisplay: arrUSD * mult,
       planStats,
       expenseByCategory,
+      majorCategory,
       firmPaidCount,
-      firmTrialCount,
-      firmOverdueCount,
+      firmWaivedCount,
+      firmPendingCount,
       currencyLabel,
       isSYP,
       mult,
@@ -286,20 +331,77 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
     showToast(isAr ? 'تم تقييد دفعة الإيراد بنجاح' : 'Revenue transaction recorded');
   };
 
-  const handleDeleteExpense = (id: string) => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من حذف هذا المصروف؟' : 'Delete this expense?')) {
-      platformFinanceService.deleteExpense(id);
-      refreshData();
-      showToast(isAr ? 'تم حذف بند المصروف' : 'Expense deleted');
+  // Handle Edit Expense
+  const handleSaveEditExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingExpense || !editingExpense.titleAr.trim() || editingExpense.amount <= 0) {
+      showToast(isAr ? 'يرجى إدخال بيانات المصروف بشكل صحيح' : 'Please provide valid expense data');
+      return;
     }
+
+    platformFinanceService.updateExpense(editingExpense.id, {
+      titleAr: editingExpense.titleAr,
+      titleEn: editingExpense.titleAr,
+      category: editingExpense.category,
+      amount: Number(editingExpense.amount),
+      currency: editingExpense.currency,
+      date: editingExpense.date,
+      paymentMethod: editingExpense.paymentMethod,
+      recipient: editingExpense.recipient,
+      invoiceRef: editingExpense.invoiceRef,
+      notes: editingExpense.notes,
+    });
+
+    refreshData();
+    setEditingExpense(null);
+    showToast(isAr ? 'تم حفظ تعديلات المصروف بنجاح' : 'Expense updated successfully');
+  };
+
+  // Handle Edit Transaction
+  const handleSaveEditTransaction = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTx || !editingTx.firmName.trim() || editingTx.amount <= 0) {
+      showToast(isAr ? 'يرجى إدخال بيانات القيد بشكل صحيح' : 'Please provide valid transaction data');
+      return;
+    }
+
+    platformFinanceService.updateTransaction(editingTx.id, {
+      firmName: editingTx.firmName,
+      type: editingTx.type,
+      amount: Number(editingTx.amount),
+      currency: editingTx.currency,
+      date: editingTx.date,
+      paymentMethod: editingTx.paymentMethod,
+      invoiceNumber: editingTx.invoiceNumber,
+      status: editingTx.status,
+      notes: editingTx.notes,
+    });
+
+    refreshData();
+    setEditingTx(null);
+    showToast(isAr ? 'تم حفظ تعديل القيد المالي بنجاح' : 'Transaction updated successfully');
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    const target = expenses.find(e => e.id === id);
+    setDeleteConfirmTarget({
+      type: 'expense',
+      id,
+      title: target?.titleAr || (isAr ? 'مصروف المنصة' : 'Platform Expense'),
+      amount: target?.amount,
+      currency: target?.currency
+    });
   };
 
   const handleDeleteTransaction = (id: string) => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من حذف هذا القيد المالي؟' : 'Delete this transaction?')) {
-      platformFinanceService.deleteTransaction(id);
-      refreshData();
-      showToast(isAr ? 'تم حذف القيد المالي' : 'Transaction deleted');
-    }
+    const target = transactions.find(t => t.id === id);
+    setDeleteConfirmTarget({
+      type: 'transaction',
+      id,
+      title: target?.firmName || target?.invoiceNumber || (isAr ? 'قيد محاسبي وارد' : 'Accounting Transaction'),
+      amount: target?.amount,
+      currency: target?.currency
+    });
   };
 
   // Category Translation Helpers
@@ -484,7 +586,7 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                 <span>{isAr ? 'إجمالي الواردات والإيرادات' : 'Total Revenue & Inflow'}</span>
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold">
-                {analytics.firmPaidCount} {isAr ? 'مشترك مسدد' : 'Paid'}
+                {analytics.completedTxCount} {isAr ? 'قيد إيراد مسدد' : 'Completed'}
               </span>
             </div>
             <div className="mt-3">
@@ -498,9 +600,9 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
               )}
             </div>
             <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-              <span>{isAr ? 'الإيراد الشهري (MRR):' : 'MRR:'}</span>
+              <span>{isAr ? 'عدد القيود المقبوضة:' : 'Collected Inflows:'}</span>
               <span className="font-bold text-emerald-400 font-mono">
-                {formatNumber(analytics.mrrDisplay)} {analytics.currencyLabel}
+                {analytics.completedTxCount} {isAr ? 'قيد مالي' : 'Entries'}
               </span>
             </div>
           </div>
@@ -529,7 +631,7 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
             <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
               <span>{isAr ? 'أكبر بند نفقات:' : 'Major Cost:'}</span>
               <span className="font-bold text-rose-300 truncate max-w-[120px]">
-                {getCategoryLabel('servers')}
+                {analytics.majorCategory ? getCategoryLabel(analytics.majorCategory) : (isAr ? 'لا توجد مصاريف' : 'None')}
               </span>
             </div>
           </div>
@@ -605,30 +707,47 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
 
       {/* INTERNAL SUB-NAVIGATION TABS */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        {/* TAB 0: MASTER GENERAL JOURNAL TABLE (جدول كافة الواردات والمصروفات) */}
+        <button
+          type="button"
+          onClick={() => setSubTab('journal')}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
+            subTab === 'journal'
+              ? 'bg-gradient-to-r from-emerald-500/20 via-amber-500/15 to-emerald-600/10 text-emerald-300 border-emerald-400 shadow-md ring-1 ring-emerald-400/40'
+              : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:text-white hover:bg-slate-800'
+          }`}
+        >
+          <Receipt className="w-4 h-4 text-emerald-400" />
+          <span>{isAr ? '📋 جدول كافة القيود (الواردات والمصروفات)' : 'Master Journal & Entries'}</span>
+          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">
+            {expenses.length + transactions.length + firms.length}
+          </span>
+        </button>
+
         <button
           type="button"
           onClick={() => setSubTab('overview')}
-          className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
             subTab === 'overview'
               ? 'bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-300 border-[#c5a869] shadow-md'
               : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
           }`}
         >
           <PieChart className="w-4 h-4" />
-          <span>{isAr ? 'تحليل المشتركين والنمو' : 'Subscriber Analytics & Growth'}</span>
+          <span>{isAr ? 'تحليل المشتركين والنمو' : 'Subscriber Analytics'}</span>
         </button>
 
         <button
           type="button"
           onClick={() => setSubTab('revenue')}
-          className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
             subTab === 'revenue'
               ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 text-emerald-300 border-emerald-500 shadow-md'
               : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
           }`}
         >
-          <Receipt className="w-4 h-4" />
-          <span>{isAr ? 'سجل الواردات والمقبوضات' : 'Revenue Ledger'}</span>
+          <TrendingUp className="w-4 h-4 text-emerald-400" />
+          <span>{isAr ? 'الواردات والاشتراكات' : 'Revenues'}</span>
           <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">
             {firms.length + transactions.length}
           </span>
@@ -637,14 +756,14 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
         <button
           type="button"
           onClick={() => setSubTab('expenses')}
-          className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
             subTab === 'expenses'
               ? 'bg-gradient-to-r from-rose-500/20 to-rose-600/10 text-rose-300 border-rose-500 shadow-md'
               : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
           }`}
         >
-          <CreditCard className="w-4 h-4" />
-          <span>{isAr ? 'المصاريف والنفقات التشغيلية' : 'Operating Expenses'}</span>
+          <TrendingDown className="w-4 h-4 text-rose-400" />
+          <span>{isAr ? 'المصروفات والنفقات' : 'Expenses'}</span>
           <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-mono">
             {expenses.length}
           </span>
@@ -653,16 +772,333 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
         <button
           type="button"
           onClick={() => setSubTab('statement')}
-          className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
+          className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer flex items-center gap-2 border ${
             subTab === 'statement'
               ? 'bg-gradient-to-r from-blue-500/20 to-blue-600/10 text-blue-300 border-blue-500 shadow-md'
               : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800'
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>{isAr ? 'قائمة الدخل والأرباح (P&L)' : 'Income Statement (P&L)'}</span>
+          <span>{isAr ? 'قائمة الدخل والأرباح (P&L)' : 'Income Statement'}</span>
         </button>
       </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 0. MASTER GENERAL JOURNAL TABLE (جدول كافة الواردات والمصروفات) */}
+      {/* ------------------------------------------------------------- */}
+      {subTab === 'journal' && (
+        <div className="space-y-4">
+          {/* Controls Bar */}
+          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Filter Tabs (All / Revenues / Expenses) */}
+            <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <button
+                type="button"
+                onClick={() => setJournalFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  journalFilter === 'all'
+                    ? 'bg-amber-400 text-slate-950 shadow'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <span>{isAr ? 'كافة القيود' : 'All Entries'}</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-mono">
+                  {expenses.length + transactions.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setJournalFilter('revenue')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  journalFilter === 'revenue'
+                    ? 'bg-emerald-500 text-slate-950 shadow'
+                    : 'text-slate-400 hover:text-emerald-400'
+                }`}
+              >
+                <span>{isAr ? 'الواردات (الإيرادات)' : 'Inflows'}</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-mono">
+                  {transactions.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setJournalFilter('expense')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  journalFilter === 'expense'
+                    ? 'bg-rose-500 text-white shadow'
+                    : 'text-slate-400 hover:text-rose-400'
+                }`}
+              >
+                <span>{isAr ? 'المصروفات (النفقات)' : 'Outflows'}</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-black/20 text-[10px] font-mono">
+                  {expenses.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Search and Action Buttons */}
+            <div className="flex flex-wrap items-center gap-2 flex-1 max-w-xl justify-end">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 text-slate-400 absolute right-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={journalSearch}
+                  onChange={(e) => setJournalSearch(e.target.value)}
+                  placeholder={isAr ? 'بحث في القيود، المكاتب، الفواتير...' : 'Search journal entries...'}
+                  className="w-full pr-9 pl-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsAddTxOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-emerald-500/20 active:scale-95"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>{isAr ? 'إضافة قيد إيراد' : 'Add Revenue'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAddExpenseOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-400 hover:to-rose-500 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-lg shadow-rose-500/20 active:scale-95"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>{isAr ? 'إضافة قيد مصروف' : 'Add Expense'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Master Unified Table */}
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-start">
+                <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th className="py-3.5 px-4 text-start">{isAr ? 'نوع القيد والتاريخ' : 'Type & Date'}</th>
+                    <th className="py-3.5 px-4 text-start">{isAr ? 'البيان / المكتب / المستفيد' : 'Description / Firm'}</th>
+                    <th className="py-3.5 px-4 text-start">{isAr ? 'التصنيف' : 'Category'}</th>
+                    <th className="py-3.5 px-4 text-start">{isAr ? 'المبلغ الأصلي' : 'Original Amount'}</th>
+                    <th className="py-3.5 px-4 text-start">{isAr ? `القيمة المعروضة (${analytics.currencyLabel})` : 'Converted Val'}</th>
+                    <th className="py-3.5 px-4 text-start">{isAr ? 'طريقة السداد' : 'Payment Method'}</th>
+                    <th className="py-3.5 px-4 text-start">{isAr ? 'رقم الإيصال / السند' : 'Invoice Ref'}</th>
+                    <th className="py-3.5 px-4 text-center">{isAr ? 'الحالة' : 'Status'}</th>
+                    <th className="py-3.5 px-4 text-center">{isAr ? 'الإجراءات' : 'Actions'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 font-medium">
+                  {/* Generate Combined Ledger List */}
+                  {(() => {
+                    const combinedList: Array<{
+                      id: string;
+                      kind: 'revenue' | 'expense';
+                      date: string;
+                      title: string;
+                      subtitle?: string;
+                      categoryLabel: string;
+                      amount: number;
+                      currency: string;
+                      displayVal: number;
+                      paymentMethod: PaymentMethodType;
+                      invoiceRef?: string;
+                      status: string;
+                      notes?: string;
+                      rawExp?: PlatformExpense;
+                      rawTx?: PlatformTransaction;
+                    }> = [];
+
+                    // 1. Transactions (Revenues)
+                    transactions.forEach(t => {
+                      const valUSD = platformFinanceService.convertToUSD(t.amount, t.currency);
+                      combinedList.push({
+                        id: t.id,
+                        kind: 'revenue',
+                        date: t.date || t.createdAt?.split('T')[0] || '',
+                        title: t.firmName,
+                        subtitle: t.type === 'subscription_new' ? (isAr ? 'سداد اشتراك جديد' : 'New Subscription') : t.type === 'subscription_renewal' ? (isAr ? 'تجديد اشتراك سنوي' : 'Renewal') : (isAr ? 'خدمات إضافية' : 'Custom'),
+                        categoryLabel: isAr ? 'اشتراك / وارد' : 'Subscription Inflow',
+                        amount: t.amount,
+                        currency: t.currency,
+                        displayVal: valUSD * analytics.mult,
+                        paymentMethod: t.paymentMethod,
+                        invoiceRef: t.invoiceNumber || 'INV-DIR',
+                        status: t.status || 'completed',
+                        notes: t.notes,
+                        rawTx: t
+                      });
+                    });
+
+                    // 2. Expenses
+                    expenses.forEach(e => {
+                      const valUSD = platformFinanceService.convertToUSD(e.amount, e.currency);
+                      combinedList.push({
+                        id: e.id,
+                        kind: 'expense',
+                        date: e.date || e.createdAt?.split('T')[0] || '',
+                        title: e.titleAr,
+                        subtitle: e.recipient ? `${isAr ? 'المستلم:' : 'To:'} ${e.recipient}` : undefined,
+                        categoryLabel: getCategoryLabel(e.category),
+                        amount: e.amount,
+                        currency: e.currency,
+                        displayVal: -(valUSD * analytics.mult),
+                        paymentMethod: e.paymentMethod,
+                        invoiceRef: e.invoiceRef || 'EXP-REF',
+                        status: 'completed',
+                        notes: e.notes,
+                        rawExp: e
+                      });
+                    });
+
+                    // Sort chronologically (newest first)
+                    combinedList.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                    // Filter
+                    const filtered = combinedList.filter(item => {
+                      if (journalFilter === 'revenue' && item.kind !== 'revenue') return false;
+                      if (journalFilter === 'expense' && item.kind !== 'expense') return false;
+                      if (journalSearch.trim()) {
+                        const q = journalSearch.toLowerCase();
+                        const match = item.title.toLowerCase().includes(q) ||
+                          (item.subtitle && item.subtitle.toLowerCase().includes(q)) ||
+                          (item.invoiceRef && item.invoiceRef.toLowerCase().includes(q)) ||
+                          (item.categoryLabel && item.categoryLabel.toLowerCase().includes(q)) ||
+                          (item.notes && item.notes.toLowerCase().includes(q));
+                        if (!match) return false;
+                      }
+                      return true;
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={9} className="py-12 text-center text-slate-500 text-xs">
+                            <Receipt className="w-8 h-8 mx-auto mb-2 text-slate-600 opacity-50" />
+                            <div>{isAr ? 'لا توجد قيود محاسبية مطابقة للبحث أو الفلتر المحدد' : 'No matching journal records found'}</div>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map((entry) => (
+                      <tr key={`${entry.kind}-${entry.id}`} className="hover:bg-slate-800/40 transition-colors">
+                        {/* Kind & Date */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 shrink-0 ${
+                              entry.kind === 'revenue'
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            }`}>
+                              {entry.kind === 'revenue' ? (
+                                <>
+                                  <ArrowUpRight className="w-3 h-3 text-emerald-400" />
+                                  <span>{isAr ? 'وارد / إيراد' : 'Inflow'}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <ArrowDownRight className="w-3 h-3 text-rose-400" />
+                                  <span>{isAr ? 'مصروف' : 'Outflow'}</span>
+                                </>
+                              )}
+                            </span>
+                            <span className="font-mono text-slate-400 text-[11px]">{entry.date}</span>
+                          </div>
+                        </td>
+
+                        {/* Description / Firm */}
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-white max-w-[220px] truncate">{entry.title}</div>
+                          {entry.subtitle && (
+                            <div className="text-[10px] text-slate-400 truncate max-w-[200px]">{entry.subtitle}</div>
+                          )}
+                          {entry.notes && (
+                            <div className="text-[10px] text-amber-300/80 truncate max-w-[200px]">{entry.notes}</div>
+                          )}
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 text-[10px]">
+                            {entry.categoryLabel}
+                          </span>
+                        </td>
+
+                        {/* Original Amount */}
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-300">
+                          {entry.kind === 'revenue' ? '+' : '-'}{formatNumber(entry.amount)} {entry.currency}
+                        </td>
+
+                        {/* Converted Amount */}
+                        <td className={`py-3.5 px-4 font-mono font-black text-sm ${
+                          entry.kind === 'revenue' ? 'text-emerald-400' : 'text-rose-400'
+                        }`}>
+                          {entry.kind === 'revenue' ? '+' : ''}{formatNumber(entry.displayVal)} {analytics.currencyLabel}
+                        </td>
+
+                        {/* Payment Method */}
+                        <td className="py-3.5 px-4 text-slate-300">
+                          <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-[10px]">
+                            {getPaymentMethodLabel(entry.paymentMethod)}
+                          </span>
+                        </td>
+
+                        {/* Invoice Ref */}
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
+                          {entry.invoiceRef}
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            {isAr ? 'مكتمل ومسدد' : 'Completed'}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (entry.kind === 'revenue' && entry.rawTx) {
+                                  setEditingTx({ ...entry.rawTx });
+                                } else if (entry.kind === 'expense' && entry.rawExp) {
+                                  setEditingExpense({ ...entry.rawExp });
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 transition cursor-pointer border border-transparent hover:border-amber-400/30"
+                              title={isAr ? 'تعديل القيد' : 'Edit Entry'}
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (entry.kind === 'revenue') {
+                                  handleDeleteTransaction(entry.id);
+                                } else {
+                                  handleDeleteExpense(entry.id);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-400/10 transition cursor-pointer border border-transparent hover:border-rose-400/30"
+                              title={isAr ? 'حذف القيد' : 'Delete Entry'}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ------------------------------------------------------------- */}
       {/* 1. OVERVIEW & SUBSCRIBER INTELLIGENCE TAB                     */}
@@ -681,66 +1117,30 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
               </div>
 
               <div className="space-y-3">
-                {/* Basic Plan */}
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-slate-200">
-                      {isAr ? 'الباقة الأساسية (Standard)' : 'Standard Plan'}
+                {Object.entries(analytics.planStats).map(([key, stat]) => {
+                  if (stat.count === 0 && firms.length > 0) return null;
+                  const sharePct = analytics.totalRevenueUSD > 0 ? (stat.revenueUSD / analytics.totalRevenueUSD) * 100 : 0;
+                  return (
+                    <div key={key} className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-slate-200">
+                          {isAr ? stat.labelAr : stat.labelEn}
+                        </div>
+                        <div className="text-[11px] text-slate-400">
+                          {stat.count} {isAr ? 'مكاتب مشتركة' : 'Subscribers'}
+                        </div>
+                      </div>
+                      <div className="text-end">
+                        <div className="text-sm font-bold text-amber-400 font-mono">
+                          {formatNumber(stat.revenueUSD * analytics.mult)} {analytics.currencyLabel}
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          {formatNumber(sharePct, 1)}% {isAr ? 'من الدخل' : 'Share'}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-400">
-                      {analytics.planStats.basic.count} {isAr ? 'مكاتب مشتركة' : 'Subscribers'}
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <div className="text-sm font-bold text-amber-400 font-mono">
-                      {formatNumber(analytics.planStats.basic.revenueUSD * analytics.mult)} {analytics.currencyLabel}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      {analytics.totalRevenueUSD > 0 ? formatNumber((analytics.planStats.basic.revenueUSD / analytics.totalRevenueUSD) * 100, 1) : 0}% {isAr ? 'من الدخل' : 'Share'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Professional Plan */}
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/30 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span>{isAr ? 'الباقة الاحترافية (Professional)' : 'Professional Plan'}</span>
-                      <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[9px] font-bold">الأكثر طلباً</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      {analytics.planStats.professional.count} {isAr ? 'مكاتب مشتركة' : 'Subscribers'}
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <div className="text-sm font-bold text-amber-400 font-mono">
-                      {formatNumber(analytics.planStats.professional.revenueUSD * analytics.mult)} {analytics.currencyLabel}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      {analytics.totalRevenueUSD > 0 ? formatNumber((analytics.planStats.professional.revenueUSD / analytics.totalRevenueUSD) * 100, 1) : 0}% {isAr ? 'من الدخل' : 'Share'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Enterprise Plan */}
-                <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-bold text-slate-200">
-                      {isAr ? 'باقة النخبة والمؤسسات (Enterprise)' : 'Enterprise Plan'}
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      {analytics.planStats.enterprise.count} {isAr ? 'مكاتب مشتركة' : 'Subscribers'}
-                    </div>
-                  </div>
-                  <div className="text-end">
-                    <div className="text-sm font-bold text-amber-400 font-mono">
-                      {formatNumber(analytics.planStats.enterprise.revenueUSD * analytics.mult)} {analytics.currencyLabel}
-                    </div>
-                    <div className="text-[10px] text-slate-400">
-                      {analytics.totalRevenueUSD > 0 ? formatNumber((analytics.planStats.enterprise.revenueUSD / analytics.totalRevenueUSD) * 100, 1) : 0}% {isAr ? 'من الدخل' : 'Share'}
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -757,28 +1157,35 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
               </div>
 
               <div className="space-y-3">
-                {(Object.keys(analytics.expenseByCategory) as ExpenseCategory[]).map(cat => {
-                  const valUSD = analytics.expenseByCategory[cat];
-                  if (valUSD <= 0) return null;
-                  const pct = analytics.totalExpensesUSD > 0 ? (valUSD / analytics.totalExpensesUSD) * 100 : 0;
+                {analytics.totalExpensesUSD === 0 ? (
+                  <div className="p-6 rounded-2xl bg-slate-950/60 border border-slate-800 text-center text-xs text-slate-400 space-y-1">
+                    <p className="font-bold text-slate-300">{isAr ? 'لا توجد مصاريف تشغيلية مدخلة' : 'No Operating Expenses'}</p>
+                    <p className="text-[10px]">{isAr ? 'أي بند مصروف يتم إضافته في دفتر القيود سيظهر توزيعه هنا فوراً' : 'Expenses recorded in the journal will appear here'}</p>
+                  </div>
+                ) : (
+                  (Object.keys(analytics.expenseByCategory) as ExpenseCategory[]).map(cat => {
+                    const valUSD = analytics.expenseByCategory[cat];
+                    if (valUSD <= 0) return null;
+                    const pct = analytics.totalExpensesUSD > 0 ? (valUSD / analytics.totalExpensesUSD) * 100 : 0;
 
-                  return (
-                    <div key={cat} className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 font-medium">{getCategoryLabel(cat)}</span>
-                        <span className="text-rose-300 font-mono font-bold">
-                          {formatNumber(valUSD * analytics.mult)} {analytics.currencyLabel} ({formatNumber(pct, 1)}%)
-                        </span>
+                    return (
+                      <div key={cat} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300 font-medium">{getCategoryLabel(cat)}</span>
+                          <span className="text-rose-300 font-mono font-bold">
+                            {formatNumber(valUSD * analytics.mult)} {analytics.currencyLabel} ({formatNumber(pct, 1)}%)
+                          </span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-rose-500 rounded-full"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                      <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-rose-500 rounded-full"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -789,7 +1196,9 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                   <ShieldCheck className="w-4 h-4 text-emerald-400" />
                   <span>{isAr ? 'صحة الاشتراكات والتحصيل' : 'Subscription Health & Collection'}</span>
                 </h3>
-                <span className="text-xs text-emerald-400 font-bold">100% مستقرة</span>
+                <span className="text-xs text-emerald-400 font-bold">
+                  {firms.length > 0 ? `${Math.round((analytics.firmPaidCount / firms.length) * 100)}% ${isAr ? 'مسدد' : 'Paid'}` : '100%'}
+                </span>
               </div>
 
               <div className="space-y-3">
@@ -808,22 +1217,22 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                   <div className="flex items-center gap-2.5">
                     <Clock className="w-5 h-5 text-amber-400" />
                     <div>
-                      <div className="text-xs font-bold text-white">{isAr ? 'فترات تجريبية نشطة' : 'Active Trials'}</div>
-                      <div className="text-[10px] text-amber-300/80">{isAr ? 'فرص تحويل للاشتراك المدفوع' : 'Conversion Opportunities'}</div>
+                      <div className="text-xs font-bold text-white">{isAr ? 'اشتراكات مستحقة / قيد التحصيل' : 'Pending Collections'}</div>
+                      <div className="text-[10px] text-amber-300/80">{isAr ? `إجمالي مستحق: ${formatNumber(analytics.firmPendingAmountUSD * analytics.mult)} ${analytics.currencyLabel}` : 'Active Pending Payment'}</div>
                     </div>
                   </div>
-                  <span className="text-base font-bold text-amber-400 font-mono">{analytics.firmTrialCount}</span>
+                  <span className="text-base font-bold text-amber-400 font-mono">{analytics.firmPendingCount}</span>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between">
+                <div className="p-3.5 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <AlertTriangle className="w-5 h-5 text-rose-400" />
+                    <Sparkles className="w-5 h-5 text-blue-400" />
                     <div>
-                      <div className="text-xs font-bold text-white">{isAr ? 'متأخرات ومستحقات للدفع' : 'Overdue Payments'}</div>
-                      <div className="text-[10px] text-rose-300/80">{isAr ? 'تتطلب إشعاراً أو تجديداً' : 'Action Required'}</div>
+                      <div className="text-xs font-bold text-white">{isAr ? 'اشتراكات معفاة رسمياً' : 'Waived Subscriptions'}</div>
+                      <div className="text-[10px] text-blue-300/80">{isAr ? 'ترخيص رسمي معفى من الرسوم' : 'Officially Waived'}</div>
                     </div>
                   </div>
-                  <span className="text-base font-bold text-rose-400 font-mono">{analytics.firmOverdueCount}</span>
+                  <span className="text-base font-bold text-blue-400 font-mono">{analytics.firmWaivedCount}</span>
                 </div>
               </div>
             </div>
@@ -881,7 +1290,7 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                     .filter(f => !txSearch || f.nameAr?.includes(txSearch) || f.slug?.includes(txSearch))
                     .map(firm => {
                       const sub = firm.subscription;
-                      const fee = sub?.annualFee || 3500;
+                      const fee = typeof sub?.annualFee === 'number' ? sub.annualFee : 0;
                       const cur = sub?.currency || 'SAR';
                       const feeUSD = platformFinanceService.convertToUSD(fee, cur);
                       const displayVal = feeUSD * analytics.mult;
@@ -911,7 +1320,7 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                             +{formatNumber(displayVal)} {analytics.currencyLabel}
                           </td>
                           <td className="py-3.5 px-4 text-slate-300">
-                            {sub?.paymentStatus === 'paid' ? 'حوالة بنكية / سداد سنوي' : 'تحت التسوية'}
+                            {sub?.paymentStatus === 'paid' ? (isAr ? 'سداد مكتمل' : 'Paid in full') : sub?.paymentStatus === 'waived' ? (isAr ? 'ترخيص معفى' : 'Waived') : (isAr ? 'قيد التحصيل' : 'Pending')}
                           </td>
                           <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
                             {sub?.startDate?.split('T')[0] || '2026-01-01'}
@@ -920,9 +1329,11 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                             <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                               sub?.paymentStatus === 'paid'
                                 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : sub?.paymentStatus === 'waived'
+                                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                                 : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                             }`}>
-                              {sub?.paymentStatus === 'paid' ? (isAr ? 'مسدد' : 'Paid') : (isAr ? 'تجريبي' : 'Trial')}
+                              {sub?.paymentStatus === 'paid' ? (isAr ? 'مسدد' : 'Paid') : sub?.paymentStatus === 'waived' ? (isAr ? 'معفى رسمياً' : 'Waived') : (isAr ? 'مستحق' : 'Pending')}
                             </span>
                           </td>
                         </tr>
@@ -1474,6 +1885,350 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
       )}
 
       {/* ------------------------------------------------------------- */}
+      {/* MODAL: EDIT REVENUE TRANSACTION                               */}
+      {/* ------------------------------------------------------------- */}
+      {editingTx && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" dir={isAr ? 'rtl' : 'ltr'}>
+          <div className="bg-slate-900 border border-amber-500/50 rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-400/20 text-amber-400 flex items-center justify-center">
+                  <Edit3 className="w-4 h-4 stroke-[3]" />
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  {isAr ? 'تعديل قيد الإيراد / الدفعة' : 'Edit Revenue Transaction'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingTx(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditTransaction} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">
+                  {isAr ? 'اسم المكتب أو العميل *' : 'Firm / Client Name *'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingTx.firmName}
+                  onChange={(e) => setEditingTx({ ...editingTx, firmName: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'المبلغ *' : 'Amount *'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={editingTx.amount}
+                    onChange={(e) => setEditingTx({ ...editingTx, amount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'العملة *' : 'Currency *'}
+                  </label>
+                  <select
+                    value={editingTx.currency}
+                    onChange={(e) => setEditingTx({ ...editingTx, currency: e.target.value as any })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none cursor-pointer"
+                  >
+                    <option value="USD">🇺🇸 دولار أمريكي ($ USD)</option>
+                    <option value="SYP">🇸🇾 ليرة سورية (SYP)</option>
+                    <option value="SAR">🇸🇦 ريال سعودي (SAR)</option>
+                    <option value="AED">🇦🇪 درهم إماراتي (AED)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'طريقة التحصيل' : 'Payment Method'}
+                  </label>
+                  <select
+                    value={editingTx.paymentMethod}
+                    onChange={(e) => setEditingTx({ ...editingTx, paymentMethod: e.target.value as any })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none cursor-pointer"
+                  >
+                    <option value="bank_transfer">تحويل بنكي</option>
+                    <option value="cash">نقداً (كاش)</option>
+                    <option value="syriatel_cash">سيريتل كاش</option>
+                    <option value="al_haram">حوالة الهرم</option>
+                    <option value="fouad">حوالة الفؤاد</option>
+                    <option value="stripe">بطاقة ائتمان / Stripe</option>
+                    <option value="usdt_crypto">USDT كريبتو</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'رقم الإيصال / الفاتورة' : 'Invoice Ref'}
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTx.invoiceNumber || ''}
+                    onChange={(e) => setEditingTx({ ...editingTx, invoiceNumber: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'تاريخ الدفعة' : 'Date'}
+                  </label>
+                  <input
+                    type="date"
+                    value={editingTx.date}
+                    onChange={(e) => setEditingTx({ ...editingTx, date: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'نوع الإيراد' : 'Type'}
+                  </label>
+                  <select
+                    value={editingTx.type}
+                    onChange={(e) => setEditingTx({ ...editingTx, type: e.target.value as any })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                  >
+                    <option value="subscription_new">سداد اشتراك جديد</option>
+                    <option value="subscription_renewal">تجديد اشتراك سنوي</option>
+                    <option value="custom_service">خدمات وتطوير مخصص</option>
+                    <option value="other">إيراد آخر</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">
+                  {isAr ? 'ملاحظات القيد' : 'Notes'}
+                </label>
+                <input
+                  type="text"
+                  value={editingTx.notes || ''}
+                  onChange={(e) => setEditingTx({ ...editingTx, notes: e.target.value })}
+                  placeholder="ملاحظات توثيقية..."
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingTx(null)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold cursor-pointer"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 font-bold cursor-pointer shadow-lg shadow-amber-400/30"
+                >
+                  {isAr ? 'حفظ تعديلات القيد' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL: EDIT EXPENSE ENTRY                                     */}
+      {/* ------------------------------------------------------------- */}
+      {editingExpense && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" dir={isAr ? 'rtl' : 'ltr'}>
+          <div className="bg-slate-900 border border-rose-500/50 rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                  <Edit3 className="w-4 h-4 stroke-[3]" />
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  {isAr ? 'تعديل قيد المصروف' : 'Edit Expense'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingExpense(null)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditExpense} className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">
+                  {isAr ? 'عنوان وبند المصروف *' : 'Expense Title *'}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingExpense.titleAr}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, titleAr: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'المبلغ *' : 'Amount *'}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={editingExpense.amount}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, amount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono font-bold focus:border-rose-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'العملة *' : 'Currency *'}
+                  </label>
+                  <select
+                    value={editingExpense.currency}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, currency: e.target.value as any })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none cursor-pointer"
+                  >
+                    <option value="USD">🇺🇸 دولار أمريكي ($ USD)</option>
+                    <option value="SYP">🇸🇾 ليرة سورية (SYP)</option>
+                    <option value="SAR">🇸🇦 ريال سعودي (SAR)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'التصنيف *' : 'Category *'}
+                  </label>
+                  <select
+                    value={editingExpense.category}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, category: e.target.value as ExpenseCategory })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none cursor-pointer"
+                  >
+                    <option value="servers">خوادم واستضافة سحابية</option>
+                    <option value="marketing">تسويق وإعلانات</option>
+                    <option value="domains">نطاقات وشهادات أمان</option>
+                    <option value="salaries">رواتب ومكافآت</option>
+                    <option value="development">تطوير وبرمجة</option>
+                    <option value="maintenance">صيانة ودعم فني</option>
+                    <option value="legal_banking">رسوم قانونية وبنكية</option>
+                    <option value="other">مصاريف تشغيلية عامة</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'طريقة الدفع *' : 'Payment Method *'}
+                  </label>
+                  <select
+                    value={editingExpense.paymentMethod}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, paymentMethod: e.target.value as any })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none cursor-pointer"
+                  >
+                    <option value="bank_transfer">تحويل بنكي</option>
+                    <option value="cash">نقداً (كاش)</option>
+                    <option value="syriatel_cash">سيريتل كاش</option>
+                    <option value="al_haram">حوالة الهرم</option>
+                    <option value="fouad">حوالة الفؤاد</option>
+                    <option value="stripe">بطاقة ائتمان / Stripe</option>
+                    <option value="usdt_crypto">USDT كريبتو</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'الجهة المستلمة' : 'Recipient'}
+                  </label>
+                  <input
+                    type="text"
+                    value={editingExpense.recipient || ''}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, recipient: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1">
+                    {isAr ? 'تاريخ المصروف' : 'Date'}
+                  </label>
+                  <input
+                    type="date"
+                    value={editingExpense.date}
+                    onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">
+                  {isAr ? 'رقم الإيصال / الفاتورة' : 'Invoice Ref'}
+                </label>
+                <input
+                  type="text"
+                  value={editingExpense.invoiceRef || ''}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, invoiceRef: e.target.value })}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1">
+                  {isAr ? 'ملاحظات إضافية' : 'Notes'}
+                </label>
+                <input
+                  type="text"
+                  value={editingExpense.notes || ''}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, notes: e.target.value })}
+                  placeholder="ملاحظات توثيقية..."
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white focus:border-rose-400 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditingExpense(null)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold cursor-pointer"
+                >
+                  {isAr ? 'إلغاء' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 text-white font-bold cursor-pointer shadow-lg shadow-rose-500/30"
+                >
+                  {isAr ? 'حفظ تعديلات المصروف' : 'Save Expense'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
       {/* MODAL: EXCHANGE RATE & FINANCIAL CONFIG                      */}
       {/* ------------------------------------------------------------- */}
       {isConfigOpen && (
@@ -1546,6 +2301,53 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                   {isAr ? 'حفظ التعديلات' : 'Save Changes'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-md p-6 rounded-3xl bg-slate-900 border border-rose-500/50 shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center mx-auto text-rose-400">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white mb-1">
+                {isAr ? 'تأكيد حذف القيد المحاسبي' : 'Confirm Entry Deletion'}
+              </h3>
+              <p className="text-xs text-slate-300">
+                {isAr 
+                  ? `هل أنت متأكد من رغبتك في حذف "${deleteConfirmTarget.title}" ${deleteConfirmTarget.amount ? `بمبلغ (${deleteConfirmTarget.amount} ${deleteConfirmTarget.currency})` : ''} نهائياً من سجلات المحاسبة؟`
+                  : `Are you sure you want to permanently delete "${deleteConfirmTarget.title}" ${deleteConfirmTarget.amount ? `(${deleteConfirmTarget.amount} ${deleteConfirmTarget.currency})` : ''}?`}
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmTarget(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition cursor-pointer"
+              >
+                {isAr ? 'إلغاء' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (deleteConfirmTarget.type === 'expense') {
+                    platformFinanceService.deleteExpense(deleteConfirmTarget.id);
+                    refreshData();
+                    showToast(isAr ? 'تم حذف بند المصروف' : 'Expense deleted');
+                  } else {
+                    platformFinanceService.deleteTransaction(deleteConfirmTarget.id);
+                    refreshData();
+                    showToast(isAr ? 'تم حذف القيد المالي' : 'Transaction deleted');
+                  }
+                  setDeleteConfirmTarget(null);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition cursor-pointer shadow-lg shadow-rose-600/30"
+              >
+                {isAr ? 'نعم، حذف نهائي' : 'Yes, Delete'}
+              </button>
             </div>
           </div>
         </div>

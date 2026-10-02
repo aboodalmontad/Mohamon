@@ -387,6 +387,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             setIsRegistrationOpen(false);
             loadFirms();
           }} 
+          onFirmRegistered={() => {
+            loadFirms();
+          }}
           lang={lang} 
         />
       )}

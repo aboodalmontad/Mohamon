@@ -4,7 +4,7 @@ import {
   Database, RefreshCw, Copy, ShieldAlert, Sparkles, X, 
   Search, ShieldCheck, FileCode, Sliders, Users, MessageSquare,
   Globe2, ArrowUpRight, HelpCircle, Check, AlertCircle, Edit3,
-  Calendar, Power, Download, FileJson, Archive, Landmark
+  Calendar, Power, Download, FileJson, Archive, Landmark, Sun, Moon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import JSZip from 'jszip';
@@ -15,6 +15,8 @@ import { SupabaseFirmsTab } from './SupabaseFirmsTab';
 import { FirmSubscriptionsTab } from './FirmSubscriptionsTab';
 import { PlatformSettingsTab } from './PlatformSettingsTab';
 import { PlatformFinanceTab } from './PlatformFinanceTab';
+import { PlatformPricingPlansTab } from './PlatformPricingPlansTab';
+import { Tag } from 'lucide-react';
 
 interface SuperAdminDashboardProps {
   isOpen: boolean;
@@ -34,7 +36,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const isAr = lang === 'ar';
   const [firms, setFirms] = useState<LawFirm[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'firms' | 'finance' | 'supabase' | 'domains' | 'platform' | 'backup'>('firms');
+  const [activeTab, setActiveTab] = useState<'firms' | 'finance' | 'pricing' | 'supabase' | 'domains' | 'platform' | 'backup'>('firms');
   
   // Feedback
   const [toastMsg, setToastMsg] = useState('');
@@ -52,6 +54,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   // Delete firm confirmation modal state
   const [deletingFirmTarget, setDeletingFirmTarget] = useState<LawFirm | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Theme Mode (Dark / Light)
+  const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('aladl_admin_theme_mode') as 'dark' | 'light') || 'dark';
+    }
+    return 'dark';
+  });
+
+  const toggleThemeMode = () => {
+    const next = themeMode === 'dark' ? 'light' : 'dark';
+    setThemeMode(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aladl_admin_theme_mode', next);
+      window.dispatchEvent(new CustomEvent('aladl_theme_mode_changed', { detail: next }));
+    }
+  };
 
   const refreshFirms = () => {
     setFirms(firmService.getAllFirms());
@@ -300,27 +319,35 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const totalMessages = firms.reduce((acc, f) => acc + (f.data?.messages?.length || 0), 0);
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto" data-theme={themeMode}>
       <div 
-        className="relative w-full max-w-6xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl text-slate-100 flex flex-col max-h-[95vh] overflow-hidden my-auto"
+        className={`relative w-full max-w-6xl rounded-2xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden my-auto border transition-colors ${
+          themeMode === 'light'
+            ? 'bg-slate-50 border-slate-300 text-slate-900 shadow-slate-900/20'
+            : 'bg-slate-900 border-slate-700/80 text-slate-100'
+        }`}
         dir={isAr ? 'rtl' : 'ltr'}
       >
         {/* Top Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div className={`px-6 py-4 border-b flex flex-wrap items-center justify-between gap-4 transition-colors ${
+          themeMode === 'light'
+            ? 'bg-white border-slate-200 text-slate-900'
+            : 'bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-slate-800 text-white'
+        }`}>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 via-[#c5a869] to-amber-700 flex items-center justify-center text-slate-950 font-black shadow-lg">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold font-serif-title text-white">
+                <h1 className={`text-xl font-bold font-serif-title ${themeMode === 'light' ? 'text-slate-900' : 'text-white'}`}>
                   {isAr ? 'إدارة المنصة الرئيسية' : 'Platform Owner Master Console'}
                 </h1>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                   PLATFORM MANAGER
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className={`text-xs ${themeMode === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
                 {isAr 
                   ? 'إدارة شبكة المكاتب، الاشتراكات، وقاعدة البيانات السحابية' 
                   : 'Manage client law firms, subscriptions, and Supabase cloud database'}
@@ -329,6 +356,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Theme Toggle Button (داكن / ساطع) */}
+            <button
+              type="button"
+              onClick={toggleThemeMode}
+              className={`px-3.5 py-2 rounded-xl border font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm ${
+                themeMode === 'light'
+                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300'
+                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border-slate-700'
+              }`}
+              title={isAr ? (themeMode === 'dark' ? 'التبديل إلى الوضع الساطع (Light Mode)' : 'التبديل إلى الوضع الداكن (Dark Mode)') : 'Toggle Dark / Light Theme'}
+            >
+              {themeMode === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
+              <span>
+                {isAr ? (themeMode === 'dark' ? 'الوضع الساطع' : 'الوضع الداكن') : (themeMode === 'dark' ? 'Light Mode' : 'Dark Mode')}
+              </span>
+            </button>
+
             <button
               onClick={onOpenCreateModal}
               className="px-5 py-2.5 rounded-xl bg-[#c5a869] hover:bg-[#b59859] text-slate-950 font-bold text-sm flex items-center gap-2 transition cursor-pointer shadow-lg active:scale-95"
@@ -339,7 +383,11 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 
             <button
               onClick={onClose}
-              className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+              className={`p-2.5 rounded-xl transition cursor-pointer border ${
+                themeMode === 'light'
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800 border-slate-800'
+              }`}
               title={isAr ? 'إغلاق' : 'Close'}
             >
               <X className="w-6 h-6" />
@@ -347,49 +395,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </div>
         </div>
 
-        {/* Global Platform Metrics Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-950/80 border-b border-slate-800">
-          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between shadow-inner">
-            <div>
-              <span className="text-slate-400 block text-[11px] mb-0.5">{isAr ? 'المكاتب المسجلة' : 'Registered Firms'}</span>
-              <span className="text-xl font-bold text-white font-mono">{totalFirms}</span>
-            </div>
-            <Building2 className="w-6 h-6 text-[#c5a869]" />
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between shadow-inner">
-            <div>
-              <span className="text-slate-400 block text-[11px] mb-0.5">{isAr ? 'إجمالي المحامين' : 'Total Attorneys'}</span>
-              <span className="text-xl font-bold text-emerald-400 font-mono">{totalAttorneys}</span>
-            </div>
-            <Users className="w-6 h-6 text-emerald-400" />
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between shadow-inner">
-            <div>
-              <span className="text-slate-400 block text-[11px] mb-0.5">{isAr ? 'الاستشارات' : 'Inquiries'}</span>
-              <span className="text-xl font-bold text-cyan-400 font-mono">{totalMessages}</span>
-            </div>
-            <MessageSquare className="w-6 h-6 text-cyan-400" />
-          </div>
-
-          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between shadow-inner">
-            <div>
-              <span className="text-slate-400 block text-[11px] mb-0.5">{isAr ? 'الاستضافة' : 'Hosting'}</span>
-              <span className="text-sm font-bold text-amber-300 font-mono">Vercel Edge</span>
-            </div>
-            <Globe2 className="w-6 h-6 text-amber-400" />
-          </div>
-        </div>
-
-        {/* Sticky Fixed Platform Master Navigation Bar */}
-        <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-xl border-b border-slate-700/80 shadow-xl">
-          {/* Section Header Title */}
+        {/* Sticky Fixed Platform Master Navigation Tabs (ألسنة لوحة التحكم المركزية) */}
+        <div className="sticky top-0 z-30 bg-slate-950/95 backdrop-blur-xl border-b border-slate-800 shadow-xl">
+          {/* Section Header Title with Real-Time Badges */}
           <div className="px-6 py-2.5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800/80 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
               <h3 className="text-xs font-black tracking-wider text-amber-400/90 uppercase font-sans">
-                {isAr ? 'أقسام لوحة التحكم المركزية' : 'Platform Master Control Sections'}
+                {isAr ? 'ألسنة لوحة التحكم المركزية' : 'Platform Control Tabs'}
               </h3>
             </div>
             <div className="flex items-center gap-2">
@@ -397,14 +410,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 {isAr ? `إجمالي المكاتب: ${totalFirms}` : `Total Firms: ${totalFirms}`}
               </span>
               <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
-                SYSTEM ONLINE
+                ONLINE • SUPABASE SYNC
               </span>
             </div>
           </div>
 
-          {/* High-Contrast Interactive Navigation Tabs */}
+          {/* High-Contrast Interactive Navigation Tabs (ألسنة التبويب) */}
           <div className="p-2.5 bg-slate-900/90">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2">
               {/* TAB 1: FIRMS & SUBSCRIPTIONS */}
               <button
                 type="button"
@@ -419,8 +432,8 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                   <Building2 className="w-4 h-4" />
                 </div>
                 <div className="text-start leading-tight">
-                  <div className="font-extrabold truncate">{isAr ? 'المكاتب' : 'Firms'}</div>
-                  <div className="text-[10px] opacity-75 font-normal">{isAr ? `${totalFirms} مكاتب` : `${totalFirms} Firms`}</div>
+                  <div className="font-extrabold truncate">{isAr ? 'المكاتب والاشتراكات' : 'Firms & Plans'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? `${totalFirms} مكتب مسجل` : `${totalFirms} Firms`}</div>
                 </div>
               </button>
 
@@ -430,7 +443,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 onClick={() => setActiveTab('finance')}
                 className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
                   activeTab === 'finance'
-                    ? 'bg-gradient-to-r from-emerald-500/20 to-amber-600/10 text-emerald-300 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.25)] ring-1 ring-emerald-400/50'
+                    ? 'bg-gradient-to-r from-emerald-500/20 to-teal-600/10 text-emerald-300 border-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.25)] ring-1 ring-emerald-400/50'
                     : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
                 }`}
               >
@@ -442,11 +455,30 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                     <span>{isAr ? 'محاسبة المنصة' : 'Finance'}</span>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   </div>
-                  <div className="text-[10px] text-emerald-400/90 font-medium">{isAr ? 'الواردات والمصاريف' : 'P&L & Ledger'}</div>
+                  <div className="text-[10px] text-emerald-400/90 font-medium">{isAr ? 'دفتر القيود والمصروفات' : 'Ledger & P&L'}</div>
                 </div>
               </button>
 
-              {/* TAB 3: SUPABASE CLOUD DATABASE */}
+              {/* TAB 3: PRICING PLANS & SUBSCRIPTION PACKAGES */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('pricing')}
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                  activeTab === 'pricing'
+                    ? 'bg-gradient-to-r from-amber-500/20 to-yellow-600/10 text-amber-300 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.25)] ring-1 ring-amber-400/50'
+                    : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
+                }`}
+              >
+                <div className={`p-1.5 rounded-lg shrink-0 ${activeTab === 'pricing' ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-800 text-amber-400'}`}>
+                  <Tag className="w-4 h-4" />
+                </div>
+                <div className="text-start leading-tight">
+                  <div className="font-extrabold text-white">{isAr ? 'خطط التسعير' : 'Pricing'}</div>
+                  <div className="text-[10px] text-amber-300/90 font-medium">{isAr ? 'إدارة باقات الاشتراك' : 'Plans & Rates'}</div>
+                </div>
+              </button>
+
+              {/* TAB 4: SUPABASE CLOUD DATABASE */}
               <button
                 type="button"
                 onClick={() => setActiveTab('supabase')}
@@ -461,11 +493,11 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 </div>
                 <div className="text-start leading-tight">
                   <div className="font-extrabold truncate">{isAr ? 'قاعدة البيانات' : 'Database'}</div>
-                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'Supabase' : 'Supabase'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'Supabase Cloud' : 'Supabase Cloud'}</div>
                 </div>
               </button>
 
-              {/* TAB 4: PLATFORM UI */}
+              {/* TAB 5: PLATFORM UI */}
               <button
                 type="button"
                 onClick={() => setActiveTab('platform')}
@@ -484,7 +516,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 </div>
               </button>
 
-              {/* TAB 5: DEPLOYMENT & SUPPORT */}
+              {/* TAB 6: DEPLOYMENT & SUPPORT */}
               <button
                 type="button"
                 onClick={() => setActiveTab('domains')}
@@ -499,15 +531,15 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 </div>
                 <div className="text-start leading-tight">
                   <div className="font-extrabold truncate">{isAr ? 'الدعم والنشر' : 'Hosting'}</div>
-                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'Vercel' : 'Vercel'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'Vercel Edge' : 'Vercel Edge'}</div>
                 </div>
               </button>
 
-              {/* TAB 6: FULL BACKUP */}
+              {/* TAB 7: FULL BACKUP */}
               <button
                 type="button"
                 onClick={() => setActiveTab('backup')}
-                className={`col-span-2 sm:col-span-1 py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
+                className={`py-2.5 px-3 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center sm:justify-start gap-2 cursor-pointer border shadow-sm ${
                   activeTab === 'backup'
                     ? 'bg-gradient-to-r from-rose-500/20 to-rose-600/10 text-rose-300 border-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.25)] ring-1 ring-rose-400/50'
                     : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-600 hover:bg-slate-800/60 hover:text-white'
@@ -518,7 +550,7 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
                 </div>
                 <div className="text-start leading-tight">
                   <div className="font-extrabold truncate">{isAr ? 'النسخ الاحتياطي' : 'Backup'}</div>
-                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'تصدير ZIP' : 'ZIP Archive'}</div>
+                  <div className="text-[10px] opacity-75 font-normal">{isAr ? 'تصدير JSON' : 'JSON Archive'}</div>
                 </div>
               </button>
             </div>
@@ -558,6 +590,14 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
               firms={firms}
               isAr={isAr}
               onRefreshFirms={refreshFirms}
+            />
+          )}
+
+          {/* TAB 2: PRICING PLANS & PACKAGES ENGINE */}
+          {activeTab === 'pricing' && (
+            <PlatformPricingPlansTab
+              firms={firms}
+              lang={lang}
             />
           )}
 

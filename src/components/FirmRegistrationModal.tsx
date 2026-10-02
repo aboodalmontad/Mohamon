@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
-import { X, CheckCircle, ChevronRight, ChevronLeft, Building, Lock, Mail, Phone, User, Globe, LayoutTemplate, Copy, ExternalLink } from 'lucide-react';
-import { Language, LawFirm } from '../types';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, CheckCircle2, ChevronRight, ChevronLeft, Building2, Lock, Mail, Phone, 
+  User, Globe, Sparkles, Copy, ExternalLink, ShieldCheck, MapPin, Check,
+  CreditCard, Eye, EyeOff, FileText, ArrowRight, ArrowLeft, Award, Layers
+} from 'lucide-react';
+import { Language, LawFirm, SubscriptionPlanTier, PricingPlan } from '../types';
 import { firmService } from '../services/firmService';
-import { initialSiteSettings, initialPartners, initialPracticeAreas, initialTestimonials, initialBlogPosts, initialCaseStudies, initialOffices } from '../data/initialData';
+import { pricingPlanService } from '../services/pricingPlanService';
+import { COUNTRIES_LIST } from '../data/countries';
+import { initialPracticeAreas, initialCaseStudies, initialTestimonials, initialBlogPosts } from '../data/initialData';
 
-const generateArabicSlug = (text: string) => {
+interface FirmRegistrationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  lang: Language;
+  onFirmRegistered?: (firm: LawFirm) => void;
+}
+
+const generateCleanSlug = (text: string) => {
   const arabicMap: Record<string, string> = {
     'أ': 'a', 'ا': 'a', 'إ': 'e', 'آ': 'a', 'ؤ': 'o', 'ئ': 'e',
     'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
@@ -28,368 +41,804 @@ const generateArabicSlug = (text: string) => {
     }
   }
   
-  return result.replace(/-+/g, '-').replace(/^-|-$/g, '') || `firm-${Date.now()}`;
+  return result.replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || `firm-${Date.now().toString(36)}`;
 };
 
-interface FirmRegistrationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  lang: Language;
-}
+export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  lang,
+  onFirmRegistered
+}) => {
+  const isAr = lang === 'ar';
+  const isTr = lang === 'tr';
 
-export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({ isOpen, onClose, lang }) => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [generatedSlugForView, setGeneratedSlugForView] = useState('');
-  
+  const [errorMsg, setErrorMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [createdFirm, setCreatedFirm] = useState<LawFirm | null>(null);
+
+  // Form State (Lawyer Input Only - No internal manager fields)
   const [formData, setFormData] = useState({
     nameAr: '',
-    email: '',
+    nameEn: '',
+    slug: '',
+    taglineAr: '',
+    founderName: '',
     phone: '',
+    email: '',
+    countryAr: 'المملكة العربية السعودية',
+    countryEn: 'Saudi Arabia',
+    cityAr: 'الرياض',
+    aboutTextAr: '',
     adminPassword: '',
-    useTemplateData: true
+    confirmPassword: '',
+    planTier: 'professional' as SubscriptionPlanTier,
+    useTemplateData: true,
   });
 
-  const isRtl = lang === 'ar';
+  const [plans, setPlans] = useState<PricingPlan[]>(() => pricingPlanService.getPlans());
+
+  useEffect(() => {
+    const handlePlansUpdated = () => {
+      const activePlans = pricingPlanService.getPlans();
+      setPlans(activePlans);
+      if (activePlans.length > 0 && !activePlans.some(p => p.tier === formData.planTier)) {
+        const defaultPlan = activePlans.find(p => p.isPopular) || activePlans[0];
+        setFormData(prev => ({ ...prev, planTier: defaultPlan.tier }));
+      }
+    };
+    handlePlansUpdated();
+    window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
+    return () => {
+      window.removeEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
+    };
+  }, []);
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    if (step < 2) {
-      setStep(step + 1);
+    setErrorMsg('');
+
+    if (step === 1) {
+      if (!formData.nameAr.trim()) {
+        setErrorMsg(isAr ? 'يرجى إدخال اسم المكتب الرسمي بالعربية' : 'Please enter official firm name');
+        return;
+      }
+      setStep(2);
+    } else if (step === 2) {
+      if (!formData.founderName.trim()) {
+        setErrorMsg(isAr ? 'يرجى إدخال اسم المحامي المسؤول / المؤسس' : 'Please enter founder attorney name');
+        return;
+      }
+      if (!formData.phone.trim()) {
+        setErrorMsg(isAr ? 'يرجى إدخال رقم الهاتف أو الواتساب للتواصل' : 'Please enter phone number');
+        return;
+      }
+      setStep(3);
+    }
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (!formData.adminPassword.trim() || formData.adminPassword.length < 4) {
+      setErrorMsg(isAr ? 'يرجى تعيين كلمة مرور قوية لإدارة مكتبك (4 أحرف أو أرقام على الأقل)' : 'Please choose a manager password (at least 4 characters)');
       return;
     }
-    
-    setIsSubmitting(true);
-    
-    const baseSlug = generateArabicSlug(formData.nameAr);
-    let finalSlug = baseSlug;
-    let counter = 1;
-    const existingFirms = firmService.getAllFirms();
-    while (existingFirms.some(f => f.slug.toLowerCase() === finalSlug.toLowerCase())) {
-      finalSlug = `${baseSlug}-${counter}`;
-      counter++;
+
+    if (formData.confirmPassword && formData.adminPassword !== formData.confirmPassword) {
+      setErrorMsg(isAr ? 'كلمة المرور وتأكيدها غير متطابقين' : 'Passwords do not match');
+      return;
     }
-    setGeneratedSlugForView(finalSlug);
 
-    // Create new firm object
-    const newFirm: LawFirm = {
-      id: crypto.randomUUID(),
-      slug: finalSlug,
-      nameAr: formData.nameAr,
-      nameEn: formData.nameAr,
-      email: formData.email,
-      phone: formData.phone,
-      logoUrl: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=200',
-      adminPassword: formData.adminPassword,
-      status: 'active',
-      isVerified: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      subscription: {
-        planTier: 'professional',
-        planNameAr: 'الباقة الاحترافية (تجريبي)',
-        planNameEn: 'Professional (Trial)',
-        status: 'trial',
-        isSiteActive: true,
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        annualFee: 0
-      },
-      data: {
-        settings: {
-          ...initialSiteSettings,
-          firmNameAr: formData.nameAr,
-          firmNameEn: formData.nameAr,
-          email: formData.email,
-          phone: formData.phone,
-          emergencyPhone: formData.phone,
-          consultationEmail: formData.email,
-          primaryColor: '#c5a869',
-          adminPassword: formData.adminPassword,
-        },
-        partners: formData.useTemplateData ? [
-          {
-            id: `partner-${Date.now()}`,
-            name: formData.nameAr,
-            nameEn: formData.nameAr,
-            title: 'الشريك المؤسس والمدير العام',
-            titleEn: 'Founding & Managing Partner',
-            specialty: 'الاستشارات القانونية والتقاضي والتحكيم',
-            specialtyEn: 'Legal Consultancy, Litigation & Arbitration',
-            experienceYears: 15,
-            education: ['بكالوريوس في الحقوق والشريعة القانونية'],
-            educationEn: ['Bachelor of Laws (LL.B.)'],
-            languages: ['العربية', 'الإنجليزية'],
-            bio: `مؤسس ومدير ${formData.nameAr}، خبرة واسعة في التمثيل القضائي وصياغة العقود والاستشارات القانونية.`,
-            bioEn: `Founder and Managing Partner of ${formData.nameAr}, with extensive experience in litigation and legal consultancy.`,
-            image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
-            email: formData.email,
-            phone: formData.phone,
-            linkedin: 'https://linkedin.com',
-            featured: true,
-            barAdmission: 'نقابة المحامين',
-            isPartner: true,
-          }
-        ] : [],
-        practiceAreas: formData.useTemplateData ? initialPracticeAreas : [],
-        caseStudies: formData.useTemplateData ? initialCaseStudies : [],
-        testimonials: formData.useTemplateData ? initialTestimonials : [],
-        blogPosts: formData.useTemplateData ? initialBlogPosts : [],
-        offices: [
-          {
-            id: `office-${Date.now()}`,
-            cityAr: 'المقر الرئيسي',
-            cityEn: 'Headquarters',
-            countryAr: 'المملكة العربية السعودية',
-            countryEn: 'Saudi Arabia',
-            addressAr: 'المقر الرئيسي للمكتب',
-            addressEn: 'Main Office Headquarters',
-            phone: formData.phone,
-            email: formData.email,
-            mapEmbedUrl: '',
-            isHeadquarter: true,
-          }
-        ],
-        messages: []
+    setIsSubmitting(true);
+
+    try {
+      const selectedPlan = plans.find(p => p.tier === formData.planTier) || plans[1];
+      const selectedCountryObj = COUNTRIES_LIST.find(c => c.ar === formData.countryAr) || { ar: 'المملكة العربية السعودية', en: 'Saudi Arabia' };
+      const firmSlug = generateCleanSlug(formData.nameAr);
+      const firmEmail = formData.email.trim() || `info@${firmSlug || 'lawfirm'}.sa`;
+
+      const res = await firmService.createFirm({
+        nameAr: formData.nameAr.trim(),
+        nameEn: formData.nameEn.trim() || formData.nameAr.trim(),
+        slug: firmSlug,
+        taglineAr: formData.taglineAr.trim() || 'ريادة قضائية وحلول قانونية واستشارية متكاملة',
+        cityAr: formData.cityAr.trim() || 'الرياض',
+        countryAr: selectedCountryObj.ar,
+        countryEn: selectedCountryObj.en,
+        phone: formData.phone.trim(),
+        email: firmEmail,
+        adminPassword: formData.adminPassword.trim(),
+        themeColor: '#c5a869',
+      });
+
+      if (res.success && res.firm) {
+        // Enhance subscription details with chosen plan
+        const updatedSub = {
+          ...res.firm.subscription!,
+          planTier: selectedPlan.tier,
+          planNameAr: selectedPlan.nameAr,
+          planNameEn: selectedPlan.nameEn,
+          annualFee: selectedPlan.priceSAR,
+          currency: 'SAR',
+          status: 'trial' as const, // Start with free trial & instant active site
+          isSiteActive: true,
+          notes: `تم التسجيل الإلكتروني عبر منصة المحامين - باقة ${selectedPlan.nameAr}`,
+        };
+
+        // If template data is requested, populate rich legal defaults
+        const updatedData = {
+          ...res.firm.data,
+          settings: {
+            ...res.firm.data.settings,
+            firmNameAr: formData.nameAr.trim(),
+            firmNameEn: formData.nameEn.trim() || formData.nameAr.trim(),
+            sloganAr: formData.taglineAr.trim() || 'ريادة قضائية وحلول قانونية واستشارية متكاملة',
+            aboutTextAr: formData.aboutTextAr.trim() || `نحن في ${formData.nameAr.trim()} نكرس خبراتنا القانونية الراسخة لتقديم أعلى مستويات التمثيل القضائي والاستشارات القانونية المتخصصة.`,
+            phone: formData.phone.trim(),
+            emergencyPhone: formData.phone.trim(),
+            email: formData.email.trim(),
+            consultationEmail: formData.email.trim(),
+            cityAr: formData.cityAr.trim(),
+            countryAr: selectedCountryObj.ar,
+            adminPassword: formData.adminPassword.trim(),
+          },
+          partners: [
+            {
+              id: `partner-${Date.now()}`,
+              name: formData.founderName.trim() || formData.nameAr.trim(),
+              nameEn: formData.founderName.trim() || 'Managing Partner',
+              title: 'المحامي المؤسس والمدير العام',
+              titleEn: 'Founding & Managing Partner',
+              specialty: 'الاستشارات القانونية والتمثيل القضائي والتحكيم',
+              specialtyEn: 'Legal Consultancy, Litigation & Arbitration',
+              experienceYears: 15,
+              education: ['بكالوريوس في الحقوق والأنظمة القانونية'],
+              educationEn: ['Bachelor of Laws (LL.B.)'],
+              languages: ['العربية', 'الإنجليزية'],
+              bio: `المحامي المؤسس والمدير العام لمكتب ${formData.nameAr.trim()}، خبرة رائدة في الترافع وصياغة العقود والاستشارات النوعية.`,
+              bioEn: `Founding & Managing Partner with extensive experience in legal counsel and litigation.`,
+              image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
+              email: formData.email.trim(),
+              phone: formData.phone.trim(),
+              linkedin: 'https://linkedin.com',
+              barAdmission: 'نقابة المحامين',
+              featured: true,
+              isPartner: true,
+            }
+          ],
+          practiceAreas: formData.useTemplateData ? initialPracticeAreas : [],
+          caseStudies: formData.useTemplateData ? initialCaseStudies : [],
+          testimonials: formData.useTemplateData ? initialTestimonials : [],
+          blogPosts: formData.useTemplateData ? initialBlogPosts : [],
+        };
+
+        const finalizedFirm: LawFirm = {
+          ...res.firm,
+          taglineAr: formData.taglineAr.trim() || res.firm.taglineAr,
+          subscription: updatedSub,
+          data: updatedData,
+        };
+
+        await firmService.saveFirm(finalizedFirm);
+        setCreatedFirm(finalizedFirm);
+        setStep(4);
+        if (onFirmRegistered) {
+          onFirmRegistered(finalizedFirm);
+        }
+      } else {
+        setErrorMsg(res.message || (isAr ? 'حدث خطأ أثناء تسجيل المكتب، يرجى المحاولة ثانية' : 'Error creating firm'));
       }
-    };
+    } catch (err: any) {
+      setErrorMsg(err.message || (isAr ? 'حدث خطأ غير متوقع أثناء تسجيل المكتب' : 'Unexpected error'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    // Save to service and sync immediately to Supabase so all visitors worldwide see the new firm
-    await firmService.saveFirm(newFirm);
-    
-    setIsSubmitting(false);
-    setIsSuccess(true);
+  const getFullSiteUrl = (slug: string) => {
+    if (typeof window === 'undefined') return `?firm=${slug}`;
+    return `${window.location.origin}/?firm=${slug}`;
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md overflow-y-auto animate-fade-in">
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      <div className="relative bg-[#181512] border border-white/10 rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center p-6 border-b border-white/10">
-          <div>
-            <h2 className="text-2xl font-serif text-[#c5a869]">تسجيل مكتب جديد</h2>
-            <p className="text-white/50 text-sm mt-1">انضم إلى منصة محامون وأطلق مكتبك الرقمي</p>
+        className="relative w-full max-w-3xl rounded-3xl bg-slate-900 border border-[#c5a869]/50 shadow-2xl text-slate-100 flex flex-col max-h-[95vh] overflow-hidden my-auto"
+        dir={isAr ? 'rtl' : 'ltr'}
+      >
+        {/* Modal Top Header */}
+        <div className="px-6 py-4.5 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-b border-slate-800 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 via-[#c5a869] to-amber-700 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold font-serif-title text-white">
+                  {isAr ? 'معالج تسجيل وتدشين موقع مكتب محاماة' : 'Law Firm Registration & Launch Wizard'}
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#c5a869]/20 text-[#ebd397] border border-[#c5a869]/40">
+                  {isAr ? 'تدشين فوري' : 'Instant Launch'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400">
+                {isAr ? 'أنشئ موقعك القانوني المستقل مع لوحة تحكم متكاملة في أقل من دقيقة' : 'Build your independent law firm website and control panel in 1 minute'}
+              </p>
+            </div>
           </div>
-          <button 
+
+          <button
             onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer border border-transparent hover:border-slate-700"
+            title={isAr ? 'إغلاق' : 'Close'}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto">
-          {isSuccess ? (
-            <div className="text-center py-10">
-              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-500" />
+        {/* Wizard Steps Navigation Bar (Only for steps 1, 2, 3) */}
+        {step < 4 && (
+          <div className="px-6 py-3 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-2 overflow-x-auto text-xs font-bold">
+            {/* Step 1 */}
+            <div className={`flex items-center gap-2 ${step === 1 ? 'text-amber-400' : step > 1 ? 'text-emerald-400' : 'text-slate-500'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-mono font-black ${
+                step === 1 ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30' : step > 1 ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {step > 1 ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : '1'}
               </div>
-              <h3 className="text-2xl font-medium text-white mb-4">تم إنشاء مكتبك بنجاح!</h3>
-              <p className="text-white/60 leading-relaxed max-w-md mx-auto mb-6">
-                تهانينا، لقد تم إنشاء مكتبك الرقمي وتفعيله بنجاح. 
-                <br /><br />
-                تم منحك <span className="text-[#c5a869] font-bold">فترة تجريبية مجانية لمدة شهر كامل</span>. 
-              </p>
-
-              <div className="bg-black/50 border border-white/10 rounded-xl p-4 mb-8 flex items-center justify-between gap-4 max-w-md mx-auto">
-                <div className="overflow-hidden text-right w-full">
-                  <span className="text-xs text-white/40 block mb-1">النطاق الرقمي الرسمي لمكتبك:</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[#c5a869] font-mono text-base font-bold break-all" dir="ltr">
-                      {generatedSlugForView}.mohamoon.sa
-                    </span>
-                    <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                      نطاق معتمد
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/?firm=${generatedSlugForView}`);
-                  }}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/60 hover:text-white shrink-0"
-                  title="نسخ الرابط"
-                >
-                  <Copy className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <button 
-                  onClick={() => {
-                    onClose();
-                    window.location.href = `/?firm=${generatedSlugForView}`;
-                  }}
-                  className="bg-[#c5a869] hover:bg-[#b38a38] text-[#181512] font-medium px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  <span>عرض الموقع</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    onClose();
-                    window.location.href = `/?firm=${generatedSlugForView}&admin=true`;
-                  }}
-                  className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-                >
-                  <LayoutTemplate className="w-5 h-5" />
-                  <span>لوحة التحكم</span>
-                </button>
-              </div>
+              <span>{isAr ? '1. هوية واسم المكتب' : '1. Firm Identity'}</span>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Progress Steps */}
-              <div className="flex items-center gap-2 mb-8">
-                <div className={`flex-1 h-2 rounded-full ${step >= 1 ? 'bg-[#c5a869]' : 'bg-white/10'}`} />
-                <div className={`flex-1 h-2 rounded-full ${step >= 2 ? 'bg-[#c5a869]' : 'bg-white/10'}`} />
+
+            <div className={`h-0.5 flex-1 max-w-[40px] ${step > 1 ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+
+            {/* Step 2 */}
+            <div className={`flex items-center gap-2 ${step === 2 ? 'text-amber-400' : step > 2 ? 'text-emerald-400' : 'text-slate-500'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-mono font-black ${
+                step === 2 ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30' : step > 2 ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {step > 2 ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : '2'}
+              </div>
+              <span>{isAr ? '2. المحامي والتواصل' : '2. Founder & Contact'}</span>
+            </div>
+
+            <div className={`h-0.5 flex-1 max-w-[40px] ${step > 2 ? 'bg-emerald-500' : 'bg-slate-800'}`} />
+
+            {/* Step 3 */}
+            <div className={`flex items-center gap-2 ${step === 3 ? 'text-amber-400' : 'text-slate-500'}`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-mono font-black ${
+                step === 3 ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30' : 'bg-slate-800 text-slate-400'
+              }`}>
+                3
+              </div>
+              <span>{isAr ? '3. الباقة وكلمة المرور' : '3. Plan & Password'}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error Alert */}
+        {errorMsg && (
+          <div className="mx-6 mt-4 p-3.5 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center gap-2 animate-shake">
+            <X className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{errorMsg}</span>
+          </div>
+        )}
+
+        {/* Scrollable Form Body */}
+        <div className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
+          {/* STEP 1: FIRM IDENTITY */}
+          {step === 1 && (
+            <form onSubmit={handleNext} className="space-y-4">
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-[#ebd397] flex items-center gap-3">
+                <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+                <p className="leading-relaxed">
+                  {isAr 
+                    ? 'أهلاً بك زميلنا المحامي! أدخل اسم مكتبك لنقوم بإنشاء موقع رسمي متكامل ومخصص لك فوراً.'
+                    : 'Welcome! Enter your firm name to instantly generate your official law firm website.'}
+                </p>
               </div>
 
-              {step === 1 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                  <h3 className="text-lg font-medium text-white mb-6">بيانات المكتب الأساسية</h3>
-                  
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">اسم المكتب (بالعربية) *</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-white/40">
-                        <Building className="w-5 h-5" />
-                      </div>
-                      <input 
-                        type="text" 
-                        required
-                        value={formData.nameAr}
-                        onChange={e => setFormData({...formData, nameAr: e.target.value})}
-                        className="w-full bg-black/50 border border-white/10 text-white rounded-xl py-3 pr-11 pl-4 focus:outline-none focus:border-[#c5a869] transition-colors"
-                        placeholder="مثال: مكتب النحوي للمحاماة"
-                      />
-                    </div>
-                  </div>
+              {/* Names */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-200 font-bold mb-1.5">
+                    {isAr ? 'اسم المكتب أو المحامي الرسمي (بالعربية) *:' : 'Official Firm Name (Arabic) *:'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={formData.nameAr}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const cleanSlug = generateCleanSlug(val);
+                      setFormData(prev => ({
+                        ...prev,
+                        nameAr: val,
+                        founderName: prev.founderName || val,
+                        slug: prev.slug ? prev.slug : cleanSlug
+                      }));
+                    }}
+                    placeholder={isAr ? 'مثال: شركة العدل للمحاماة والاستشارات' : 'e.g. Al-Adl Law Firm'}
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-sm focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-400/30"
+                  />
+                </div>
 
-                  <div className="pt-4">
-                    <div 
-                      onClick={() => setFormData({...formData, useTemplateData: !formData.useTemplateData})}
-                      className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start gap-4 ${
-                        formData.useTemplateData 
-                          ? 'bg-[#c5a869]/10 border-[#c5a869] text-[#c5a869]' 
-                          : 'bg-black/50 border-white/10 text-white hover:border-white/30'
-                      }`}
-                    >
-                      <div className={`mt-0.5 w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-colors ${
-                        formData.useTemplateData ? 'bg-[#c5a869] border-[#c5a869]' : 'border-white/30 bg-transparent'
-                      }`}>
-                        {formData.useTemplateData && <CheckCircle className="w-3.5 h-3.5 text-black" />}
-                      </div>
-                      <div>
-                        <h4 className={`text-sm font-medium mb-1 ${formData.useTemplateData ? 'text-white' : 'text-white/80'}`}>
-                          بدء بموقع جاهز ومليء بالبيانات (موصى به)
-                        </h4>
-                        <p className="text-xs text-white/50 leading-relaxed">
-                          سيتم ملء موقعك ببيانات افتراضية احترافية باللغات الثلاث (محامين افتراضيين بخبرات عالية، مقالات، خدمات قانونية متكاملة) لتتمكن من رؤية الموقع بشكله النهائي وتعديله لاحقاً بدلاً من البدء بموقع فارغ.
-                        </p>
-                      </div>
-                      <LayoutTemplate className={`w-8 h-8 shrink-0 opacity-20 ${formData.useTemplateData ? 'text-[#c5a869]' : 'text-white'}`} />
-                    </div>
+                <div>
+                  <label className="block text-slate-200 font-bold mb-1.5">
+                    {isAr ? 'اسم المكتب بالإنجليزية (اختياري):' : 'Official Firm Name (English):'}
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nameEn}
+                    onChange={(e) => setFormData({ ...formData, nameEn: e.target.value })}
+                    placeholder="e.g. Al-Adl Law Firm & Legal Counsel"
+                    className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 text-sm focus:border-amber-400 focus:outline-none font-sans"
+                  />
+                </div>
+              </div>
+
+              {/* Tagline */}
+              <div>
+                <label className="block text-slate-200 font-bold mb-1.5 flex items-center justify-between">
+                  <span>{isAr ? 'الشعار اللفظي أو الرؤية القانونية للمكتب:' : 'Firm Tagline / Slogan:'}</span>
+                  <span className="text-[10px] text-amber-400 font-normal">
+                    {isAr ? 'اختر من العبارات الجاهزة المهنية' : 'Select professional tagline'}
+                  </span>
+                </label>
+                <select
+                  value={formData.taglineAr}
+                  onChange={(e) => setFormData({ ...formData, taglineAr: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white text-xs focus:border-amber-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="">{isAr ? '-- اختر الشعار اللفظي المناسب لمكتبك --' : '-- Select Professional Slogan --'}</option>
+                  {[
+                    'ريادة قضائية وحلول قانونية واستشارية متكاملة',
+                    'حماية حقوقكم وتحقيق العدالة بأعلى معايير المهنية',
+                    'خبرة راسخة في الترافع والتمثيل القضائي وحماية المصالح',
+                    'شركاؤكم الموثوقون في النجاح القانوني وحل النزاعات',
+                    'رؤية استراتيجية وحلول قانونية مبتكرة لقطاع الأعمال والأفراد',
+                    'دفاع صلب عن حقوقكم وموثوقية مطلقة في الاستشارات',
+                    'نحمي مصالحكم القانونية ونمهد لكم طريق النجاح المؤسسي',
+                    'التميز في صياغة العقود وتمثيل الموكلين أمام كافة الجهات القضائية',
+                    'العدالة الناجزة والخبرة القانونية العميقة في خدمة قضاياكم',
+                    'استشارات قانونية دقيقة وحلول قضائية ذكية لضمان استقرار أعمالكم'
+                  ].map((slogan, idx) => (
+                    <option key={idx} value={slogan}>{slogan}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Step 1 Actions */}
+              <div className="flex items-center justify-end pt-4 border-t border-slate-800">
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-xl bg-[#c5a869] hover:bg-[#b59859] text-slate-950 font-black text-sm flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
+                >
+                  <span>{isAr ? 'متابعة لبيانات التواصل والمحامي' : 'Continue to Contact Info'}</span>
+                  {isAr ? <ChevronLeft className="w-4 h-4 stroke-[3]" /> : <ChevronRight className="w-4 h-4 stroke-[3]" />}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* STEP 2: FOUNDER & CONTACT */}
+          {step === 2 && (
+            <form onSubmit={handleNext} className="space-y-4">
+              {/* Founder Name */}
+              <div>
+                <label className="block text-slate-200 font-bold mb-1.5">
+                  {isAr ? 'اسم المحامي المسؤول أو الشريك المؤسس *:' : 'Founder / Managing Attorney Name *:'}
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-amber-400 absolute right-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    autoFocus
+                    value={formData.founderName}
+                    onChange={(e) => setFormData({ ...formData, founderName: e.target.value })}
+                    placeholder={isAr ? 'مثال: المحامي أحمد النحوي' : 'e.g. Attorney Ahmad Nahwi'}
+                    className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Phone & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-200 font-bold mb-1.5">
+                    {isAr ? 'رقم الهاتف أو الواتساب الرسمي *:' : 'Phone or WhatsApp Number *:'}
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-emerald-400 absolute right-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="+966 50 123 4567"
+                      className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none font-mono"
+                    />
                   </div>
                 </div>
-              )}
 
-              {step === 2 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                  <h3 className="text-lg font-medium text-white mb-6">بيانات الاتصال والتوثيق</h3>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-white/60 mb-2">البريد الإلكتروني *</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-white/40">
-                          <Mail className="w-5 h-5" />
-                        </div>
-                        <input 
-                          type="email" 
-                          required
-                          dir="ltr"
-                          value={formData.email}
-                          onChange={e => setFormData({...formData, email: e.target.value})}
-                          className="w-full bg-black/50 border border-white/10 text-white rounded-xl py-3 pr-11 pl-4 focus:outline-none focus:border-[#c5a869] transition-colors text-left"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm text-white/60 mb-2">رقم الجوال *</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-white/40">
-                          <Phone className="w-5 h-5" />
-                        </div>
-                        <input 
-                          type="tel" 
-                          required
-                          dir="ltr"
-                          value={formData.phone}
-                          onChange={e => setFormData({...formData, phone: e.target.value})}
-                          className="w-full bg-black/50 border border-white/10 text-white rounded-xl py-3 pr-11 pl-4 focus:outline-none focus:border-[#c5a869] transition-colors text-left"
-                        />
-                      </div>
-                    </div>
+                <div>
+                  <label className="block text-slate-200 font-bold mb-1.5 flex items-center justify-between">
+                    <span>{isAr ? 'البريد الإلكتروني الرسمي للمكتب:' : 'Official Law Firm Email:'}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">{isAr ? 'اختياري' : 'Optional'}</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-blue-400 absolute right-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="contact@lawfirm.com"
+                      className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none font-mono"
+                    />
                   </div>
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-sm text-white/60 mb-2">كلمة مرور مدير المكتب *</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-white/40">
-                        <Lock className="w-5 h-5" />
+              {/* Country & City */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-slate-200 font-bold mb-1.5">
+                    {isAr ? 'الدولة:' : 'Country:'}
+                  </label>
+                  <select
+                    value={formData.countryAr}
+                    onChange={(e) => {
+                      const sel = COUNTRIES_LIST.find(c => c.ar === e.target.value);
+                      setFormData({ 
+                        ...formData, 
+                        countryAr: e.target.value,
+                        countryEn: sel?.en || 'Saudi Arabia'
+                      });
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:border-amber-400 focus:outline-none cursor-pointer"
+                  >
+                    {COUNTRIES_LIST.map((c) => (
+                      <option key={c.code} value={c.ar}>
+                        {c.flag} {c.ar}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-200 font-bold mb-1.5">
+                    {isAr ? 'المدينة:' : 'City:'}
+                  </label>
+                  <div className="relative">
+                    <MapPin className="w-4 h-4 text-amber-400 absolute right-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={formData.cityAr}
+                      onChange={(e) => setFormData({ ...formData, cityAr: e.target.value })}
+                      placeholder={isAr ? 'الرياض / جدة / دمشق' : 'City name...'}
+                      className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Brief About Firm Text */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-slate-200 font-bold">
+                    {isAr ? 'نبذة تعريفية موجزة عن المكتب والخبرات:' : 'Brief About Firm Text:'}
+                  </label>
+                  <span className="text-[10px] text-amber-400 font-normal">
+                    {isAr ? 'اختر نموذجاً جاهزاً أو اكتبه بنفسك' : 'Select a template or type custom'}
+                  </span>
+                </div>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setFormData({ ...formData, aboutTextAr: e.target.value });
+                    }
+                  }}
+                  className="w-full mb-2 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 text-xs focus:border-amber-400 focus:outline-none cursor-pointer"
+                >
+                  <option value="">{isAr ? '-- اختر نموذجاً جاهزاً للنبذة التعريفية (20 نموذجاً) --' : '-- Choose from 20 ready bio templates --'}</option>
+                  {[
+                    'نحن شركة رائدة في تقديم الخدمات القانونية والاستشارات المتخصصة والتمثيل القضائي أمام كافة المحاكم والجهات القضائية باحترافية عالية وموثوقية مطلقة.',
+                    'مكتب محاماة متكامل يضم نخبة من الكفاءات القانونية المؤهلة لتقديم حلول استراتيجية ذكية لقطاع الأعمال والأفراد وحماية حقوقهم ومصالحهم.',
+                    'نكرس خبراتنا القانونية الراسخة لتقديم أعلى مستويات التمثيل القضائي وصياغة العقود والاستشارات النوعية التي تضمن استقرار ونمو أعمال موكلينا.',
+                    'مؤسسة قانونية معتمدة تقدم خدمات الترافع التجاري والمدني والجزائي، وتقديم الاستشارات القانونية الدقيقة وفق أعلى معايير المهنية والسرية.',
+                    'نتميز بخبرة عريقة في حل النزاعات المعقدة والتحكيم التجاري وتمثيل الشركات والمؤسسات الكبرى أمام الجهات القضائية والتحكيمية.',
+                    'فريق قانوني محترف يجمع بين الأصالة والعمق المعرفي في الشريعة والقانون وبين الحداثة في تقديم الحلول القانونية السريعة والفعالة.',
+                    'نقدم خدمات استشارية وقانونية شاملة للشركات والناشئة والأفراد، مع التركيز على الوقاية القانونية وحماية الأصول وحل النزاعات بكفاءة عالية.',
+                    'مكتب محاماة واستشارات يرتكز على قيم الأمانة والنزاهة والسرعة والإتقان في الدفاع عن حقوق الموكلين وتحقيق تطلعاتهم القانونية.',
+                    'نمتلك خبرة واسعة في قضايا الشركات، الملكية الفكرية، عقود الاستثمار، والتقاضي القضائي الدولي والمحلي بمهارة واحترافية متناهية.',
+                    'نسعى دائماً لتقديم حلول قانونية عملية ومبتكرة تخدم مصالح موكلينا وتحقق لهم الأمان القضائي والاستدامة في كافة تعاملاتهم.',
+                    'مكتب قانوني متخصص في قضايا التجارة الدولية، الشركات المساهمة، النزاعات المصرفية، وصياغة العقود الكبرى بمهنية رفيعة المستوى.',
+                    'نقدم رعاية قانونية شاملة ومتابعة دقيقة لكافة القضايا والمعاملات القانونية لعملائنا داخل الدولة وخارجها بأعلى معايير الجودة.',
+                    'نحن شريككم القانوني الموثوق في اتخاذ القرارات السليمة وحماية حقوقكم ومكتسباتكم المالية والتجارية عبر استشارات دقيقة ومدروسة.',
+                    'مكتب استشارات قانونية يضم خبرات قضائية متراكمة لتقديم الدعم القانوني الفوري والفعال للشركات ورجال الأعمال والأفراد.',
+                    'نكرس جهودنا لتحقيق العدالة وحماية مصالح عملائنا من خلال الترافع البارع والتحليل القانوني العميق والحلول الاستراتيجية.',
+                    'مكتب محاماة معتمد يقدم خدمات قانونية نوعية تشمل التأسيس، الحوكمة، تسوية النزاعات، والتمثيل القضائي أمام مختلف الدرجات القضائية.',
+                    'نقدم رؤى قانونية ثاقبة وحلولاً استشارية ذكية تساعد عملاءنا على مواجهة التحديات القانونية بثقة واستقرار تام.',
+                    'مؤسسة قانونية عصرية تجمع بين الاحترافية التقنية والخبرة القضائية العميقة لتوفير خدمات قانونية فائقة الجودة والموثوقية.',
+                    'نضع خبرتنا الطويلة في خدمة عملائنا لضمان سلامة أعمالهم وحماية حقوقهم المدنية والتجارية وفق أحدث النظم القانونية.',
+                    'مكتب محاماة رائد يلتزم بتقديم أرفع مستويات الدفاع القانوني والاستشارات الموثوقة التي تلبي طموحات واحتياجات موكلينا بكل كفاءة.'
+                  ].map((tpl, i) => (
+                    <option key={i} value={tpl}>النموذج ({i + 1}): {tpl.slice(0, 75)}...</option>
+                  ))}
+                </select>
+                <textarea
+                  rows={3}
+                  value={formData.aboutTextAr}
+                  onChange={(e) => setFormData({ ...formData, aboutTextAr: e.target.value })}
+                  placeholder={isAr ? 'اكتب نبذة مختصرة عن تأسيس المكتب ومجالات تميزه أو اختر من القائمة أعلاه...' : 'Write a brief description or select from templates above...'}
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+
+              {/* Step 2 Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition cursor-pointer"
+                >
+                  {isAr ? 'السابق' : 'Back'}
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-xl bg-[#c5a869] hover:bg-[#b59859] text-slate-950 font-black text-sm flex items-center gap-2 transition cursor-pointer shadow-lg shadow-amber-500/20 active:scale-95"
+                >
+                  <span>{isAr ? 'متابعة لاختيار الباقة والأمان' : 'Continue to Plan & Password'}</span>
+                  {isAr ? <ChevronLeft className="w-4 h-4 stroke-[3]" /> : <ChevronRight className="w-4 h-4 stroke-[3]" />}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* STEP 3: PLAN SELECTION & ADMIN PASSWORD */}
+          {step === 3 && (
+            <form onSubmit={handleFinalSubmit} className="space-y-5">
+              {/* Plan Cards */}
+              <div className="space-y-2">
+                <label className="block text-slate-200 font-bold">
+                  {isAr ? 'اختر باقة الاشتراك المناسبة لمكتبك:' : 'Select Your Subscription Plan:'}
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {plans.map((p) => {
+                    const isSelected = formData.planTier === p.tier;
+                    return (
+                      <div
+                        key={p.tier}
+                        onClick={() => setFormData({ ...formData, planTier: p.tier })}
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-amber-950/30 border-amber-400 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/50'
+                            : 'bg-slate-950/70 border-slate-800 hover:border-slate-700 hover:bg-slate-950'
+                        }`}
+                      >
+                        {p.isPopular && (
+                          <span className="absolute -top-2.5 right-4 rtl:right-4 rtl:left-auto bg-gradient-to-r from-amber-400 to-[#c5a869] text-slate-950 font-black text-[9px] px-2 py-0.5 rounded-full shadow">
+                            {isAr ? (p.badgeAr || 'الأكثر طلباً') : (p.badgeEn || 'Popular')}
+                          </span>
+                        )}
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white text-xs">{p.nameAr}</span>
+                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                              isSelected ? 'border-amber-400 bg-amber-400 text-slate-950' : 'border-slate-600'
+                            }`}>
+                              {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                          </div>
+
+                          <div className="text-[10px] text-amber-300 font-medium">
+                            {p.badgeAr}
+                          </div>
+
+                          <ul className="space-y-1.5 pt-2 text-[10px] text-slate-300">
+                            {p.featuresAr.slice(0, 3).map((feat, idx) => (
+                              <li key={idx} className="flex items-start gap-1.5">
+                                <Check className="w-3 h-3 text-emerald-400 shrink-0 mt-0.5" />
+                                <span>{feat}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
+                          <span className="text-slate-400">{isAr ? 'الباقة الرسمية' : 'Official Plan'}</span>
+                          <span className="font-bold text-amber-300 font-mono">${(p.priceUSD || 0).toLocaleString()} / {p.billingCycle === 'annual' ? (isAr ? 'سنة' : 'year') : (isAr ? 'شهر' : 'month')}</span>
+                        </div>
                       </div>
-                      <input 
-                        type="password" 
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Manager Password Section */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2 text-white font-bold">
+                  <Lock className="w-4 h-4 text-amber-400" />
+                  <span>{isAr ? 'كلمة مرور لوحة تحكم المكتب (Manager Password):' : 'Firm Manager Password:'}</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  {isAr 
+                    ? 'ستستخدم هذه الكلمة لتسجيل الدخول إلى لوحة إدارة موقعك وتعديل النصوص، الشركاء، واستقبال استشارات الموكلين.'
+                    : 'Used to log in to your executive dashboard and customize your landing page.'}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 mb-1">{isAr ? 'كلمة المرور *:' : 'Password *:'}</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? 'text' : 'password'}
                         required
                         value={formData.adminPassword}
-                        onChange={e => setFormData({...formData, adminPassword: e.target.value})}
-                        className="w-full bg-black/50 border border-white/10 text-white rounded-xl py-3 pr-11 pl-4 focus:outline-none focus:border-[#c5a869] transition-colors text-left"
+                        onChange={(e) => setFormData({ ...formData, adminPassword: e.target.value })}
                         placeholder="••••••••"
+                        className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono focus:border-amber-400 focus:outline-none pr-10 rtl:pr-10 rtl:pl-3"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
                     </div>
-                    <p className="text-xs text-white/40 mt-2">ستستخدم هذه الكلمة لتسجيل الدخول للوحة تحكم مكتبك.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 mb-1">{isAr ? 'تأكيد كلمة المرور:' : 'Confirm Password:'}</label>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={formData.confirmPassword}
+                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white font-mono focus:border-amber-400 focus:outline-none"
+                    />
                   </div>
                 </div>
-              )}
+              </div>
 
-              <div className="pt-6 border-t border-white/10 flex items-center justify-between">
-                {step > 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => setStep(step - 1)}
-                    className="px-6 py-3 rounded-xl border border-white/10 text-white hover:bg-white/5 transition-colors flex items-center gap-2"
-                  >
-                    {isRtl ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-                    <span>رجوع</span>
-                  </button>
-                ) : (
-                  <div />
-                )}
+              {/* Use Template Seed Data */}
+              <label className="flex items-center gap-3 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:bg-slate-950 transition">
+                <input
+                  type="checkbox"
+                  checked={formData.useTemplateData}
+                  onChange={(e) => setFormData({ ...formData, useTemplateData: e.target.checked })}
+                  className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-700 cursor-pointer"
+                />
+                <span className="text-slate-300 text-[11px]">
+                  {isAr 
+                    ? 'تهيئة الموقع تلقائياً بنماذج تخصصات قانونية وقضايا نموذجية أولية (يُمكن تعديلها بالكامل لاحقاً)'
+                    : 'Initialize site with default legal practice areas and template sections'}
+                </span>
+              </label>
+
+              {/* Step 3 Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition cursor-pointer"
+                >
+                  {isAr ? 'السابق' : 'Back'}
+                </button>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#c5a869] hover:bg-[#b38a38] text-[#181512] px-8 py-3 rounded-xl font-medium transition-all flex items-center gap-2"
+                  className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 via-[#d4af37] to-[#c5a869] hover:brightness-110 text-slate-950 font-black text-sm flex items-center gap-2 transition cursor-pointer shadow-xl shadow-amber-950/40 active:scale-95 disabled:opacity-50"
                 >
                   {isSubmitting ? (
-                    <div className="w-5 h-5 border-2 border-[#181512] border-t-transparent rounded-full animate-spin" />
+                    <>
+                      <Sparkles className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>{isAr ? 'جاري إنشاء وتدشين الموقع...' : 'Launching your website...'}</span>
+                    </>
                   ) : (
                     <>
-                      <span>{step === 1 ? 'التالي' : 'إرسال الطلب'}</span>
-                      {step === 1 && (isRtl ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />)}
+                      <Award className="w-4 h-4 text-slate-950 stroke-[3]" />
+                      <span>{isAr ? 'تدشين موقع المكتب والبدء الآن' : 'Launch Law Firm Website'}</span>
                     </>
                   )}
                 </button>
               </div>
             </form>
+          )}
+
+          {/* STEP 4: SUCCESS & LAUNCH SCREEN */}
+          {step === 4 && createdFirm && (
+            <div className="text-center space-y-6 py-4 animate-fade-in">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center mx-auto text-slate-950 font-black shadow-2xl shadow-emerald-500/30">
+                <CheckCircle2 className="w-9 h-9 text-slate-950 stroke-[2.5]" />
+              </div>
+
+              <div className="space-y-1.5">
+                <h3 className="text-2xl font-black text-white font-serif-title">
+                  {isAr ? 'تهانينا! تم تدشين موقع مكتبك بنجاح' : 'Congratulations! Your Website is Live!'}
+                </h3>
+                <p className="text-xs text-[#ebd397] max-w-md mx-auto leading-relaxed">
+                  {isAr 
+                    ? `أصبح موقع "${createdFirm.nameAr}" جاهزاً ونشطاً لاستقبال الموكلين وطلبات الاستشارة.`
+                    : `Your official website for "${createdFirm.nameAr}" is now live and ready.`}
+                </p>
+              </div>
+
+              {/* Live Link Card */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/40 text-start space-y-2 max-w-lg mx-auto shadow-xl">
+                <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold">
+                  <span>{isAr ? 'رابط موقعك الرسمي المباشر:' : 'Official Live URL:'}</span>
+                  <span className="text-emerald-400 flex items-center gap-1 font-mono">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    {isAr ? 'موقع نشط ومفعل' : 'Active Site'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                  <Globe className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="font-mono text-xs text-white truncate flex-1 font-bold">
+                    {getFullSiteUrl(createdFirm.slug)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(getFullSiteUrl(createdFirm.slug));
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition cursor-pointer"
+                    title={isAr ? 'نسخ الرابط' : 'Copy URL'}
+                  >
+                    {copiedLink ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Login Credentials Box */}
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 max-w-lg mx-auto text-start space-y-2">
+                <div className="text-[11px] font-bold text-amber-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>{isAr ? 'بيانات إدارة موقعك ومتابعة الاستشارات:' : 'Control Panel Access:'}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">{isAr ? 'البريد الإلكتروني:' : 'Email:'}</span>
+                    <span className="font-mono font-bold text-white truncate block">{createdFirm.email}</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-slate-900 border border-slate-800">
+                    <span className="text-[10px] text-slate-400 block">{isAr ? 'كلمة المرور:' : 'Password:'}</span>
+                    <span className="font-mono font-bold text-amber-300 block">{formData.adminPassword}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct Launch Action */}
+              <div className="pt-3 max-w-lg mx-auto flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    window.location.href = `/?firm=${createdFirm.slug}`;
+                  }}
+                  className="w-full sm:flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-[#c5a869] hover:brightness-110 text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-emerald-500/20 transition cursor-pointer active:scale-95"
+                >
+                  <ExternalLink className="w-4 h-4 text-slate-950 stroke-[3]" />
+                  <span>{isAr ? 'الانتقال إلى موقع المكتب الآن' : 'Visit Live Website'}</span>
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </div>

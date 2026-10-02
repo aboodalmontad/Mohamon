@@ -379,8 +379,40 @@ export interface LawFirmData {
   savedAt?: string;
 }
 
-export type SubscriptionPlanTier = 'starter' | 'professional' | 'enterprise' | 'custom';
+export type SubscriptionPlanTier = 'starter' | 'professional' | 'enterprise' | 'custom' | string;
 export type SubscriptionStatus = 'active' | 'expired' | 'suspended' | 'trial';
+
+export interface PricingPlan {
+  id: string;
+  tier: SubscriptionPlanTier;
+  nameAr: string;
+  nameEn: string;
+  nameTr?: string;
+  badgeAr?: string;
+  badgeEn?: string;
+  badgeTr?: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  descriptionTr?: string;
+  priceUSD: number;
+  priceSAR?: number;
+  priceSYP?: number;
+  billingCycle: 'annual' | 'monthly' | 'lifetime' | 'custom';
+  isPopular?: boolean;
+  isActive: boolean;
+  featuresAr: string[];
+  featuresEn: string[];
+  featuresTr?: string[];
+  maxLawyers?: number;
+  maxOffices?: number;
+  customDomainAllowed: boolean;
+  storageGB?: number;
+  aiAssistantEnabled?: boolean;
+  supportLevelAr?: string;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface FirmSubscription {
   planTier: SubscriptionPlanTier;
@@ -394,7 +426,7 @@ export interface FirmSubscription {
   annualFee?: number; // Annual fee amount
   currency?: string; // 'SAR' | 'USD' | 'AED'
   autoRenew?: boolean;
-  paymentStatus?: 'paid' | 'pending' | 'overdue';
+  paymentStatus?: 'paid' | 'pending' | 'overdue' | 'waived';
   notes?: string;
 }
 

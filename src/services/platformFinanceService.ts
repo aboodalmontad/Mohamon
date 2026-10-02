@@ -62,50 +62,7 @@ const STORAGE_KEY_EXPENSES = 'aladl_platform_expenses_v1';
 const STORAGE_KEY_TRANSACTIONS = 'aladl_platform_transactions_v1';
 const STORAGE_KEY_CONFIG = 'aladl_platform_finance_config_v1';
 
-const initialExpenses: PlatformExpense[] = [
-  {
-    id: 'exp-1',
-    titleAr: 'اشتراك خوادم واستضافة سحابية عالية الأداء (Vercel Enterprise & Supabase Pro)',
-    titleEn: 'Cloud Infrastructure & DB Hosting (Vercel & Supabase)',
-    category: 'servers',
-    amount: 120,
-    currency: 'USD',
-    date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    paymentMethod: 'stripe',
-    recipient: 'Supabase / Vercel Inc.',
-    invoiceRef: 'INV-2026-CLOUD-01',
-    notes: 'تغطية البنية التحتية للخوادم وقواعد البيانات السحابية لكافة المكاتب',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'exp-2',
-    titleAr: 'تجديد حزمة النطاقات وحماية شهادات الأمان SSL وحماية Cloudflare',
-    titleEn: 'Domains Renewal & SSL Security',
-    category: 'domains',
-    amount: 65,
-    currency: 'USD',
-    date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    paymentMethod: 'bank_transfer',
-    recipient: 'Cloudflare Inc & Namecheap',
-    invoiceRef: 'INV-CF-8849',
-    notes: 'حماية وتأمين الدومينات والنطاقات الخاصة بالمكاتب',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'exp-3',
-    titleAr: 'حملات تسويقية وإعلانات موجهة لنقابات المحامين والمكاتب القانونية',
-    titleEn: 'Targeted Legal SaaS Marketing Campaigns',
-    category: 'marketing',
-    amount: 250,
-    currency: 'USD',
-    date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    paymentMethod: 'cash',
-    recipient: 'Meta Ads & Google Ads Agency',
-    invoiceRef: 'MKT-2026-08',
-    notes: 'حملة استقطاب المكاتب والشركات الحقوقية في دمشق وحلب والمحافظات',
-    createdAt: new Date().toISOString(),
-  }
-];
+const initialExpenses: PlatformExpense[] = [];
 
 const initialConfig: PlatformFinanceConfig = {
   reportingCurrency: 'USD',
@@ -130,9 +87,12 @@ class PlatformFinanceService {
     try {
       const storedExp = localStorage.getItem(STORAGE_KEY_EXPENSES);
       if (storedExp) {
-        this.expenses = JSON.parse(storedExp);
+        const parsed: PlatformExpense[] = JSON.parse(storedExp);
+        // Purge old mock expenses ('exp-1', 'exp-2', 'exp-3') so platform finance reflects real entered data
+        this.expenses = parsed.filter(e => !['exp-1', 'exp-2', 'exp-3'].includes(e.id));
+        this.saveExpenses();
       } else {
-        this.expenses = initialExpenses;
+        this.expenses = [];
         this.saveExpenses();
       }
 
@@ -225,6 +185,16 @@ class PlatformFinanceService {
     this.transactions.unshift(newTx);
     this.saveTransactions();
     return newTx;
+  }
+
+  public updateTransaction(id: string, updates: Partial<PlatformTransaction>): boolean {
+    const idx = this.transactions.findIndex(t => t.id === id);
+    if (idx !== -1) {
+      this.transactions[idx] = { ...this.transactions[idx], ...updates };
+      this.saveTransactions();
+      return true;
+    }
+    return false;
   }
 
   public deleteTransaction(id: string): boolean {
