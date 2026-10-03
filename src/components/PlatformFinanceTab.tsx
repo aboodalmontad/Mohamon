@@ -1285,9 +1285,9 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-medium">
-                  {/* Active Firm Subscriptions Ledger Entries */}
+                  {/* Active Firm Subscriptions Ledger Entries (Strictly Paid or Waived) */}
                   {firms
-                    .filter(f => !txSearch || f.nameAr?.includes(txSearch) || f.slug?.includes(txSearch))
+                    .filter(f => (f.subscription?.paymentStatus === 'paid' || f.subscription?.paymentStatus === 'waived') && (!txSearch || f.nameAr?.includes(txSearch) || f.slug?.includes(txSearch)))
                     .map(firm => {
                       const sub = firm.subscription;
                       const fee = typeof sub?.annualFee === 'number' ? sub.annualFee : 0;
@@ -1374,14 +1374,24 @@ export const PlatformFinanceTab: React.FC<PlatformFinanceTabProps> = ({
                             <div className="text-emerald-400/80">{tx.invoiceNumber}</div>
                           </td>
                           <td className="py-3.5 px-4 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTransaction(tx.id)}
-                              className="text-slate-500 hover:text-rose-400 p-1 rounded-lg transition"
-                              title={isAr ? 'حذف القيد' : 'Delete'}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setEditingTx(tx)}
+                                className="text-slate-500 hover:text-amber-400 p-1 rounded-lg transition cursor-pointer"
+                                title={isAr ? 'تعديل القيد' : 'Edit'}
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteTransaction(tx.id)}
+                                className="text-slate-500 hover:text-rose-400 p-1 rounded-lg transition cursor-pointer"
+                                title={isAr ? 'حذف القيد' : 'Delete'}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
