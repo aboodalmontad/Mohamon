@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, MapPin, Scale, Building, RefreshCw } from 'lucide-react';
+import { Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, MapPin, Scale, Building, RefreshCw, QrCode } from 'lucide-react';
 import { FirmRegistrationModal } from './FirmRegistrationModal';
+import { FirmQRCodeModal } from './FirmQRCodeModal';
 import { Language, LawFirm } from '../types';
 import { firmService, createDefaultFirms } from '../services/firmService';
 import { storageService } from '../services/storageService';
@@ -20,6 +21,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
   const [activeFirms, setActiveFirms] = useState<LawFirm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
+  const [qrModalFirm, setQrModalFirm] = useState<LawFirm | null>(null);
   const isRtl = lang === 'ar';
   const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
 
@@ -295,9 +297,26 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                             <MapPin className="w-3.5 h-3.5 text-[#c5a869] shrink-0" />
                             <span className="break-words">{city}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-[#ebd397] font-semibold bg-[#c5a869]/15 px-2.5 py-1 rounded-md border border-[#c5a869]/30 group-hover:bg-[#c5a869] group-hover:text-[#181512] transition-colors">
-                            <span>{isRtl ? 'زيارة الموقع' : lang === 'tr' ? 'Siteyi Ziyaret Et' : 'Visit Site'}</span>
-                            <ArrowIcon className="w-3 h-3" />
+                          
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setQrModalFirm(firm);
+                              }}
+                              className="p-1.5 px-2 rounded-md bg-white/10 hover:bg-[#c5a869] text-white hover:text-[#181512] transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer"
+                              title={isRtl ? 'عرض ومسح باركود المكتب' : 'Show Firm QR Code'}
+                            >
+                              <QrCode className="w-3.5 h-3.5 text-[#c5a869] group-hover:text-inherit" />
+                              <span>{isRtl ? 'الباركود QR' : 'QR'}</span>
+                            </button>
+
+                            <div className="flex items-center gap-1 text-xs text-[#ebd397] font-semibold bg-[#c5a869]/15 px-2.5 py-1 rounded-md border border-[#c5a869]/30 group-hover:bg-[#c5a869] group-hover:text-[#181512] transition-colors">
+                              <span>{isRtl ? 'زيارة الموقع' : lang === 'tr' ? 'Siteyi Ziyaret Et' : 'Visit Site'}</span>
+                              <ArrowIcon className="w-3 h-3" />
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -391,6 +410,20 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
             loadFirms();
           }}
           lang={lang} 
+        />
+      )}
+
+      {qrModalFirm && (
+        <FirmQRCodeModal
+          isOpen={!!qrModalFirm}
+          onClose={() => setQrModalFirm(null)}
+          firmName={qrModalFirm.nameAr}
+          firmSlug={qrModalFirm.slug}
+          tagline={qrModalFirm.taglineAr}
+          city={qrModalFirm.cityAr}
+          phone={qrModalFirm.phone}
+          themeColor={qrModalFirm.themeColor}
+          lang={lang}
         />
       )}
     </div>

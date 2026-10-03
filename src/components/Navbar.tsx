@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check } from 'lucide-react';
+import { Scale, Phone, Globe, Menu, X, Shield, UserCheck, RefreshCw, ChevronDown, Check, QrCode } from 'lucide-react';
 import { SiteSettings, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
@@ -11,6 +11,7 @@ interface NavbarProps {
   onToggleLang?: () => void;
   onOpenConsultation: (practiceId?: string, partnerId?: string) => void;
   onOpenAdmin: () => void;
+  onOpenQRModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({
@@ -20,6 +21,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
   onToggleLang,
   onOpenConsultation,
   onOpenAdmin,
+  onOpenQRModal,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -188,7 +190,22 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
                 <span className="font-bold text-[11px] sm:text-xs text-[#4b4334] group-hover:text-[#87641d]">{t.refreshApp}</span>
               </button>
 
-              {/* 3. Admin Panel / Dashboard Trigger */}
+              {/* 3. Firm QR Code Access Trigger */}
+              {onOpenQRModal && (
+                <button
+                  type="button"
+                  onClick={onOpenQRModal}
+                  className="text-xs text-[#87641d] hover:text-[#684b12] flex items-center gap-1 sm:gap-1.5 transition px-2.5 sm:px-3 py-1 rounded-lg bg-white/95 hover:bg-white border border-[#c5a869]/60 hover:border-[#b38a38] shadow-xs cursor-pointer active:scale-95 font-bold"
+                  title={lang === 'ar' ? 'رمز الباركود الذكي للمكتب (QR Code)' : lang === 'tr' ? 'Büro QR Kodu' : 'Firm QR Code'}
+                >
+                  <QrCode className="w-3.5 h-3.5 text-[#b38a38]" />
+                  <span className="font-bold text-[11px] sm:text-xs text-[#4b4334]">
+                    {lang === 'ar' ? 'رمز الباركود' : lang === 'tr' ? 'QR Kod' : 'QR Code'}
+                  </span>
+                </button>
+              )}
+
+              {/* 4. Admin Panel / Dashboard Trigger */}
               <button
                 type="button"
                 onClick={onOpenAdmin}
@@ -401,6 +418,18 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({
             </div>
 
             <div className="pt-4 flex flex-col gap-3">
+              {onOpenQRModal && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenQRModal();
+                  }}
+                  className="w-full py-2.5 rounded-lg bg-white border border-[#c5a869] text-[#87641d] font-bold text-center flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4 text-[#b38a38]" />
+                  <span>{lang === 'ar' ? 'رمز الباركود الذكي للمكتب (QR Code)' : lang === 'tr' ? 'Büro QR Kodu' : 'Firm QR Code'}</span>
+                </button>
+              )}
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);

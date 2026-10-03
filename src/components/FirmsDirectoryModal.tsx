@@ -15,13 +15,15 @@ import {
   KeyRound, 
   ArrowRight,
   Database,
-  Globe2
+  Globe2,
+  QrCode
 } from 'lucide-react';
 import { firmService } from '../services/firmService';
 import { storageService } from '../services/storageService';
 import { LawFirm, Language } from '../types';
 import { getLocalized } from '../services/i18n';
 import { translateTextSync } from '../services/translator';
+import { FirmQRCodeModal } from './FirmQRCodeModal';
 
 interface FirmsDirectoryModalProps {
   isOpen: boolean;
@@ -42,6 +44,7 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState<string>('all');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [qrModalFirm, setQrModalFirm] = useState<LawFirm | null>(null);
 
   // New Firm Registration Form state
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -477,6 +480,17 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
                               </span>
                             )}
                             <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setQrModalFirm(firm);
+                              }}
+                              className="p-1.5 rounded-lg text-stone-500 hover:text-[#87641d] hover:bg-[#b38a38]/15 transition-colors"
+                              title={lang === 'ar' ? "عرض وتحميل باركود المكتب (QR Code)" : "Show Firm QR Code"}
+                            >
+                              <QrCode className="w-4 h-4 text-[#87641d]" />
+                            </button>
+
+                            <button
                               onClick={(e) => handleCopyLink(firm.slug, e)}
                               className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors"
                               title={lang === 'ar' ? "نسخ رابط الموقع المستقل" : lang === 'tr' ? "Site Bağlantısını Kopyala" : "Copy Website URL"}
@@ -586,6 +600,23 @@ export const FirmsDirectoryModal: React.FC<FirmsDirectoryModalProps> = React.mem
           </div>
         </div>
       </div>
+
+      {qrModalFirm && (
+        <FirmQRCodeModal
+          isOpen={!!qrModalFirm}
+          onClose={() => setQrModalFirm(null)}
+          firmName={qrModalFirm.nameAr}
+          firmSlug={qrModalFirm.slug}
+          tagline={qrModalFirm.taglineAr}
+          city={qrModalFirm.cityAr}
+          phone={qrModalFirm.phone}
+          themeColor={qrModalFirm.themeColor}
+          lang={lang}
+        />
+      )}
     </div>
   );
 });
+
+export default FirmsDirectoryModal;
+

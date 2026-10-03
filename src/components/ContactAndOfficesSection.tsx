@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Send, Phone, Mail, MapPin, Clock, Shield, CheckCircle2, Building, MessageCircle, ExternalLink, Globe, Award, Sparkles, AlertCircle
+  Send, Phone, Mail, MapPin, Clock, Shield, CheckCircle2, Building, MessageCircle, ExternalLink, Globe, Award, Sparkles, AlertCircle, QrCode
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { storageService } from '../services/storageService';
+import { firmService } from '../services/firmService';
 import { SiteSettings, PracticeArea, OfficeLocation, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
+import { FirmQRCodeCard } from './FirmQRCodeCard';
 
 interface ContactSectionProps {
   settings: SiteSettings;
   practiceAreas: PracticeArea[];
   offices: OfficeLocation[];
   lang: Language;
+  onOpenQRModal?: () => void;
 }
 
 export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.memo(({
@@ -19,6 +22,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
   practiceAreas,
   offices,
   lang,
+  onOpenQRModal,
 }) => {
   const t = useTranslation(lang);
   const isAr = lang === 'ar';
@@ -99,6 +103,7 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
   };
 
   const firmName = getLocalized(settings, 'firmName', lang, settings.firmNameAr);
+  const slogan = getLocalized(settings, 'slogan', lang, settings.sloganAr || '');
   const workingHours = getLocalized(settings, 'workingHours', lang, settings.workingHoursAr);
   const headquarterAddress = getLocalized(settings, 'address', lang, settings.addressAr);
 
@@ -652,6 +657,17 @@ export const ContactAndOfficesSection: React.FC<ContactSectionProps> = React.mem
                 })()}
               </div>
             )}
+
+            {/* 3. Smart QR Digital Card for the Firm */}
+            <div className="pt-2">
+              <FirmQRCodeCard
+                firmName={firmName}
+                firmSlug={firmService.getActiveFirmSlug()}
+                tagline={slogan}
+                lang={lang}
+                onOpenFullModal={onOpenQRModal}
+              />
+            </div>
 
           </div>
         </div>

@@ -9,8 +9,9 @@ import {
   Languages, Wand2, ArrowRightLeft, Loader2, Target, Compass, Award, History, FileText,
   Copy, Code2, HardDrive, Cloud, FileCode, Database, Link2, Server, HelpCircle, RotateCcw,
   Coins, DollarSign, TrendingUp, BarChart3, Banknote, Lock, FileCheck2, Globe2, ArrowUp, ArrowDown,
-  Sun, Moon
+  Sun, Moon, QrCode
 } from 'lucide-react';
+import { FirmQRCodeModal } from './FirmQRCodeModal';
 import { storageService } from '../services/storageService';
 import { firmService } from '../services/firmService';
 import { pricingPlanService } from '../services/pricingPlanService';
@@ -975,6 +976,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
     }
     return 'dark';
   });
+
+  // Firm QR Code Modal State
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
 
   const toggleThemeMode = () => {
     const next = themeMode === 'dark' ? 'light' : 'dark';
@@ -1974,6 +1978,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                     <span>{isAr ? 'حفظ التعديلات' : 'Save Changes'}</span>
                   </>
                 )}
+              </button>
+            )}
+
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={() => setIsQRModalOpen(true)}
+                className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-amber-500/50 text-amber-300 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow transition cursor-pointer"
+                title={isAr ? 'رمز الباركود الذكي للمكتب (تحميل، طباعة، ومشاركة)' : 'Firm Smart QR Code Card'}
+              >
+                <QrCode className="w-4 h-4 text-amber-400" />
+                <span className="hidden sm:inline">{isAr ? 'باركود المكتب QR' : 'Firm QR'}</span>
+                <span className="sm:hidden">{isAr ? 'QR' : 'QR'}</span>
               </button>
             )}
 
@@ -9296,6 +9313,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
               </div>
             </div>
           </div>
+        )}
+
+        {isQRModalOpen && (
+          <FirmQRCodeModal
+            isOpen={isQRModalOpen}
+            onClose={() => setIsQRModalOpen(false)}
+            firmName={settings.firmNameAr || 'مكتب محاماة'}
+            firmSlug={firmService.getActiveFirmSlug()}
+            tagline={settings.sloganAr}
+            city={settings.cityAr}
+            phone={settings.phone}
+            themeColor={settings.primaryColor || '#c5a869'}
+            lang={lang}
+          />
         )}
 
       </div>

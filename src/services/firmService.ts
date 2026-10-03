@@ -2,6 +2,13 @@ import { LawFirm, LawFirmData, SiteSettings, FirmSubscription, SubscriptionPlanT
 import prepackagedFirms from '../../public/firms_data.json';
 import { 
   initialSiteSettings, 
+  initialPartners,
+  initialPracticeAreas,
+  initialTestimonials,
+  initialCaseStudies,
+  initialBlogPosts,
+  initialOffices,
+  DEFAULT_WHY_PILLARS
 } from '../data/initialData';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID, formatSupabaseError } from '../lib/supabase';
 import { translateTextSync, hasArabicChars, sanitizeNoArabic } from './translator';
@@ -1660,15 +1667,7 @@ class FirmService {
 
   // Returns the designated single firm displayed on Vercel deployment root domain
   public getDefaultPublicFirmSlug(): string {
-    // 1. Check environment variable set in Vercel or Vite (VITE_DEFAULT_FIRM_SLUG)
-    try {
-      const envSlug = (import.meta.env.VITE_DEFAULT_FIRM_SLUG || '').trim();
-      if (envSlug) {
-        return envSlug;
-      }
-    } catch {}
-
-    // 2. Check local platform setting
+    // 1. Check local platform setting
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(STORAGE_KEY_DEFAULT_PUBLIC_SLUG);
       if (stored) {
@@ -1676,7 +1675,7 @@ class FirmService {
       }
     }
 
-    // 3. Check firm marked with isDefaultPublic === true
+    // 2. Check firm marked with isDefaultPublic === true
     const defaultFirm = this.memoryFirms.find((f) => f.isDefaultPublic);
     if (defaultFirm) return defaultFirm.slug;
 
@@ -1816,6 +1815,8 @@ class FirmService {
     taglineAr?: string;
     licenseNumber?: string;
     themeColor?: string;
+    populateTemplateData?: boolean;
+    founderName?: string;
   }): Promise<{ success: boolean; firm?: LawFirm; message: string }> {
     // Generate clean unique slug
     let rawSlug = (info.slug || info.nameEn || info.nameAr)
@@ -1840,48 +1841,107 @@ class FirmService {
     const cEn = info.countryEn || 'Saudi Arabia';
     const cityAr = info.cityAr || 'الرياض';
     const cityEn = info.cityEn || 'Riyadh';
+    const firmPhone = info.phone?.trim() || '+966 11 456 7890';
+    const firmEmail = info.email?.trim() || `info@${finalSlug || 'lawfirm'}.com`;
+    const firmFounder = (info.founderName || info.nameAr || '').trim();
+
+    const isPopulated = info.populateTemplateData !== false;
+    const nowMs = Date.now();
 
     const newSettings: SiteSettings = {
+      ...initialSiteSettings,
       firmNameAr: info.nameAr,
       firmNameEn: info.nameEn || 'Law Firm & Legal Counsel',
-      sloganAr: info.taglineAr || 'حلول قانونية واستشارات استراتيجية رائدة',
-      sloganEn: 'Strategic Legal Solutions',
-      subSloganAr: 'خبرة عريقة في الأنظمة والقوانين',
-      subSloganEn: 'Excellence in Legal Practice',
-      aboutTextAr: 'نحن مكتب محاماة رائد يضم نخبة من المستشارين القانونيين...',
-      aboutTextEn: 'We are a leading law firm with elite legal advisors...',
-      phone: info.phone || '+966 11 000 0000',
-      emergencyPhone: info.phone || '+966 50 000 0000',
-      email: info.email || 'info@lawfirm.com',
-      consultationEmail: info.email || 'consult@lawfirm.com',
+      sloganAr: info.taglineAr || 'ريادة قضائية وحلول استراتيجية متكاملة لحماية حقوقكم واستثماراتكم',
+      sloganEn: 'Strategic Legal Solutions & Comprehensive Defense',
+      subSloganAr: 'فريق نخبة من كبار المحامين والمستشارين القانونيين والمحكّمين المعتمدين لتقديم استشارات رفيعة المستوى وتمثيل قضائي رائد.',
+      subSloganEn: 'An elite alliance of seasoned attorneys, legal consultants, and accredited arbitrators.',
+      aboutTextAr: `تأسس ${info.nameAr} ليكون المرجع القانوني والصرح الأكثر موثوقية لنخبة الشركات والمؤسسات الاستثمارية. نجمع بين عمق الخبرة القضائية والمعرفة الدقيقة بالأنظمة واللوائح الحديثة لتقديم استشارات استباقية وتمثيل قضائي لا يقبل المساومة.`,
+      aboutTextEn: `Founded as a premier legal fortress for leading corporations and premier investors, delivering uncompromising trial advocacy and strategic transaction advisory.`,
+      phone: firmPhone,
+      emergencyPhone: firmPhone,
+      contactPhone: firmPhone,
+      email: firmEmail,
+      consultationEmail: firmEmail,
+      contactEmail: firmEmail,
       countryAr: cAr,
       countryEn: cEn,
       cityAr: cityAr,
       cityEn: cityEn,
-      addressAr: `${cityAr}، ${cAr}`,
-      addressEn: `${cityEn}, ${cEn}`,
-      workingHoursAr: 'الأحد - الخميس: 8:00 صباحاً - 5:00 مساءً',
-      workingHoursEn: 'Sun - Thu: 8:00 AM - 5:00 PM',
-      stats: {
-        yearsExperience: 10,
-        casesWon: 100,
-        activeClients: 500,
-        successRate: 95,
-        recoveredMillionsUSD: 10
-      },
-      socialLinks: {
-        linkedin: 'https://linkedin.com',
-        twitter: 'https://twitter.com',
-        youtube: 'https://youtube.com'
-      },
-      contactPhone: info.phone || '+966 11 000 0000',
-      contactEmail: info.email || 'info@lawfirm.com',
-      licenseNumber: info.licenseNumber || 'LIC-2025-001',
+      addressAr: `برج النخبة، طريق الملك فهد، ${cityAr}، ${cAr}`,
+      addressEn: `Elite Tower, King Fahd Road, ${cityEn}, ${cEn}`,
+      workingHoursAr: 'الأحد - الخميس: 8:30 صباحاً - 6:30 مساءً (فريق الطوارئ 24/7)',
+      workingHoursEn: 'Sun - Thu: 8:30 AM - 6:30 PM (Emergency 24/7)',
+      licenseNumber: info.licenseNumber || 'LIC-2026-001',
       adminPassword: info.adminPassword || '123456',
+      whyPillars: DEFAULT_WHY_PILLARS,
+    };
+
+    // Build populated sections with tailored attributes or empty if explicitly opted out
+    let finalPartners = [];
+    let finalPractices = [];
+    let finalCases = [];
+    let finalTestimonials = [];
+    let finalBlogs = [];
+
+    if (isPopulated) {
+      finalPartners = initialPartners.map((p, idx) => {
+        if (idx === 0) {
+          return {
+            ...p,
+            id: `partner-${nowMs}-${idx + 1}`,
+            name: firmFounder || p.name,
+            nameEn: info.nameEn || p.nameEn,
+            phone: firmPhone,
+            email: firmEmail,
+            bio: `المحامي المؤسس والشريك الإداري العام لمكتب ${info.nameAr}، خبرة رائدة في الترافع في القضايا التجارية الكبرى وصياغة العقود وإدارة التحكيم الدولي.`,
+          };
+        }
+        return {
+          ...p,
+          id: `partner-${nowMs}-${idx + 1}`,
+          phone: firmPhone,
+        };
+      });
+
+      finalPractices = initialPracticeAreas.map((pa, idx) => ({
+        ...pa,
+        id: `practice-${nowMs}-${idx + 1}`,
+      }));
+
+      finalCases = initialCaseStudies.map((cs, idx) => ({
+        ...cs,
+        id: `case-${nowMs}-${idx + 1}`,
+      }));
+
+      finalTestimonials = initialTestimonials.map((tm, idx) => ({
+        ...tm,
+        id: `test-${nowMs}-${idx + 1}`,
+      }));
+
+      finalBlogs = initialBlogPosts.map((bp, idx) => ({
+        ...bp,
+        id: `blog-${nowMs}-${idx + 1}`,
+        authorName: idx === 0 ? (firmFounder || bp.authorName) : bp.authorName,
+      }));
+    }
+
+    const headquarterOffice = {
+      id: `off-${nowMs}-1`,
+      cityAr: cityAr,
+      cityEn: cityEn,
+      countryAr: cAr,
+      countryEn: cEn,
+      addressAr: `المقر الرئيسي، طريق الملك فهد، ${cityAr}، ${cAr}`,
+      addressEn: `Headquarters, King Fahd Road, ${cityEn}, ${cEn}`,
+      phone: firmPhone,
+      email: firmEmail,
+      mapEmbedUrl: '',
+      isHeadquarter: true,
     };
 
     const newFirm: LawFirm = {
-      id: toValidUUID(`firm-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`),
+      id: toValidUUID(`firm-${nowMs}-${Math.random().toString(36).substring(2, 6)}`),
       slug: finalSlug,
       nameAr: info.nameAr,
       nameEn: info.nameEn || 'Law Firm',
@@ -1891,8 +1951,8 @@ class FirmService {
       cityEn: cityEn,
       countryAr: cAr,
       countryEn: cEn,
-      phone: info.phone || '+966 11 000 0000',
-      email: info.email || 'info@lawfirm.com',
+      phone: firmPhone,
+      email: firmEmail,
       licenseNumber: info.licenseNumber || '',
       adminPassword: info.adminPassword || '123456',
       status: 'active',
@@ -1903,26 +1963,12 @@ class FirmService {
       updatedAt: new Date().toISOString(),
       data: {
         settings: newSettings,
-        partners: [],
-        practiceAreas: [],
-        caseStudies: [],
-        testimonials: [],
-        blogPosts: [],
-        offices: [
-          {
-            id: `off-${Date.now()}`,
-            cityAr: info.cityAr || 'الرياض',
-            cityEn: info.cityEn || 'Riyadh',
-            countryAr: cAr,
-            countryEn: cEn,
-            addressAr: `المقر الرئيسي، ${info.cityAr || 'الرياض'}`,
-            addressEn: `Headquarters, ${info.cityEn || 'Riyadh'}`,
-            phone: info.phone || '+966 11 000 0000',
-            email: info.email || 'info@lawfirm.com',
-            mapEmbedUrl: '',
-            isHeadquarter: true,
-          }
-        ],
+        partners: finalPartners,
+        practiceAreas: finalPractices,
+        caseStudies: finalCases,
+        testimonials: finalTestimonials,
+        blogPosts: finalBlogs,
+        offices: [headquarterOffice],
         messages: [],
         savedAt: new Date().toISOString(),
       },

@@ -354,3 +354,6 @@ export const ConsultationModal: React.FC<ConsultationModalProps> = ({
     </div>
   );
 };
+
+export default ConsultationModal;
+

@@ -189,14 +189,43 @@ const MEMORY_CACHE: Record<string, any> = {
 
 // Internal helper to get data from active firm cache
 const getFromCache = (key: keyof typeof MEMORY_CACHE, _storageKey: string, defaultValue: any) => {
-  if (MEMORY_CACHE[key] !== null) return MEMORY_CACHE[key];
+  if (MEMORY_CACHE[key] !== null && MEMORY_CACHE[key] !== undefined) {
+    if (key === 'settings') {
+      return {
+        ...defaultValue,
+        ...MEMORY_CACHE[key],
+        socialLinks: {
+          ...defaultValue.socialLinks,
+          ...(MEMORY_CACHE[key]?.socialLinks || {}),
+        },
+        whyPillars: Array.isArray(MEMORY_CACHE[key]?.whyPillars) && MEMORY_CACHE[key].whyPillars.length > 0
+          ? MEMORY_CACHE[key].whyPillars
+          : defaultValue.whyPillars,
+      };
+    }
+    return MEMORY_CACHE[key];
+  }
 
   try {
     const activeSlug = firmService.getActiveFirmSlug();
     if (activeSlug && firmService.hasFirmInMemory(activeSlug)) {
       const firm = firmService.getFirmBySlug(activeSlug);
-      if (firm && firm.data && (firm.data as any)[key] !== undefined) {
-        MEMORY_CACHE[key] = (firm.data as any)[key];
+      if (firm && firm.data && (firm.data as any)[key] !== undefined && (firm.data as any)[key] !== null) {
+        if (key === 'settings') {
+          MEMORY_CACHE[key] = {
+            ...defaultValue,
+            ...(firm.data as any)[key],
+            socialLinks: {
+              ...defaultValue.socialLinks,
+              ...((firm.data as any)[key]?.socialLinks || {}),
+            },
+            whyPillars: Array.isArray((firm.data as any)[key]?.whyPillars) && (firm.data as any)[key].whyPillars.length > 0
+              ? (firm.data as any)[key].whyPillars
+              : defaultValue.whyPillars,
+          };
+        } else {
+          MEMORY_CACHE[key] = (firm.data as any)[key];
+        }
         return MEMORY_CACHE[key];
       }
     }

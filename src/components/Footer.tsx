@@ -1,8 +1,10 @@
 import React from 'react';
-import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw } from 'lucide-react';
+import { Scale, Phone, Mail, MapPin, Linkedin, Twitter, Youtube, ArrowUp, Lock, RefreshCw, QrCode } from 'lucide-react';
 import { SiteSettings, PracticeArea, Language } from '../types';
 import { useTranslation, getLocalized } from '../services/i18n';
 import { storageService } from '../services/storageService';
+import { firmService } from '../services/firmService';
+import { FirmQRCodeCard } from './FirmQRCodeCard';
 
 interface FooterProps {
   settings: SiteSettings;
@@ -11,6 +13,7 @@ interface FooterProps {
   onOpenConsultation: (practiceId?: string) => void;
   onOpenAdmin: () => void;
   onOpenSuperAdmin?: () => void;
+  onOpenQRModal?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = React.memo(({
@@ -20,6 +23,7 @@ export const Footer: React.FC<FooterProps> = React.memo(({
   onOpenConsultation,
   onOpenAdmin,
   onOpenSuperAdmin,
+  onOpenQRModal,
 }) => {
   const t = useTranslation(lang);
 
@@ -134,33 +138,51 @@ export const Footer: React.FC<FooterProps> = React.memo(({
             </p>
 
             <div className="pt-2 flex items-center gap-3">
-              <a
-                href={settings.socialLinks.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-[#2c261e] border border-[#3d352b] hover:border-[#c5a869] text-[#d8ceb8] hover:text-[#c5a869] flex items-center justify-center transition"
-                title="LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a
-                href={settings.socialLinks.twitter}
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-[#2c261e] border border-[#3d352b] hover:border-[#c5a869] text-[#d8ceb8] hover:text-[#c5a869] flex items-center justify-center transition"
-                title="Twitter"
-              >
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a
-                href={settings.socialLinks.youtube}
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-[#2c261e] border border-[#3d352b] hover:border-[#c5a869] text-[#d8ceb8] hover:text-[#c5a869] flex items-center justify-center transition"
-                title="YouTube"
-              >
-                <Youtube className="w-4 h-4" />
-              </a>
+              {settings?.socialLinks?.linkedin && (
+                <a
+                  href={settings.socialLinks.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#2c261e] border border-[#3d352b] hover:border-[#c5a869] text-[#d8ceb8] hover:text-[#c5a869] flex items-center justify-center transition"
+                  title="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              )}
+              {settings?.socialLinks?.twitter && (
+                <a
+                  href={settings.socialLinks.twitter}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#2c261e] border border-[#3d352b] hover:border-[#c5a869] text-[#d8ceb8] hover:text-[#c5a869] flex items-center justify-center transition"
+                  title="Twitter"
+                >
+                  <Twitter className="w-4 h-4" />
+                </a>
+              )}
+              {settings?.socialLinks?.youtube && (
+                <a
+                  href={settings.socialLinks.youtube}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-[#2c261e] border border-[#3d352b] hover:border-[#c5a869] text-[#d8ceb8] hover:text-[#c5a869] flex items-center justify-center transition"
+                  title="YouTube"
+                >
+                  <Youtube className="w-4 h-4" />
+                </a>
+              )}
+            </div>
+
+            {/* Compact Firm QR Card */}
+            <div className="pt-2 max-w-xs">
+              <FirmQRCodeCard
+                firmName={firmName}
+                firmSlug={firmService.getActiveFirmSlug()}
+                tagline={slogan}
+                compact={true}
+                lang={lang}
+                onOpenFullModal={onOpenQRModal}
+              />
             </div>
           </div>
 
@@ -170,7 +192,7 @@ export const Footer: React.FC<FooterProps> = React.memo(({
               {t.navPracticeAreas}
             </h4>
             <ul className="space-y-2.5">
-              {practiceAreas.slice(0, 5).map((p) => (
+              {(practiceAreas || []).slice(0, 5).map((p) => (
                 <li key={p.id}>
                   <button
                     onClick={() => onOpenConsultation(p.id)}
@@ -257,6 +279,17 @@ export const Footer: React.FC<FooterProps> = React.memo(({
           </div>
 
           <div className="flex items-center gap-4">
+            {onOpenQRModal && (
+              <button
+                onClick={onOpenQRModal}
+                className="text-[#d8ceb8] hover:text-[#c5a869] flex items-center gap-1 transition cursor-pointer"
+                title={lang === 'ar' ? 'رمز الباركود الذكي للمكتب (QR Code)' : lang === 'tr' ? 'Büro QR Kodu' : 'Firm QR Code'}
+              >
+                <QrCode className="w-3.5 h-3.5 text-[#c5a869]" />
+                <span className="font-medium">{lang === 'ar' ? 'الباركود QR' : lang === 'tr' ? 'QR Kod' : 'QR Code'}</span>
+              </button>
+            )}
+
             <button
               onClick={() => {
                 storageService.clearCacheAndRefreshApp();

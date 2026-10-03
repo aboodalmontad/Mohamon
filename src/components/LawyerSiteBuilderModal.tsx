@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { 
   Building2, Globe, Sparkles, CheckCircle2, Copy, ExternalLink, 
   ShieldCheck, Lock, Phone, Mail, MapPin, Palette, ArrowRight, ArrowLeft,
-  X, Scale, Briefcase, HelpCircle, Layers
+  X, Scale, Briefcase, HelpCircle, Layers, QrCode
 } from 'lucide-react';
 import { firmService } from '../services/firmService';
 import { LawFirm } from '../types';
 import { COUNTRIES_LIST } from '../data/countries';
+import { FirmQRCodeCard } from './FirmQRCodeCard';
 
 interface LawyerSiteBuilderModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [useTemplateData, setUseTemplateData] = useState(true);
 
   // Form State
   const [nameAr, setNameAr] = useState('');
@@ -74,13 +76,14 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
 
   const handleCreate = async () => {
     if (!nameAr.trim()) {
-      setErrorMsg(isAr ? 'يرجى كتابة اسم المكتب القانوني بالعربية' : 'Please enter law firm name');
+      setErrorMsg(isAr ? 'يرجى كتابة اسم المكتب أو المحامي بالعربية' : 'Please enter law firm or lawyer name');
       setStep(1);
       return;
     }
-    if (!adminPassword.trim()) {
-      setErrorMsg(isAr ? 'يرجى تحديد كلمة مرور لإدارة مكتبك' : 'Please choose a manager password');
-      setStep(4);
+    const finalPhone = (phone || whatsapp).trim();
+    if (!finalPhone) {
+      setErrorMsg(isAr ? 'يرجى إدخال رقم الهاتف أو الواتساب للتواصل' : 'Please enter phone or WhatsApp number');
+      setStep(1);
       return;
     }
 
@@ -96,10 +99,12 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
         cityAr: cityAr.trim(),
         countryAr: selectedCountryObj.ar,
         countryEn: selectedCountryObj.en,
-        phone: phone.trim() || whatsapp.trim(),
+        phone: finalPhone,
         email: email.trim(),
-        adminPassword: adminPassword.trim(),
+        adminPassword: adminPassword.trim() || '123456',
         themeColor,
+        populateTemplateData: useTemplateData,
+        founderName: nameAr.trim(),
       });
 
       if (res.success && res.firm) {
@@ -209,18 +214,81 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
           {/* STEP 1: Basic Firm Info */}
           {step === 1 && (
             <div className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-[#c5a869]/10 border border-[#c5a869]/20 text-xs text-[#d8ceb8] flex items-start gap-2.5">
-                <Sparkles className="w-4 h-4 text-[#c5a869] shrink-0 mt-0.5" />
-                <p>
-                  {isAr 
-                    ? 'ستظهر صفحة الهبوط باسم مكتبك فقط، مع شعارك، وأرقام تواصلك، بدون أي علامة تجارية أو رابط لمنصتنا.'
-                    : 'Your landing page will strictly display your firm branding, phone numbers, and services with 100% white-label isolation.'}
-                </p>
+              {/* Template Choice Selector */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#c5a869]/15 via-amber-500/10 to-slate-950 border border-[#c5a869]/40 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#c5a869]" />
+                    <span className="text-xs font-bold text-white">
+                      {isAr ? 'نوع محتوى المكتب عند التدشين:' : 'Firm Content Template:'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                    {isAr ? 'موصى به للمحامي' : 'Recommended'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
+                  <div 
+                    onClick={() => setUseTemplateData(true)}
+                    className={`p-3 rounded-xl border cursor-pointer transition flex items-start gap-2.5 ${
+                      useTemplateData 
+                        ? 'border-[#c5a869] bg-slate-950 shadow-md ring-1 ring-[#c5a869]/50' 
+                        : 'border-slate-800 bg-slate-950/40 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="templateMode"
+                      checked={useTemplateData}
+                      onChange={() => setUseTemplateData(true)}
+                      className="mt-1 text-[#c5a869] focus:ring-[#c5a869] cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span>{isAr ? 'مكتب مكتمل مليء بالبيانات' : 'Complete Populated Firm'}</span>
+                        {useTemplateData && <CheckCircle2 className="w-3.5 h-3.5 text-[#c5a869]" />}
+                      </div>
+                      <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                        {isAr 
+                          ? 'فقط ضع اسمك ورقم هاتفك، والمنصة تنشئ لك فوراً موقعاً متكاملاً (شركاء، تخصصات، قضايا، شهادات، ومقالات) جاهزاً وقابلاً للتعديل بالكامل من لوحة التحكم.'
+                          : 'Enter your name & phone only. Launches with complete partners, practices, precedents, testimonials & blog posts.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div 
+                    onClick={() => setUseTemplateData(false)}
+                    className={`p-3 rounded-xl border cursor-pointer transition flex items-start gap-2.5 ${
+                      !useTemplateData 
+                        ? 'border-[#c5a869] bg-slate-950 shadow-md ring-1 ring-[#c5a869]/50' 
+                        : 'border-slate-800 bg-slate-950/40 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="templateMode"
+                      checked={!useTemplateData}
+                      onChange={() => setUseTemplateData(false)}
+                      className="mt-1 text-[#c5a869] focus:ring-[#c5a869] cursor-pointer"
+                    />
+                    <div>
+                      <div className="text-xs font-bold text-white">
+                        {isAr ? 'مكتب فارغ (البدء من الصفر)' : 'Blank Empty Firm'}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                        {isAr 
+                          ? 'صفحة بيضاء بدون أي محتوى مسبق لتقوم بكتابة كل قسم وتخصص يدوياً من البداية.'
+                          : 'A blank canvas with empty sections to build custom content manually from scratch.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  {isAr ? 'اسم المكتب القانوني (بالعربية) *' : 'Law Firm Name (Arabic) *'}
+                  {isAr ? 'اسم المكتب القانوني أو المحامي (بالعربية) *' : 'Law Firm / Attorney Name (Arabic) *'}
                 </label>
                 <input
                   type="text"
@@ -232,36 +300,41 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  {isAr ? 'اسم المكتب القانوني (بالإنكليزية / اللاتينية)' : 'Law Firm Name (English)'}
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Al-Nahwi Legal Consultants & Attorneys"
-                  value={nameEn}
-                  onChange={(e) => setNameEn(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none ltr"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  {isAr ? 'الشعار اللفظي أو العبارة الترويجية (Slogan)' : 'Firm Tagline / Slogan'}
-                </label>
-                <input
-                  type="text"
-                  placeholder={isAr ? 'مثال: حماية حقوقكم ودعم استثماراتكم بأعلى معايير الحكمة القضائية' : 'Protecting your rights & business'}
-                  value={taglineAr}
-                  onChange={(e) => setTaglineAr(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    {isAr ? 'الدولة التي تعمل فيها' : 'Country'}
+                    {isAr ? 'رقم الهاتف أو الواتساب للتواصل *' : 'Phone / WhatsApp Number *'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+966 50 000 0000"
+                    value={phone || whatsapp}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setWhatsapp(e.target.value);
+                    }}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none font-mono ltr text-right"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    {isAr ? 'البريد الإلكتروني الرسمي (اختياري)' : 'Official Email (Optional)'}
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="contact@lawfirm.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none font-mono ltr text-right"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    {isAr ? 'الدولة' : 'Country'}
                   </label>
                   <select
                     value={countryAr}
@@ -288,31 +361,26 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Fast 1-Click Launch Action inside Step 1 */}
+              <div className="pt-2 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    {isAr ? 'رقم الواتساب للاستشارات السريعة' : 'WhatsApp Number'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="+966 50 000 0000"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none font-mono ltr text-right"
-                  />
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#c5a869]" />
+                    <span>{isAr ? 'تدشين فوري بنقرة واحدة:' : 'Instant 1-Click Launch:'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    {isAr ? 'يكفي كتابة الاسم ورقم الهاتف فقط لتدشين موقع مكتبي فوراً بكافة البيانات' : 'Name & phone are enough to launch live site immediately'}
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    {isAr ? 'البريد الإلكتروني الرسمي' : 'Official Email'}
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="contact@lawfirm.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none font-mono ltr text-right"
-                  />
-                </div>
+                <button
+                  type="button"
+                  disabled={isSubmitting || !nameAr.trim() || !(phone.trim() || whatsapp.trim())}
+                  onClick={handleCreate}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#d4af37] via-[#c5a869] to-[#87641d] hover:brightness-110 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition shadow-lg cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                >
+                  <Sparkles className="w-4 h-4 text-slate-950" />
+                  <span>{isSubmitting ? (isAr ? 'جاري التدشين...' : 'Launching...') : (isAr ? 'تدشين المكتب فوراً بكافة البيانات' : 'Launch Live Site Now')}</span>
+                </button>
               </div>
             </div>
           )}
@@ -511,6 +579,17 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
                 </div>
               </div>
 
+              {/* QR Code / Barcode Card for sharing & printing */}
+              <div className="space-y-2">
+                <FirmQRCodeCard
+                  firmName={createdFirm.nameAr}
+                  firmSlug={createdFirm.slug}
+                  tagline={createdFirm.data?.settings?.sloganAr || isAr ? 'امسح الباركود للوصول الفوري للمكتب' : 'Scan to open office'}
+                  themeColor="#c5a869"
+                  lang={lang}
+                />
+              </div>
+
               {/* Login info recap */}
               <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-2">
                 <div className="font-bold text-white flex items-center gap-1.5">
@@ -598,3 +677,6 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
     </div>
   );
 };
+
+export default LawyerSiteBuilderModal;
+

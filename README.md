@@ -27,7 +27,6 @@
 | :--- | :--- | :--- |
 | `VITE_SUPABASE_URL` | رابط مشروعك في Supabase | `https://xyzcompany.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | المفتاح العام لمشروعك في Supabase | `eyJhbGciOiJIUzI1NiIsInR5cCI6...` |
-| `VITE_DEFAULT_FIRM_SLUG` | (اختياري) المكتب الافتراضي المعروض للعامة | `nahwi-law` |
 
 5. اضغط **Deploy**.
 6. سيبدأ البناء وينتهي في أقل من دقيقة، وسيصبح موقعك متاحاً للعالم على رابط Vercel الرسمي مثل: `your-firm.vercel.app`.

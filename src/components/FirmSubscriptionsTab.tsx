@@ -39,11 +39,13 @@ import {
   Wallet,
   History,
   Coins,
-  AlignJustify
+  AlignJustify,
+  QrCode
 } from 'lucide-react';
 import { LawFirm, FirmSubscription, SubscriptionPlanTier, SubscriptionStatus } from '../types';
 import { firmService, ensureFirmSubscription } from '../services/firmService';
 import { platformFinanceService, PaymentMethodType, PlatformTransaction } from '../services/platformFinanceService';
+import { FirmQRCodeModal } from './FirmQRCodeModal';
 
 interface FirmSubscriptionsTabProps {
   firms: LawFirm[];
@@ -90,6 +92,7 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
   const [firmPaymentHistory, setFirmPaymentHistory] = useState<PlatformTransaction[]>([]);
   const [deleteTxConfirmTarget, setDeleteTxConfirmTarget] = useState<string | null>(null);
+  const [qrModalFirm, setQrModalFirm] = useState<LawFirm | null>(null);
 
   // Add new firm modal state
   const [isAddFirmModalOpen, setIsAddFirmModalOpen] = useState(false);
@@ -804,6 +807,14 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
                   </button>
 
                   <button
+                    onClick={() => setQrModalFirm(firm)}
+                    className="p-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-[#c5a869] hover:text-amber-300 border border-[#c5a869]/30 transition active:scale-95 cursor-pointer"
+                    title={isAr ? 'عرض وتحميل باركود المكتب QR' : 'Firm Barcode / QR Code'}
+                  >
+                    <QrCode className="w-4 h-4" />
+                  </button>
+
+                  <button
                     onClick={() => handleOpenEdit(firm, 'plan')}
                     className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition active:scale-95 border border-slate-700 cursor-pointer"
                     title={isAr ? 'تعديل الباقة والاشتراك' : 'Edit Plan'}
@@ -909,6 +920,7 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
                             <CreditCard className="w-3.5 h-3.5" />
                             <span>{isAr ? 'سداد' : 'Pay'}</span>
                           </button>
+                          <button onClick={() => setQrModalFirm(firm)} className="p-1.5 rounded-xl bg-amber-500/15 text-[#c5a869] hover:text-amber-300 border border-[#c5a869]/30 transition cursor-pointer" title={isAr ? 'عرض باركود المكتب QR' : 'Firm QR'}><QrCode className="w-4 h-4" /></button>
                           <button onClick={() => handleOpenEdit(firm, 'plan')} className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer" title={isAr ? 'تعديل الباقة' : 'Edit Plan'}><Settings2 className="w-4 h-4" /></button>
                           <button onClick={() => onSwitchToFirm(firm)} className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition cursor-pointer" title={isAr ? 'معاينة' : 'Preview'}><ExternalLink className="w-4 h-4" /></button>
                           <button onClick={() => onDeleteFirm(firm)} className="p-1.5 rounded-xl bg-slate-800 text-slate-500 hover:text-rose-400 transition cursor-pointer" title={isAr ? 'حذف المكتب' : 'Delete'}><Trash2 className="w-4 h-4" /></button>
@@ -2006,6 +2018,18 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Firm QR Code & Barcode Modal */}
+      {qrModalFirm && (
+        <FirmQRCodeModal
+          isOpen={true}
+          onClose={() => setQrModalFirm(null)}
+          firmName={qrModalFirm.nameAr}
+          firmSlug={qrModalFirm.slug}
+          tagline={qrModalFirm.taglineAr || qrModalFirm.data?.settings?.sloganAr}
+          lang={lang}
+        />
       )}
     </div>
   );

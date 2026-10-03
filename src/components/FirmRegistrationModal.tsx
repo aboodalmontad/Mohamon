@@ -156,6 +156,8 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
         email: firmEmail,
         adminPassword: formData.adminPassword.trim(),
         themeColor: '#c5a869',
+        populateTemplateData: formData.useTemplateData,
+        founderName: formData.founderName.trim(),
       });
 
       if (res.success && res.firm) {

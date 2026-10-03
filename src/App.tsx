@@ -15,11 +15,11 @@ import { TestimonialsSection } from './components/TestimonialsSection';
 import { BlogSection } from './components/BlogSection';
 import { ContactAndOfficesSection } from './components/ContactAndOfficesSection';
 import { Footer } from './components/Footer';
+import LawyerSiteBuilderModal from './components/LawyerSiteBuilderModal';
+import FirmsDirectoryModal from './components/FirmsDirectoryModal';
+import ConsultationModal from './components/ConsultationModal';
 const AdminDashboard = React.lazy(() => import('./components/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 const SuperAdminDashboard = React.lazy(() => import('./components/SuperAdminDashboard').then(module => ({ default: module.SuperAdminDashboard })));
-const LawyerSiteBuilderModal = React.lazy(() => import('./components/LawyerSiteBuilderModal').then(module => ({ default: module.LawyerSiteBuilderModal })));
-const FirmsDirectoryModal = React.lazy(() => import('./components/FirmsDirectoryModal').then(module => ({ default: module.FirmsDirectoryModal })));
-const ConsultationModal = React.lazy(() => import('./components/ConsultationModal').then(module => ({ default: module.ConsultationModal })));
 import { FirmSuspendedNotice } from './components/FirmSuspendedNotice';
 import { PlatformLanding } from './components/PlatformLanding';
 import { storageService } from './services/storageService';
@@ -397,7 +397,7 @@ export default function App() {
             />
           </React.Suspense>
         )}
-        <React.Suspense fallback={null}>
+        {isSiteBuilderOpen && (
           <LawyerSiteBuilderModal
             isOpen={isSiteBuilderOpen}
             onClose={() => setIsSiteBuilderOpen(false)}
@@ -408,7 +408,7 @@ export default function App() {
             }}
             lang={lang}
           />
-        </React.Suspense>
+        )}
       </>
     );
   }
@@ -552,7 +552,7 @@ export default function App() {
       )}
 
       {/* Modals */}
-      <React.Suspense fallback={null}>
+      {isConsultationOpen && (
         <ConsultationModal
           isOpen={isConsultationOpen}
           onClose={() => setIsConsultationOpen(false)}
@@ -562,29 +562,31 @@ export default function App() {
           defaultPartnerId={selectedPartnerId}
           lang={lang}
         />
-      </React.Suspense>
+      )}
 
       {/* Protected Admin Control Center - Single Firm Level Only */}
-      <React.Suspense fallback={null}>
-        <AdminDashboard
-          isOpen={isAdminOpen}
-          onClose={() => setIsAdminOpen(false)}
-          lang={lang}
-        />
-      </React.Suspense>
+      {isAdminOpen && (
+        <React.Suspense fallback={null}>
+          <AdminDashboard
+            isOpen={isAdminOpen}
+            onClose={() => setIsAdminOpen(false)}
+            lang={lang}
+          />
+        </React.Suspense>
+      )}
 
       {/* Lawyer 1-Click Site Builder Modal */}
-      <React.Suspense fallback={null}>
+      {isSiteBuilderOpen && (
         <LawyerSiteBuilderModal
           isOpen={isSiteBuilderOpen}
           onClose={() => setIsSiteBuilderOpen(false)}
           onFirmCreated={handleFirmCreated}
           lang={lang}
         />
-      </React.Suspense>
+      )}
 
       {/* Law Firms Directory Modal */}
-      <React.Suspense fallback={null}>
+      {isDirectoryOpen && (
         <FirmsDirectoryModal
           isOpen={isDirectoryOpen}
           onClose={() => setIsDirectoryOpen(false)}
@@ -596,7 +598,7 @@ export default function App() {
           }}
           lang={lang}
         />
-      </React.Suspense>
+      )}
 
     </div>
   );

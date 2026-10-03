@@ -212,10 +212,533 @@ export const initialSiteSettings: SiteSettings = {
   adminPassword: 'admin'
 };
 
-export const initialPartners: Partner[] = [];
-export const initialPracticeAreas: PracticeArea[] = [];
-export const initialTestimonials: Testimonial[] = [];
-export const initialCaseStudies: CaseStudy[] = [];
-export const initialBlogPosts: BlogPost[] = [];
-export const initialOffices: OfficeLocation[] = [];
+export const initialPartners: Partner[] = [
+  {
+    id: 'partner-default-1',
+    name: 'المحامي والمستشار القانوني د. عبد الرحمن بن عبد الله آل هلال',
+    nameEn: 'Dr. Abdulrahman Al-Helal, Esq.',
+    nameTr: 'Av. Dr. Abdurrahman El-Hilal',
+    title: 'المحامي المؤسس والشريك الإداري العام',
+    titleEn: 'Founding & Senior Managing Partner',
+    titleTr: 'Kurucu ve Kıdemli Yönetici Ortak',
+    specialty: 'الشركات والاستثمار الدولي، التحكيم التجاري، والترافع أمام المحاكم العليا',
+    specialtyEn: 'Corporate Law, Cross-Border M&A, Commercial Arbitration & High Courts',
+    specialtyTr: 'Şirketler Hukuku, Uluslararası Tahkim ve Yüksek Yargı Temsili',
+    experienceYears: 24,
+    education: [
+      'دكتوراه في القانون التجاري والأنظمة الاستثمارية المقارنة - جامعة السوربون',
+      'ماجستير في التحكيم التجاري وفض منازعات عقود الطاقة - جامعة هارفارد',
+      'محكم معتمد لدى مركز التحكيم التجاري لدول مجلس التعاون وهيئة التحكيم الدولية (ICC)'
+    ],
+    educationEn: [
+      'Ph.D. in Comparative Commercial Law - Sorbonne University',
+      'LL.M. in International Arbitration & Energy Disputes - Harvard Law School',
+      'Accredited Arbitrator at GCC Commercial Arbitration Centre & ICC Court of Arbitration'
+    ],
+    languages: ['العربية', 'الإنجليزية', 'الفرنسية'],
+    bio: 'يُعد الدكتور عبد الرحمن من أبرز القامات القضائية والاستشارية في المنطقة، قاد بنجاح تسوية نزاعات تجارية وصفقات اندماج واستحواذ تخطت قيمتها الإجمالية مليارات الدولارات. يمثل كبرى المجموعات القابضة والصناديق السيادية أمام محاكم التمييز ومراكز التحكيم الدولية.',
+    bioEn: 'A leading judicial and strategic advisor who has spearheaded dispute resolutions and cross-border M&A transactions exceeding billions in capital across the MENA region and Europe.',
+    bioTr: 'Bölgenin en saygın hukuk otoritelerinden biri olan Dr. Abdurrahman, toplam değeri milyarlarca doları aşan yüksek profilli ticari uyuşmazlıkları ve birleşme-devralma işlemlerini başarıyla yönetmiştir.',
+    image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=800',
+    email: 'helal@aladllaw.com',
+    phone: '+966 11 456 7890',
+    linkedin: 'https://linkedin.com',
+    barAdmission: 'الهيئة السعودية للمحامين ونقابة المحامين الدولية (IBA)',
+    featured: true,
+    isPartner: true,
+    roleCategory: 'managing_partner',
+    casesWonCount: 380,
+  },
+  {
+    id: 'partner-default-2',
+    name: 'المستشار القانوني د. طارق بن عبد العزيز السعيد',
+    nameEn: 'Dr. Tariq Al-Saeed',
+    nameTr: 'Dr. Tarık El-Said',
+    title: 'شريك أول - رئيس قسم التحكيم الدولي والعقود الهندسية',
+    titleEn: 'Senior Partner - Head of International Arbitration & Infrastructure',
+    titleTr: 'Kıdemli Ortak - Uluslararası Tahkim ve İnşaat Hukuku',
+    specialty: 'عقود الفيديك (FIDIC)، التحكيم المؤسسي (LCIA & ICC)، والمنازعات المصرفية',
+    specialtyEn: 'FIDIC Engineering Contracts, Institutional Arbitration & Banking Disputes',
+    specialtyTr: 'FIDIC Sözleşmeleri, Kurumsal Tahkim ve Bankacılık Uyuşmazlıkları',
+    experienceYears: 19,
+    education: [
+      'ماجستير في القانون الدولي الخاص - كلية كينجز لندن (King\'s College)',
+      'زميل المعهد الملكي للمحكمين المعتمدين بلندن (FCIArb)',
+      'عضو هيئة محكمي المركز السعودي للتحكيم التجاري (SCCA)'
+    ],
+    educationEn: [
+      'LL.M. in Private International Law - King\'s College London',
+      'Fellow of the Chartered Institute of Arbitrators (FCIArb)',
+      'Accredited Arbitrator at Saudi Center for Commercial Arbitration (SCCA)'
+    ],
+    languages: ['العربية', 'الإنجليزية'],
+    bio: 'خبير دولي مرموق في عقود المقاولات الكبرى ومشاريع البنية التحتية، تولى صياغة وإدارة عقود مشاريع استراتيجية ومثل أطراف النزاع في تحكيمات دولية كبرى.',
+    bioEn: 'Distinguished international authority in mega infrastructure disputes, turnkey project contracts, and commercial arbitrations.',
+    bioTr: 'Dev altyapı projeleri, EPC sözleşmeleri ve kurumsal ticari tahkimlerde tanınmış bir uluslararası hukuk uzmanıdır.',
+    image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=800',
+    email: 'saeed@aladllaw.com',
+    phone: '+966 11 456 7891',
+    linkedin: 'https://linkedin.com',
+    barAdmission: 'محكم معتمد وهيئة المحامين',
+    featured: true,
+    isPartner: true,
+    roleCategory: 'senior_partner',
+    casesWonCount: 290,
+  },
+  {
+    id: 'partner-default-3',
+    name: 'الأستاذة المحامية نورة بنت فهد الهاشمي',
+    nameEn: 'Noura Al-Hashemi, Esq.',
+    nameTr: 'Av. Noura El-Haşimi',
+    title: 'شريكة - رئيسة قسم حوكمة الشركات والملكية الفكرية والذكاء الاصطناعي',
+    titleEn: 'Partner - Corporate Governance, IP & Emerging Tech',
+    titleTr: 'Ortak - Kurumsal Yönetim, Fikri Mülkiyet ve Bilişim',
+    specialty: 'حوكمة الشركات العائلية، حماية البيانات والجرائم الرقمية، والفرانشايز',
+    specialtyEn: 'Family Business Charters, Data Privacy, Cyber Law & Global Franchising',
+    specialtyTr: 'Aile Şirketleri Anayasası, Veri Gizliliği, Bilişim Suçları ve Franchising',
+    experienceYears: 14,
+    education: [
+      'ماجستير في قوانين الملكية الفكرية والاقتصاد الرقمي - جامعة لندن',
+      'شهادة قيادة الامتثال المؤسسي وحوكمة مجالس الإدارة (Corporate Governance)'
+    ],
+    educationEn: [
+      'LL.M. in IP & Digital Economy Law - University of London',
+      'Board Governance & Corporate Compliance Certificate'
+    ],
+    languages: ['العربية', 'الإنجليزية'],
+    bio: 'متخصصة رائدة في وضع لوائح الحوكمة وحماية الملكية الفكرية وبراءات الاختراع للشركات الكبرى، وصياغة مواثيق العائلة لضمان استدامة الكيانات التجارية عبر الأجيال.',
+    bioEn: 'Premier specialist in corporate charters, family office restructuring, technology transactions, and IP litigation across MENA.',
+    bioTr: 'Kurumsal yönetim, aile şirketleri anayasaları ve fikri mülkiyet uyuşmazlıkları alanında uzman kıdemli ortak avukat.',
+    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800',
+    email: 'hashemi@aladllaw.com',
+    phone: '+966 11 456 7892',
+    linkedin: 'https://linkedin.com',
+    barAdmission: 'الهيئة السعودية للمحامين',
+    featured: true,
+    isPartner: true,
+    roleCategory: 'partner',
+    casesWonCount: 210,
+  }
+];
+
+export const initialPracticeAreas: PracticeArea[] = [
+  {
+    id: 'practice-1',
+    title: 'قضايا الشركات والاستثمار التجاري',
+    titleEn: 'Corporate & Commercial Investment',
+    titleTr: 'Şirketler ve Ticari Yatırım Hukuku',
+    category: 'corporate',
+    categoryLabelAr: 'قطاع الأعمال والشركات',
+    categoryLabelEn: 'Corporate & M&A',
+    iconName: 'Building2',
+    shortDesc: 'تأسيس الكيانات الاستثمارية، صياغة اتفاقيات الشركاء، وعمليات الاندماج والاستحواذ وحماية حقوق المساهمين.',
+    shortDescEn: 'Cross-border M&A transactions, joint ventures, shareholder restructuring, and capital market compliance.',
+    shortDescTr: 'Şirket kuruluşları, birleşme ve devralmalar, ortaklar sözleşmeleri ve kurumsal yeniden yapılandırma.',
+    fullDesc: 'نقدم استشارات قانونية متكاملة تواكب دورة حياة الشركات بكافة أشكالها؛ بدءاً من صياغة عقود التأسيس ومواثيق الشركاء، والترتيب القانوني لصفقات الاندماج والاستحواذ المعقدة (M&A)، والفحص النافي للجهالة (Due Diligence)، وانتهاءً بإعادة الهيكلة والتسوية مع الدائنين وضمان الامتثال التام للأنظمة الرقابية وأسواق المال.',
+    fullDescEn: 'Comprehensive corporate counsel spanning cross-border M&A, private equity structuring, regulatory due diligence, joint ventures, and capital markets compliance tailored to multi-tiered enterprises.',
+    keyServices: [
+      'هيكلة وتنفيذ صفقات الاندماج والاستحواذ (M&A)',
+      'صياغة اتفاقيات الشركاء وعقود الاستثمار وحصص الملكية',
+      'إجراء الفحص القانوني النافي للجهالة (Legal Due Diligence)',
+      'استخراج تراخيص الاستثمار الأجنبي وتأسيس المقرات الإقليمية',
+      'حوكمة الشركات المساهمة وتأهيلها للإدراج في السوق المالية'
+    ],
+    keyServicesEn: [
+      'Mergers & Acquisitions (M&A) structuring and closing',
+      'Shareholders agreements, partnership deeds and cap tables',
+      'Full legal due diligence for target acquisitions',
+      'Foreign direct investment (FDI) licensing & HQ setup',
+      'Corporate governance, board compliance & IPO readiness'
+    ],
+    casesCount: 420,
+    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000',
+  },
+  {
+    id: 'practice-2',
+    title: 'التحكيم التجاري الدولي وفض المنازعات',
+    titleEn: 'International Commercial Arbitration',
+    titleTr: 'Uluslararası Ticari Tahkim ve Uyuşmazlık Çözümü',
+    category: 'disputes',
+    categoryLabelAr: 'التحكيم وتسوية النزاعات',
+    categoryLabelEn: 'Arbitration & ADR',
+    iconName: 'Scale',
+    shortDesc: 'تمثيل الأطراف أمام مراكز التحكيم الدولية (ICC, LCIA, SCCA) وصياغة مشاريط التحكيم وتنفيذ الأحكام.',
+    shortDescEn: 'Representation in multi-jurisdictional institutional arbitrations, arbitral awards enforcement, and emergency relief.',
+    shortDescTr: 'ICC, LCIA ve SCCA nezdinde tahkim temsili, tahkim şartı hazırlama ve yabancı hakem kararlarının tenfizi.',
+    fullDesc: 'يمتلك مكتبنا سجلاً استثنائياً في إدارة النزاعات التحكيمية المعقدة في قطاعات المقاولات، الطاقة، والتمويل. يتولى فريقنا صياغة اتفاقيات التحكيم المحكمة، وإدارة استراتيجيات الدفاع والهجوم أمام لجان التحكيم المستقلة والمؤسسية، إضافةً إلى إجراءات تذييل الأحكام الأجنبية بالصيغة التنفيذية وفق اتفاقية نيويورك.',
+    fullDescEn: 'Premier trial advocacy in institutional and ad-hoc arbitrations under ICC, LCIA, DIAC, and SCCA rules, coupled with cross-border recognition and enforcement of arbitral awards.',
+    keyServices: [
+      'الترافع أمام هيئات التحكيم في غرف التحكيم الدولية (ICC, LCIA, SCCA)',
+      'صياغة شروط ومشاريط التحكيم المحصنة من الطعن',
+      'استصدار الأوامر الوقتية والتدابير التحفظية العاجلة لحماية الأصول',
+      'تنفيذ أحكام التحكيم الأجنبية وفق معاهدة نيويورك الدولية',
+      'إدارة جلسات الوساطة التجارية والتسويات الودية السرية'
+    ],
+    keyServicesEn: [
+      'Advocacy in institutional arbitrations (ICC, LCIA, SCCA, DIAC)',
+      'Drafting bulletproof arbitration agreements and dispute clauses',
+      'Securing emergency injunctions and asset freezing orders',
+      'Cross-border enforcement of awards under the New York Convention',
+      'High-stakes commercial mediation and confidential ADR'
+    ],
+    casesCount: 260,
+    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1000',
+  },
+  {
+    id: 'practice-3',
+    title: 'الترافع القضائي والمحاكم الكبرى',
+    titleEn: 'Commercial & High Courts Litigation',
+    titleTr: 'Ticari ve Yüksek Yargı Dava Temsili',
+    category: 'disputes',
+    categoryLabelAr: 'القضاء والترافع',
+    categoryLabelEn: 'Litigation & Courts',
+    iconName: 'Gavel',
+    shortDesc: 'دفاع رصين أمام المحاكم التجارية والإدارية والاستئناف والتمييز في النزاعات المالية والعقود الكبرى.',
+    shortDescEn: 'Relentless trial advocacy across commercial, administrative, appellate, and supreme courts.',
+    shortDescTr: 'Ticaret, idare, istinaf ve temyiz mahkemelerinde yüksek meblağlı dava takibi ve savunma.',
+    fullDesc: 'نخوض القضايا الكبرى بعزيمة لا تلين وإعداد فقهي ونظامي شديد العمق. يمثل محامونا كبار الموكلين أمام كافة درجات التقاضي في الدعاوى العقدية، والمسؤولية التقصيرية، والنزاعات البنكية، وقضايا التعويض، مدعومين بفريق استقصائي وتحليلي يفند أدلة الخصوم ويحمي المركز القانوني للموكل.',
+    fullDescEn: 'Elite courtroom litigation before appellate and supreme courts, defending clients in high-stakes contractual liability, banking disputes, and administrative enforcement.',
+    keyServices: [
+      'التمثيل أمام المحاكم التجارية والمحاكم العامة وديوان المظالم',
+      'إعداد المذكرات الجوابية ولوائح الاعتراض والاستئناف والنقض',
+      'الترافع في منازعات العقود والتعويضات المالية الكبرى',
+      'استصدار قرارات الحجز التحفظي ومنع السفر وأوامر التنفيذ المباشرة',
+      'متابعة إجراءات محاكم التنفيذ وتحصيل السندات والأموال'
+    ],
+    keyServicesEn: [
+      'Representation before Commercial Courts and Administrative Tribunals',
+      'Appeals, petitions for cassation, and supreme court pleadings',
+      'Litigating breach of contract and multimillion damage claims',
+      'Precautionary attachments, travel bans, and summary judgments',
+      'Execution court enforcement and cross-jurisdictional recovery'
+    ],
+    casesCount: 890,
+    image: 'https://images.unsplash.com/photo-1453733197781-79dfb1071536?auto=format&fit=crop&q=80&w=1000',
+  },
+  {
+    id: 'practice-4',
+    title: 'العقارات والمقاولات ومشاريع الفيديك (FIDIC)',
+    titleEn: 'Real Estate, Construction & FIDIC',
+    titleTr: 'Gayrimenkul, İnşaat ve FIDIC Hukuku',
+    category: 'realestate',
+    categoryLabelAr: 'العقار والمشاريع',
+    categoryLabelEn: 'Real Estate & Projects',
+    iconName: 'Building',
+    shortDesc: 'صياغة عقود المقاولات الدولية، مشاريع التطوير العقاري الكبرى، والتعامل مع مطالبات التمديد والتعويض.',
+    shortDescEn: 'Structuring mega real estate developments, turnkey EPC contracts, FIDIC dispute claims, and zoning compliance.',
+    shortDescTr: 'Büyük ölçekli gayrimenkul projeleri, EPC sözleşmeleri, FIDIC uyuşmazlıkları ve imar hukuku danışmanlığı.',
+    fullDesc: 'نقدم حلولاً قانونية متقدمة للمطورين العقاريين، والمقاولين الرئيسيين، وصناديق الاستثمار العقاري؛ تشمل مراجعة وتفصيل عقود الفيديك، وهيكلة اتفاقيات البيع على الخارطة، وتسوية نزاعات التأخير وتجاوز التكاليف، وحماية حقوق الملكية والفرز والتراخيص البلدية.',
+    fullDescEn: 'Strategic legal counsel for institutional developers, contractors, and REITs on standard FIDIC contracts, delay claims, cost overruns, and municipal regulatory permissions.',
+    keyServices: [
+      'صياغة ومراجعة عقود الفيديك (الكتاب الأحمر، الأصفر، والفضي)',
+      'هيكلة اتفاقيات التطوير العقاري المشترك والتمويل العقاري',
+      'إدارة مطالبات التمديد الزمني والتعويض المالي للمقاولين (Claims)',
+      'توثيق وإصدار تراخيص البيع على الخارطة (وافي)',
+      'تسوية نزاعات عقود المقاولين الفرعيين والتوريد الإنشائي'
+    ],
+    keyServicesEn: [
+      'Drafting & negotiation of FIDIC conditions (Red, Yellow, Silver Books)',
+      'Structuring real estate joint ventures, REITs & mortgage finance',
+      'Time extension and financial claims management (EOT Claims)',
+      'Off-plan sales regulatory compliance and escrow accounts',
+      'Subcontractor dispute resolutions and supply chain agreements'
+    ],
+    casesCount: 310,
+    image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&q=80&w=1000',
+  },
+  {
+    id: 'practice-5',
+    title: 'الملكية الفكرية والذكاء الاصطناعي والجرائم الرقمية',
+    titleEn: 'Intellectual Property, AI & Cyber Law',
+    titleTr: 'Fikri Mülkiyet, Yapay Zekâ ve Bilişim Hukuku',
+    category: 'technology',
+    categoryLabelAr: 'التقنية والملكية الفكرية',
+    categoryLabelEn: 'IP & Emerging Tech',
+    iconName: 'Cpu',
+    shortDesc: 'تسجيل وحماية العلامات التجارية وبراءات الاختراع، الامتثال السيبراني، ومكافحة القرصنة والجرائم المعلوماتية.',
+    shortDescEn: 'Global trademark protection, patent licensing, software IP audits, cybersecurity compliance, and cybercrime defense.',
+    shortDescTr: 'Marka ve patent tescili, yazılım lisanslama, veri koruma (KVKK/GDPR) ve siber suçlarla mücadele.',
+    fullDesc: 'نواكب الثورة الرقمية بتقديم حلول تشريعية لحماية الأصول غير الملموسة؛ من تسجيل العلامات وحمايتها إقليمياً، وصياغة عقود البرمجيات والحوسبة السحابية (SaaS)، والامتثال لأنظمة حماية البيانات الشخصية والذكاء الاصطناعي، وملاحقة قضايا الابتزاز والاختراق الرقمي.',
+    fullDescEn: 'Cutting-edge advisory on intangible assets, patent filings, trade secret fortification, SaaS licensing, cyber defense litigation, and data privacy framework compliance.',
+    keyServices: [
+      'تسجيل العلامات التجارية والنماذج الصناعية وحمايتها دولياً',
+      'صياغة عقود تراخيص البرمجيات ونقل التكنولوجيا وعقود SaaS',
+      'إجراءات التحفظ الجمركي ومصادرة البضائع المقلدة',
+      'الامتثال لنظام حماية البيانات الشخصية (PDPL & GDPR)',
+      'الترافع في قضايا الجرائم المعلوماتية والاختراق وتسريب البيانات'
+    ],
+    keyServicesEn: [
+      'Trademark, patent and industrial design registration & defense',
+      'Software licensing, tech transfer and SaaS SLA contracts',
+      'Customs border protection and counterfeit goods seizures',
+      'Data Privacy compliance frameworks (PDPL, GDPR)',
+      'Cybercrime defense, anti-fraud and data breach litigation'
+    ],
+    casesCount: 180,
+    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=1000',
+  },
+  {
+    id: 'practice-6',
+    title: 'التركات وحوكمة الشركات العائلية',
+    titleEn: 'Estate Planning & Family Business Governance',
+    titleTr: 'Miras Hukuku ve Aile Şirketleri Anayasası',
+    category: 'finance',
+    categoryLabelAr: 'الأصول والشركات العائلية',
+    categoryLabelEn: 'Estate & Family Office',
+    iconName: 'Shield',
+    shortDesc: 'صياغة مواثيق العائلة، قسمة التركات الرضائية والقضائية، وحماية استدامة الأصول للأجيال القادمة.',
+    shortDescEn: 'Drafting multi-generational family constitutions, succession trusts, and high-net-worth estate distributions.',
+    shortDescTr: 'Aile anayasası hazırlanması, miras taksimi, vakıf ve intikal süreçlerinde stratejik danışmanlık.',
+    fullDesc: 'تتطلب إدارة ثروات العائلات التجارية حكمة بالغة تجمع بين الأحكام الشرعية الدقيقة والأنظمة التجارية المحدثة. نساعد الأسر الاستثمارية في صياغة ميثاق العائلة، وتأسيس الصناديق والشركات القابضة، وقسمة وتصفية التركات الكبرى المعقدة ودياً وقضائياً دون الإضرار بكيان الشركات.',
+    fullDescEn: 'Preserving family enterprise continuity through bespoke family protocols, succession trusts, holding restructuring, and amicable dispute settlements across generations.',
+    keyServices: [
+      'صياغة ميثاق العائلة ولوائح الحوكمة وتنظيم انتقال القيادة',
+      'تصفية وقسمة التركات العقارية والمالية الكبرى',
+      'تأسيس الصناديق الوقفية والاستثمارية العائلية',
+      'حل نزاعات الشركاء والورثة ودياً عبر الوساطة القانونية',
+      'إعادة هيكلة الشركات الفردية إلى شركات مساهمة مقفلة'
+    ],
+    keyServicesEn: [
+      'Drafting family constitutions and succession governance protocols',
+      'Liquidation and judicial distribution of multi-million estates',
+      'Establishing family trusts, endowments and holding vehicles',
+      'Alternative mediation of partner and heir disputes',
+      'Converting sole proprietorships into sustainable joint-stock entities'
+    ],
+    casesCount: 220,
+    image: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=1000',
+  }
+];
+
+export const initialTestimonials: Testimonial[] = [
+  {
+    id: 'test-default-1',
+    clientName: 'المهندس خالد بن عبد الله العبد الله',
+    clientNameEn: 'Eng. Khalid Al-Abdullah',
+    clientRole: 'رئيس مجلس الإدارة',
+    clientRoleEn: 'Chairman of the Board',
+    company: 'مجموعة التطوير العقاري والاستثمار القابضة',
+    companyEn: 'Holding Real Estate Development Group',
+    content: 'تعاملنا مع المكتب في هيكلة صفقة عقارية واستثمارية ضخمة تجاوزت قيمتها مئات الملايين، واستصدار التراخيص السيادية. تميز الفريق بالعمق القانوني والدقة المتناهية والسرعة الفائقة في حسم الأمور المعقدة وحماية حقوقنا في كافة جولات التفاوض.',
+    contentEn: 'Our group entrusted this firm with structuring a multi-million-dollar real estate investment deal. Their profound mastery of regulatory nuances and fearless negotiation safeguarded our assets completely.',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
+    caseType: 'هيكلة استثمار عقاري وعقود فيديك',
+    year: '2026'
+  },
+  {
+    id: 'test-default-2',
+    clientName: 'الدكتور سامر النجار',
+    clientNameEn: 'Dr. Samer Al-Najjar',
+    clientRole: 'المدير التنفيذي للعمليات',
+    clientRoleEn: 'Chief Operating Officer (COO)',
+    company: 'شركة التقنيات الحديثة والحلول السحابية',
+    companyEn: 'Advanced Cloud Technologies & AI Systems',
+    content: 'نجح الفريق القانوني في صياغة عقود البرمجيات الدولية وحماية حقوق الملكية الفكرية لمنصتنا الرقمية ضد التعديات الإقليمية. احترافية عالية ووقاية قانونية متكاملة، ونعتبرهم شركاء نجاحنا الأساسيين.',
+    contentEn: 'The firm successfully fortified our software licensing architecture and defended our intellectual property against regional infringements with utmost precision.',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300',
+    caseType: 'حماية ملكية فكرية وعقود تقنية',
+    year: '2026'
+  },
+  {
+    id: 'test-default-3',
+    clientName: 'الأستاذ طارق بن إبراهيم السعيد',
+    clientNameEn: 'Tariq Al-Saeed',
+    clientRole: 'نائب رئيس مجلس الإدارة',
+    clientRoleEn: 'Vice Chairman of the Board',
+    company: 'مجموعة الاستثمار المالي والصناعي',
+    companyEn: 'Financial & Industrial Investment Alliance',
+    content: 'تمثيل قضائي استثنائي أمام المحاكم التجارية ولجان التحكيم. خاض الفريق نزاعاً تعاقدياً دولياً معقداً بقوة وثبات وحقق حكماً باتاً أرجع للمجموعة أصولها وألزم الطرف الآخر بتعويضات مجزية.',
+    contentEn: 'Remarkable trial representation before commercial courts and arbitration tribunals. They secured a decisive, enforceable final award restoring our entire assets and full damages.',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300',
+    caseType: 'تحكيم تجاري دولي ونزاع مساهمين',
+    year: '2025'
+  },
+  {
+    id: 'test-default-4',
+    clientName: 'الشيخ فيصل المقرن',
+    clientNameEn: 'Sheikh Faisal Al-Mogren',
+    clientRole: 'رئيس مجلس المديرين',
+    clientRoleEn: 'Chairman of the Board of Managers',
+    company: 'شركة الصناعات التحويلية واللوجستية',
+    companyEn: 'Manufacturing & Logistics International Co.',
+    content: 'مستشارون قانونيون على أعلى مستوى من الكفاءة والحصانة المهنية. تميزوا في صياغة عقود التوريد الدولية والشحن والتسوية الودية لنزاعات الشركاء بحرفية وقائية لا مثيل لها جنبتنا أروقة المحاكم.',
+    contentEn: 'Top-tier corporate counsel with exceptional strategic foresight. Their dispute-preventive drafting and confidential mediation kept our commercial enterprise fully protected.',
+    rating: 5,
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300',
+    caseType: 'عقود تجارية دولية وحوكمة شركاء',
+    year: '2025'
+  }
+];
+
+export const initialCaseStudies: CaseStudy[] = [
+  {
+    id: 'case-default-1',
+    title: 'حسم نزاع تحكيمي دولي في عقد مقاولات بنية تحتية كبرى',
+    titleEn: 'International Arbitration Victory in $120M Infrastructure Contract',
+    category: 'تحكيم دولي ومقاولات',
+    categoryEn: 'International Arbitration',
+    outcome: 'حكم تحكيمي نهائي بات بإلزام الخصم بدفع 120 مليون دولار مع كافة الفوائد والمصاريف',
+    outcomeEn: 'Final binding award securing $120M in damages, extension of time, and full legal costs',
+    summary: 'إدارة دفاع قانوني وفني محكم أمام هيئة تحكيم دولية (ICC) لتفنيد ادعاءات الإخلال الزمني وتثبيت مطالبات المقاول بالتعويض والتمديد العادل وفق شروط عقود الفيديك.',
+    summaryEn: 'Spearheaded trial defense in a complex ICC arbitration defending against delay liquidated damages and securing complete contractor indemnification.',
+    year: '2026',
+    value: '$120,000,000',
+    highlight: 'حكم تحكيمي نهائي غير قابل للطعن'
+  },
+  {
+    id: 'case-default-2',
+    title: 'إعادة الهيكلة والتنظيم المالي لمجموعة استثمارية وتفادي التصفية',
+    titleEn: 'Financial Restructuring & Debt Settlement of $85M Portfolio',
+    category: 'إفلاس وإعادة تنظيم مالي',
+    categoryEn: 'Restructuring & Insolvency',
+    outcome: 'اعتماد مقترح إعادة التنظيم المالي وتعليق كافة المطالبات القضائية وجدولة الديون',
+    outcomeEn: 'Approved financial reorganization plan, staying creditor litigation and securing sustainable 5-year repayment schedule',
+    summary: 'تمثيل المجموعة المدينة أمام المحكمة التجارية، وإعداد خطة سداد استراتيجية توافق عليها أكثر من 85% من الدائنين لحفظ استمرارية النشاط التجاري وحماية أكثر من 1200 موظف.',
+    summaryEn: 'Represented debtor holding company in commercial court bankruptcy proceedings, obtaining comprehensive creditor ratification and safeguarding operational viability.',
+    year: '2025',
+    value: '$85,000,000',
+    highlight: 'إنقاذ كيان صناعي من الإفلاس'
+  },
+  {
+    id: 'case-default-3',
+    title: 'هيكلة صفقة استحواذ كامل لشركة تقنية مالية (FinTech) واستصدار التراخيص',
+    titleEn: 'Strategic M&A Acquisition of Licensed FinTech Enterprise',
+    category: 'اندماج واستحواذ (M&A)',
+    categoryEn: 'Corporate & M&A',
+    outcome: 'إتمام صفقة الشراء ونقل 100% من الحصص والحصول على موافقة البنك المركزي دون أي ملاحظات',
+    outcomeEn: 'Successful 100% share acquisition and Central Bank regulatory approvals cleared within record time',
+    summary: 'إجراء فحص قانوني شامل نافٍ للجهالة، وصياغة اتفاقية شراء الأسهم (SPA)، وتعديل لوائح الحوكمة وضمان الامتثال التنظيمي للأنظمة المصرفية والمالية.',
+    summaryEn: 'Conducted rigorous regulatory due diligence, drafted share purchase agreements (SPA), and secured unconditional monetary authority consents.',
+    year: '2025',
+    value: '$65,000,000',
+    highlight: 'امتثال مصرفي وتنظيمي كامل'
+  },
+  {
+    id: 'case-default-4',
+    title: 'إسقاط ربط زكوي وضريبي تعسفي لصالح شركة خدمات نفطية',
+    titleEn: 'Annulment of $45M Unlawful Tax Assessment Claim',
+    category: 'قانون ضريبي وزكوي',
+    categoryEn: 'Tax Litigation',
+    outcome: 'إلغاء المطالبة الضريبية بالكامل أمام الأمانة العامة للجان الضريبية مع رد المبالغ المحتجزة',
+    outcomeEn: 'Complete cancellation of the assessment by the Tax Appeals Committee with full refund of seized escrow funds',
+    summary: 'تقديم دفوع نظامية ومحاسبية تفصيلية تثبت تطبيق المعاملات الضريبية البينية بصورة نظامية وبطلان الحساب التقديري الصادر من الهيئة.',
+    summaryEn: 'Drafted forensic legal and accounting appeals demonstrating correct cross-border transaction treatment, successfully revoking arbitrary assessments.',
+    year: '2024',
+    value: '$45,000,000',
+    highlight: 'إلغاء 100% من المطالبة'
+  },
+  {
+    id: 'case-default-5',
+    title: 'حماية علامة تجارية عالمية ومصادرة ملايين السلع المقلدة',
+    titleEn: 'Cross-Border Trademark Enforcement & Counterfeit Seizure',
+    category: 'ملكية فكرية وجرائم تجارية',
+    categoryEn: 'Intellectual Property Enforcement',
+    outcome: 'استصدار أحكام قضائية بمصادرة وإتلاف السلع المغشوشة وإلزام المقلدين بتعويضات رادعة',
+    outcomeEn: 'Judicial destruction orders across 8 ports, accompanied by substantial compensatory damage awards against infringers',
+    summary: 'تنسيق مع الجمارك وجهات الضبط القضائي لتنفيذ مداهمات متزامنة في 8 منافذ ومستودعات، وحماية الحصة السوقية لموكلنا من التشويه التجاري.',
+    summaryEn: 'Coordinated simultaneous border seizures with customs authorities, obtaining immediate judicial injunctions and punitive damages.',
+    year: '2024',
+    value: '$25,000,000',
+    highlight: 'حماية احتكارية للعلامة'
+  }
+];
+
+export const initialBlogPosts: BlogPost[] = [
+  {
+    id: 'blog-default-1',
+    title: 'التحكيم التجاري الإلكتروني وتطبيقات الذكاء الاصطناعي في فض المنازعات',
+    titleEn: 'Online Commercial Arbitration & AI in Modern Dispute Resolution',
+    slug: 'ai-commercial-arbitration',
+    category: 'التحكيم والتكنولوجيا',
+    categoryEn: 'Arbitration & Tech',
+    excerpt: 'قراءة تحليلية في المسائل الإجرائية والقانونية المرتبطة بجلسات التحكيم الرقمي واستخدام الخوارزميات الذكية في تقييم الأدلة وحجية التوقيع الإلكتروني.',
+    excerptEn: 'Analytical review of procedural dynamics, algorithmic evidence evaluation, and the enforceability of digital arbitral awards under public policy standards.',
+    content: 'تناقش هذه الدراسة التحول الجوهري في إجراءات التحكيم التجاري الدولي مع ظهور تقنيات التحكيم عن بُعد والذكاء الاصطناعي. نتناول الحجية القانونية للمستندات الإلكترونية، وحماية السرية في البيئة السحابية، والحدود التشريعية لاستخدام خوارزميات التنبؤ بالأحكام ومدى مطابقتها لمتطلبات النظام العام والعدالة الإجرائية في الاتفاقيات الدولية.',
+    contentEn: 'This comprehensive legal study explores the fundamental transition toward digital hearing protocols and AI-assisted tribunal proceedings in modern commercial disputes.',
+    authorName: 'د. عبد الرحمن آل هلال',
+    authorRole: 'المحامي المؤسس والشريك الإداري',
+    date: '2026-02-15',
+    readTime: '7 دقائق',
+    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=1000',
+    tags: ['تحكيم تجاري', 'ذكاء اصطناعي', 'تقاضي رقمي', 'حماية بيانات']
+  },
+  {
+    id: 'blog-default-2',
+    title: 'دليل الشركاء في صياغة اتفاقيات التأسيس وتفادي نزاعات الملكية',
+    titleEn: 'Founder Shareholders Agreements & Deadlock Prevention Guide',
+    slug: 'partners-agreement-deadlock-prevention',
+    category: 'قانون الشركات والاستثمار',
+    categoryEn: 'Corporate Law',
+    excerpt: 'أبرز البنود الجوهرية والآليات الوقائية التي تجب مراعاتها عند إعداد اتفاقيات الشركاء لحماية حقوق الأغلبية والأقلية وتفادي الشلل الإداري.',
+    excerptEn: 'Essential clauses and preventive mechanisms for structuring shareholders agreements, tag-along rights, and Russian roulette deadlock resolution.',
+    content: 'تُعد اتفاقية الشركاء وثيقة حيوية تحكم العلاقة بين المؤسسين والمستثمرين. يستعرض هذا المقال الطرق النموذجية لحل التجمّد الإداري (Deadlock)، والآليات المعتمدة لتقييم الحصص عند خروج أحد الشركاء، وحقوق الشفعة والشرط الجزائي، بما يضمن استقرار الكيان الاقتصادي وتفادي اللجوء للقضاء.',
+    contentEn: 'A practical legal framework for crafting balanced shareholder agreements, exit valuations, drag-along rights, and conflict-avoidance mechanisms.',
+    authorName: 'الأستاذة نورة الهاشمي',
+    authorRole: 'شريكة - رئيسة قسم حوكمة الشركات',
+    date: '2026-01-20',
+    readTime: '6 دقائق',
+    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000',
+    tags: ['شركات', 'اتفاقية شركاء', 'حوكمة', 'استثمار']
+  },
+  {
+    id: 'blog-default-3',
+    title: 'عقود الفيديك (FIDIC) في مشاريع البنية التحتية وإدارة مطالبات التمديد',
+    titleEn: 'FIDIC Mega Infrastructure Contracts & Extension of Time (EOT) Claims',
+    slug: 'fidic-infrastructure-eot-claims',
+    category: 'العقارات والمقاولات',
+    categoryEn: 'Construction & FIDIC',
+    excerpt: 'شرح متكامل لأهم الشروط العامة في عقود المقاولات الدولية وكيفية التعاطي مع إشعارات المطالبات وتمديد المدد الزمنية لتفادي غرامات التأخير.',
+    excerptEn: 'Deep-dive analysis into sub-clause 20.1 time-bar notices, engineer determination procedures, and delay mitigation under FIDIC Yellow and Red Books.',
+    content: 'تُعتبر الشروط النموذجية لعقود الفيديك المعيار الدولي لإدارة المشاريع الإنشائية الكبرى. يتناول هذا المقال التوزيع العادل للمخاطر بين صاحب العمل والمقاول، وصلاحيات المهندس المشرف، والشروط الشكلية الصارمة لتقديم إشعارات مطالبات التمديد والتعويض المالي تفادياً لسقوط الحقوق بمضي المدة.',
+    contentEn: 'Comprehensive guide navigating risk allocations, engineer determinations, and time-bar preservation strategies in FIDIC construction arbitrations.',
+    authorName: 'د. طارق السعيد',
+    authorRole: 'شريك أول - رئيس قسم التحكيم الدولي',
+    date: '2025-12-10',
+    readTime: '9 دقائق',
+    image: 'https://images.unsplash.com/photo-1541888946425-d0fbb186c5f7?auto=format&fit=crop&q=80&w=1000',
+    tags: ['عقود فيديك', 'مقاولات', 'مطالبات تمديد', 'بنية تحتية']
+  },
+  {
+    id: 'blog-default-4',
+    title: 'إجراءات التسوية الوقائية وإعادة التنظيم المالي بموجب نظام الإفلاس المحدث',
+    titleEn: 'Preventive Settlement & Debt Restructuring Under Modern Insolvency Laws',
+    slug: 'preventive-settlement-insolvency-reorganization',
+    category: 'إفلاس وتسوية مالية',
+    categoryEn: 'Insolvency & Restructuring',
+    excerpt: 'كيف تستفيد المنشآت المتعثرة من الأدوات النظامية لتعليق المطالبات القضائية وإعادة هيكلة ديونها للحفاظ على استمرارية النشاط التجاري.',
+    excerptEn: 'How distressed commercial entities can leverage statutory moratoria, cram-down provisions, and judicial restructuring plans to preserve enterprise value.',
+    content: 'يقدم نظام الإفلاس حزمة من الحلول المتطورة للشركات التي تواجه اضطرابات مالية مؤقتة. تسلط هذه الدراسة الضوء على شروط افتتاح إجراء التسوية الوقائية، وكيفية إعداد مقترح إعادة التنظيم المالي وتفاوض الديون مع البنوك والموردين، وأثر تعليق المطالبات على تحصين أصول الشركة واستعادة توازنها التشغيلي.',
+    contentEn: 'An exhaustive exploration of debtor protections, automatic stays of execution, and creditor voting thresholds under modern bankruptcy legislation.',
+    authorName: 'د. عبد الرحمن آل هلال',
+    authorRole: 'المحامي المؤسس والشريك الإداري',
+    date: '2025-11-28',
+    readTime: '8 دقائق',
+    image: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=1000',
+    tags: ['نظام الإفلاس', 'إعادة هيكلة', 'جدولة ديون', 'تعليق مطالبات']
+  }
+];
+
+export const initialOffices: OfficeLocation[] = [
+  {
+    id: 'office-default-1',
+    cityAr: 'الرياض',
+    cityEn: 'Riyadh',
+    cityTr: 'Riyad',
+    countryAr: 'المملكة العربية السعودية',
+    countryEn: 'Saudi Arabia',
+    countryTr: 'Suudi Arabistan',
+    addressAr: 'برج المملكة، الطابق 42، طريق الملك فهد، الرياض، المملكة العربية السعودية',
+    addressEn: 'Kingdom Tower, 42nd Floor, King Fahd Road, Riyadh, Saudi Arabia',
+    addressTr: 'Kingdom Tower, 42. Kat, King Fahd Caddesi, Riyad, Suudi Arabistan',
+    phone: '+966 11 456 7890',
+    email: 'riyadh@aladllaw.com',
+    mapEmbedUrl: '',
+    isHeadquarter: true,
+  }
+];
+
 export const initialContactMessages: ContactMessage[] = [];
+

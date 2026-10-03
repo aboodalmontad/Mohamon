@@ -31,7 +31,9 @@ export class ErrorBoundary extends Component<Props, State> {
   public handleReset = () => {
     try {
       localStorage.clear();
-      window.location.reload();
+      sessionStorage.clear();
+      // Clear URL params that might point to a malformed firm
+      window.location.href = window.location.pathname;
     } catch {
       window.location.reload();
     }
@@ -41,7 +43,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-[#fbf8f2] text-[#181512] flex items-center justify-center p-4 font-sans rtl:text-right" dir="rtl">
-          <div className="max-w-md w-full p-8 rounded-3xl bg-white border border-[#c5a869]/50 shadow-2xl text-center space-y-6">
+          <div className="max-w-lg w-full p-8 rounded-3xl bg-white border border-[#c5a869]/50 shadow-2xl text-center space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-[#b38a38]/15 border border-[#b38a38]/30 flex items-center justify-center mx-auto text-[#87641d]">
               <ShieldAlert className="w-8 h-8" />
             </div>
@@ -54,6 +56,12 @@ export class ErrorBoundary extends Component<Props, State> {
                 تم رصد المشكلة ومعالجتها بأمان. يمكنك إعادة تحميل الصفحة أو إعادة تعيين التخزين المؤقت لاستئناف العمل فوراً.
               </p>
             </div>
+
+            {this.state.error && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-right text-[11px] font-mono text-amber-900 max-h-28 overflow-y-auto break-all">
+                {this.state.error.message || this.state.error.toString()}
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
               <button
@@ -68,7 +76,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReset}
                 className="px-4 py-2.5 rounded-xl bg-[#f4eee2] text-[#87641d] border border-[#e6ddcc] text-xs font-semibold hover:bg-[#ede4d4] transition cursor-pointer"
               >
-                إعادة ضبط البيانات التلقائية
+                إعادة ضبط البيانات واستئناف العمل
               </button>
             </div>
           </div>
