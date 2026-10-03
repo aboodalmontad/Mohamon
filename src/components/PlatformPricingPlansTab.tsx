@@ -214,7 +214,7 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
     }
   };
 
-  const handleSavePlan = (e: React.FormEvent) => {
+  const handleSavePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nameAr.trim()) {
       showToast(isAr ? 'يرجى إدخال اسم الباقة بالعربية' : 'Please enter plan name');
@@ -245,7 +245,8 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         featuresAr: formData.featuresAr,
         featuresEn: formData.featuresEn,
       });
-      showToast(isAr ? '⚡️ تم تحديث الباقة وحفظها في السحابة بنجاح لكافة المستخدمين الجدد!' : 'Pricing plan updated & saved to cloud successfully for all users!');
+      await pricingPlanService.syncToCloud();
+      showToast(isAr ? '⚡️ تم تحديث الباقة وحفظها في قاعدة البيانات السحابية بنجاح لكافة المستخدمين الجدد!' : 'Pricing plan updated & saved to cloud successfully for all users!');
     } else {
       pricingPlanService.addPlan({
         tier: formData.tier.trim().toLowerCase() || `custom_${Date.now().toString().slice(-4)}`,
@@ -271,29 +272,33 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         featuresEn: formData.featuresEn,
         sortOrder: plans.length + 1,
       });
-      showToast(isAr ? '⚡️ تمت إضافة الباقة وحفظها في السحابة بنجاح لكافة المستخدمين الجدد!' : 'New pricing plan created & saved to cloud successfully for all users!');
+      await pricingPlanService.syncToCloud();
+      showToast(isAr ? '⚡️ تمت إضافة الباقة وحفظها في قاعدة البيانات السحابية بنجاح لكافة المستخدمين الجدد!' : 'New pricing plan created & saved to cloud successfully for all users!');
     }
 
     setIsAddModalOpen(false);
     refreshPlans();
   };
 
-  const handleDeletePlan = (id: string) => {
+  const handleDeletePlan = async (id: string) => {
     pricingPlanService.deletePlan(id);
+    await pricingPlanService.syncToCloud();
     setDeletePlanId(null);
     showToast(isAr ? '⚡️ تم حذف الباقة وتحديث السحابة بنجاح!' : 'Pricing plan deleted & synced to cloud!');
     refreshPlans();
   };
 
-  const handleToggleActive = (id: string) => {
+  const handleToggleActive = async (id: string) => {
     pricingPlanService.togglePlanActive(id);
+    await pricingPlanService.syncToCloud();
     refreshPlans();
     showToast(isAr ? '⚡️ تم تغيير حالة التفعيل وحفظها في السحابة!' : 'Plan status updated & saved to cloud!');
   };
 
-  const handleResetDefaults = () => {
+  const handleResetDefaults = async () => {
     if (window.confirm(isAr ? 'هل أنت متأكد من استعادة باقات التسعير الافتراضية وحفظها في السحابة للمنصة؟' : 'Reset to default pricing plans and sync to cloud?')) {
       pricingPlanService.resetToDefaults();
+      await pricingPlanService.syncToCloud();
       refreshPlans();
       showToast(isAr ? '⚡️ تمت استعادة الباقات وحفظها في السحابة بنجاح!' : 'Pricing plans reset & saved to cloud!');
     }

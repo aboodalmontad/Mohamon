@@ -306,38 +306,7 @@ export const SupabaseFirmsTab: React.FC<SupabaseFirmsTabProps> = ({ lang, onFirm
         </div>
       )}
 
-      {/* Active Firm Summary for Context (Platform-Level View) */}
-      <div className="px-5 py-4 rounded-2xl bg-slate-800 border border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm shadow-xl mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.6)] animate-pulse" />
-          <span className="text-slate-200 font-bold">{isAr ? 'نطاق الإدارة الحالي:' : 'Current Management Scope:'}</span>
-          <span className="font-extrabold text-[#c5a869] font-serif-title text-base tracking-tight bg-black/30 px-3 py-1 rounded-lg border border-white/5">
-            {firms.find((f) => f.slug === activeSlug)?.nameAr || activeSlug}
-          </span>
-          <span className="px-2 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 font-mono text-xs">
-            ?firm={activeSlug}
-          </span>
-        </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleCopyLink(activeSlug)}
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition shadow-sm cursor-pointer"
-            title={isAr ? 'نسخ رابط المكتب' : 'Copy link'}
-          >
-            {copiedSlug === activeSlug ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          </button>
-          <a
-            href={`/?firm=${activeSlug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-[#c5a869] border border-slate-800 transition shadow-sm"
-            title={isAr ? 'فتح المعاينة' : 'Open Preview'}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      </div>
 
       {/* SECTION 1: SUPABASE CONFIGURATION & SYNC */}
       <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 space-y-6">

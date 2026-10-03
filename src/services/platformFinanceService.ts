@@ -120,18 +120,21 @@ class PlatformFinanceService {
   private saveExpenses() {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(this.expenses));
+      window.dispatchEvent(new CustomEvent('aladl_finance_updated'));
     }
   }
 
   private saveTransactions() {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_TRANSACTIONS, JSON.stringify(this.transactions));
+      window.dispatchEvent(new CustomEvent('aladl_finance_updated'));
     }
   }
 
   private saveConfig() {
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(this.config));
+      window.dispatchEvent(new CustomEvent('aladl_finance_updated'));
     }
   }
 

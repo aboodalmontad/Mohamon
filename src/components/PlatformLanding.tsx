@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, MapPin, Scale, Building, RefreshCw, QrCode } from 'lucide-react';
+import { Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, MapPin, Scale, Building, RefreshCw, QrCode, Sparkles, Check } from 'lucide-react';
 import { FirmRegistrationModal } from './FirmRegistrationModal';
 import { FirmQRCodeModal } from './FirmQRCodeModal';
-import { Language, LawFirm } from '../types';
+import { Language, LawFirm, PricingPlan } from '../types';
 import { firmService, createDefaultFirms } from '../services/firmService';
+import { pricingPlanService } from '../services/pricingPlanService';
 import { storageService } from '../services/storageService';
 import { PlatformSettings } from '../types';
 import { getLocalized } from '../services/i18n';
@@ -22,6 +23,18 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
   const [qrModalFirm, setQrModalFirm] = useState<LawFirm | null>(null);
+  const [plans, setPlans] = useState<PricingPlan[]>(() => pricingPlanService.getPlans());
+
+  useEffect(() => {
+    const handlePlansUpdated = () => {
+      setPlans(pricingPlanService.getPlans());
+    };
+    pricingPlanService.init().catch(() => {});
+    window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
+    return () => {
+      window.removeEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
+    };
+  }, []);
   const isRtl = lang === 'ar';
   const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
 
@@ -395,6 +408,109 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                   : 'Superior protection for your firm and client data through encrypted cloud servers and advanced access controls.'}
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Pricing Plans Section */}
+      <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-950 border-t border-white/10 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#c5a869]/10 via-transparent to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#c5a869]/10 border border-[#c5a869]/30 text-[#c5a869] text-xs font-semibold">
+              <Sparkles className="w-4 h-4" />
+              <span>{isRtl ? 'باقات الاشتراك والأسعار' : lang === 'tr' ? 'Abonelik Planları ve Fiyatlandırma' : 'Subscription Plans & Pricing'}</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {isRtl ? 'خطط أسعار شفافة ومرنة تناسب كافة المكاتب القانونية' : lang === 'tr' ? 'Tüm Hukuk Büroları İçin Esnek ve Şeffaf Fiyatlandırma' : 'Transparent & Flexible Pricing Plans for Every Law Firm'}
+            </h2>
+            <p className="text-slate-400 text-sm sm:text-base">
+              {isRtl ? 'أنشئ موقع مكتبك الرسمي وانضم إلى المنصة الآن مع إمكانية إدارة شؤونك القانونية بكل كفاءة وسهولة.' : lang === 'tr' ? 'Büronuzun resmi web sitesini oluşturun ve hukuki süreçlerinizi kolayca yönetin.' : 'Launch your official firm website and manage legal operations with ease.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {plans
+              .filter(p => p.isActive)
+              .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+              .map(plan => {
+                const priceDisplay = lang === 'ar' ? `${plan.priceSAR} ر.س` : lang === 'tr' ? `${plan.priceTRY || plan.priceSAR} ₺` : `$${plan.priceUSD}`;
+                const cycleText = plan.billingCycle === 'annual' ? (isRtl ? '/ سنوياً' : ' / year') : (isRtl ? '/ شهرياً' : ' / month');
+
+                return (
+                  <div 
+                    key={plan.id}
+                    className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                      plan.isPopular 
+                        ? 'bg-gradient-to-b from-slate-900 to-slate-900/90 border-2 border-[#c5a869] shadow-2xl shadow-[#c5a869]/10 scale-105 z-10' 
+                        : 'bg-slate-900/60 border border-white/10 hover:border-white/20'
+                    }`}
+                  >
+                    {plan.isPopular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#c5a869] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md">
+                        {isRtl ? (plan.badgeAr || 'الأكثر طلباً واختياراً') : (plan.badgeEn || 'Most Popular')}
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold text-white font-serif-title">{isRtl ? plan.nameAr : plan.nameEn}</h3>
+                        <span className="text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-mono">
+                          {plan.tier}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-slate-400 mb-6 min-h-[36px] leading-relaxed">
+                        {isRtl ? plan.descriptionAr : plan.descriptionEn}
+                      </p>
+
+                      <div className="mb-6 pb-6 border-b border-white/10 flex items-baseline gap-2">
+                        <span className="text-3xl sm:text-4xl font-black text-[#c5a869] font-serif-title">{priceDisplay}</span>
+                        <span className="text-xs text-slate-400">{cycleText}</span>
+                      </div>
+
+                      <div className="space-y-3 mb-8">
+                        <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                          {isRtl ? 'الميزات والقدرات المشمولة:' : 'Included Features & Capabilities:'}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                          <span>{isRtl ? `عدد المحامين: ${plan.maxLawyers === 999 ? 'غير محدود' : plan.maxLawyers}` : `Lawyers: ${plan.maxLawyers === 999 ? 'Unlimited' : plan.maxLawyers}`}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                          <span>{isRtl ? `مساحة التخزين المشفرة: ${plan.storageGB} جيجابايت` : `Secure Storage: ${plan.storageGB} GB`}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-300">
+                          <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                          <span>{isRtl ? `الدعم الفني: ${plan.supportLevelAr}` : `Support: ${plan.supportLevelAr}`}</span>
+                        </div>
+
+                        {(isRtl ? plan.featuresAr : plan.featuresEn)?.map((feat, idx) => (
+                          <div key={idx} className="flex items-center gap-2 text-xs text-slate-300">
+                            <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                            <span>{feat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsRegistrationOpen(true)}
+                      className={`w-full py-3 px-6 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
+                        plan.isPopular
+                          ? 'bg-[#c5a869] hover:bg-[#b09358] text-slate-950 shadow-[#c5a869]/20'
+                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                      }`}
+                    >
+                      <span>{isRtl ? 'اختر هذه الباقة وسجل الآن' : lang === 'tr' ? 'Bu Planı Seç ve Kaydol' : 'Select Plan & Register Now'}</span>
+                      {isRtl ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                    </button>
+                  </div>
+                );
+              })}
           </div>
         </div>
       </section>
