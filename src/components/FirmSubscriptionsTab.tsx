@@ -722,9 +722,16 @@ export const FirmSubscriptionsTab: React.FC<FirmSubscriptionsTabProps> = ({
                   {/* Plan Tier */}
                   <div className="space-y-1">
                     <span className="text-slate-500 text-[10px] block font-semibold">{isAr ? 'الباقة السنوية' : 'Plan'}</span>
-                    <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 inline-block whitespace-nowrap">
-                      {isAr ? sub.planNameAr : sub.planNameEn}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20 inline-block whitespace-nowrap">
+                        {isAr ? sub.planNameAr : sub.planNameEn}
+                      </span>
+                      {sub.status === 'trial' && (
+                        <span className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold">
+                          {isAr ? 'فترة تجريبية (شهر)' : 'Free Trial'}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Fee & Payment Status */}

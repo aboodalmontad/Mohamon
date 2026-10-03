@@ -2011,18 +2011,18 @@ class FirmService {
       },
 
       subscription: {
-        planTier: 'starter',
-        planNameAr: 'الباقة السنوية القياسية للمحامي',
-        planNameEn: 'Lawyer Standard Annual Plan',
-        status: 'active',
+        planTier: info.populateTemplateData !== false ? 'professional' : 'starter',
+        planNameAr: 'فترة تجريبية مجانية (شهر واحد)',
+        planNameEn: 'Free Trial (1 Month)',
+        status: 'trial',
         isSiteActive: true,
         startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days free trial
         annualFee: 2500,
         currency: 'SAR',
-        autoRenew: true,
-        paymentStatus: 'paid',
-        notes: 'تم تفعيل ترخيص الموقع السنوي للمكتب بنجاح',
+        autoRenew: false,
+        paymentStatus: 'pending',
+        notes: 'فترة تجريبية مجانية لمدة شهر من تاريخ التسجيل. بانتظار سداد الاشتراك لتفعيله نهائياً من قبل الإدارة.',
       },
     };
 
@@ -2034,7 +2034,7 @@ class FirmService {
     return {
       success: true,
       firm: newFirm,
-      message: `تم إنشاء موقع المكتب القانوني وتفعيله لسنة كاملة بنجاح! الرابط المستقل: ?firm=${finalSlug}`,
+      message: `تم إنشاء موقع المكتب القانوني ومنحه فترة تجريبية مجانية لمدة شهر بنجاح! الرابط المستقل: ?firm=${finalSlug}`,
     };
   }
 
