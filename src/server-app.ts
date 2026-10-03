@@ -12,9 +12,11 @@ import {
   initialSiteSettings, 
   initialOffices 
 } from './data/initialData';
+import { initialPricingPlans } from './services/pricingPlanService';
 
 const PUBLIC_DATA_PATH = path.join(process.cwd(), 'public', 'site_data.json');
 const FIRMS_DATA_PATH = path.join(process.cwd(), 'public', 'firms_data.json');
+const PLANS_DATA_PATH = path.join(process.cwd(), 'public', 'pricing_plans.json');
 const SUPABASE_CONFIG_PATH = path.join(process.cwd(), 'public', 'supabase_config.json');
 const INITIAL_DATA_TS_PATH = path.join(process.cwd(), 'src', 'data', 'initialData.ts');
 
@@ -98,6 +100,13 @@ export function ensurePublicDataFile() {
         fs.writeFileSync(FIRMS_DATA_PATH, JSON.stringify(initialFirms, null, 2), 'utf-8');
       } catch (e) {
         console.warn('Could not write FIRMS_DATA_PATH (read-only filesystem):', e);
+      }
+    }
+    if (!fs.existsSync(PLANS_DATA_PATH)) {
+      try {
+        fs.writeFileSync(PLANS_DATA_PATH, JSON.stringify(initialPricingPlans, null, 2), 'utf-8');
+      } catch (e) {
+        console.warn('Could not write PLANS_DATA_PATH (read-only filesystem):', e);
       }
     }
   } catch (err) {
@@ -360,6 +369,53 @@ app.post('/api/firms/delete', (req, res) => {
     const filtered = firms.filter((f: any) => f.slug !== slug);
     setServerFirms(filtered);
     return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+let serverPlansMemoryCache: any[] | null = null;
+
+function getServerPricingPlans(): any[] {
+  if (serverPlansMemoryCache !== null) {
+    return serverPlansMemoryCache;
+  }
+  try {
+    if (fs.existsSync(PLANS_DATA_PATH)) {
+      serverPlansMemoryCache = JSON.parse(fs.readFileSync(PLANS_DATA_PATH, 'utf-8'));
+      return serverPlansMemoryCache || initialPricingPlans;
+    }
+  } catch (e) {
+    console.warn('Error reading PLANS_DATA_PATH into cache:', e);
+  }
+  return initialPricingPlans;
+}
+
+function setServerPricingPlans(plans: any[]) {
+  serverPlansMemoryCache = plans;
+  try {
+    fs.writeFileSync(PLANS_DATA_PATH, JSON.stringify(plans, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Could not write PLANS_DATA_PATH:', e);
+  }
+}
+
+app.get('/api/pricing-plans', (_req, res) => {
+  try {
+    return res.json({ success: true, data: getServerPricingPlans() });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, data: initialPricingPlans, error: err.message });
+  }
+});
+
+app.post('/api/pricing-plans', (req, res) => {
+  try {
+    const { plans } = req.body;
+    if (!Array.isArray(plans)) {
+      return res.status(400).json({ success: false, error: 'Array of plans required' });
+    }
+    setServerPricingPlans(plans);
+    return res.json({ success: true, count: plans.length, updatedAt: new Date().toISOString() });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

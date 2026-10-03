@@ -1,14 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, CheckCircle2, ChevronRight, ChevronLeft, Building2, Lock, Mail, Phone, 
   User, Globe, Sparkles, Copy, ExternalLink, ShieldCheck, MapPin, Check,
-  CreditCard, Eye, EyeOff, FileText, ArrowRight, ArrowLeft, Award, Layers
+  CreditCard, Eye, EyeOff, FileText, ArrowRight, ArrowLeft, Award, Layers,
+  Upload, Camera, Trash2
 } from 'lucide-react';
 import { Language, LawFirm, SubscriptionPlanTier, PricingPlan } from '../types';
 import { firmService } from '../services/firmService';
 import { pricingPlanService } from '../services/pricingPlanService';
 import { COUNTRIES_LIST } from '../data/countries';
 import { initialPracticeAreas, initialCaseStudies, initialTestimonials, initialBlogPosts } from '../data/initialData';
+import { processImageFile } from './ImageUploader';
+
+const LAWYER_PORTRAIT_PRESETS = [
+  { id: 'attorney-1', label: 'محامي تنفيذي', url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-2', label: 'مستشار وقور', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-3', label: 'محامية شريكة', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-4', label: 'شريك إداري', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-5', label: 'محامي تجاري', url: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=600' },
+];
 
 interface FirmRegistrationModalProps {
   isOpen: boolean;
@@ -67,6 +77,8 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
     slug: '',
     taglineAr: '',
     founderName: '',
+    founderTitle: 'المحامي المؤسس والشريك الإداري العام',
+    founderPhotoUrl: '',
     phone: '',
     email: '',
     countryAr: 'المملكة العربية السعودية',
@@ -79,6 +91,24 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
     useTemplateData: true,
   });
 
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsProcessingPhoto(true);
+      setErrorMsg('');
+      const processed = await processImageFile(file, 600, 600, 0.8);
+      setFormData(prev => ({ ...prev, founderPhotoUrl: processed }));
+    } catch (err: any) {
+      setErrorMsg(err.message || (isAr ? 'فشل معالجة الصورة، يرجى اختيار ملف صورة صالح' : 'Failed to process image'));
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  };
+
   const [plans, setPlans] = useState<PricingPlan[]>(() => pricingPlanService.getPlans());
 
   useEffect(() => {
@@ -90,12 +120,17 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
         setFormData(prev => ({ ...prev, planTier: defaultPlan.tier }));
       }
     };
+
     handlePlansUpdated();
+    if (isOpen) {
+      pricingPlanService.init().catch(() => {});
+    }
+
     window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     return () => {
       window.removeEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     };
-  }, []);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -158,6 +193,8 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
         themeColor: '#c5a869',
         populateTemplateData: formData.useTemplateData,
         founderName: formData.founderName.trim(),
+        founderTitle: formData.founderTitle.trim(),
+        founderPhotoUrl: formData.founderPhotoUrl.trim(),
       });
 
       if (res.success && res.firm) {
@@ -196,7 +233,7 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
               id: `partner-${Date.now()}`,
               name: formData.founderName.trim() || formData.nameAr.trim(),
               nameEn: formData.founderName.trim() || 'Managing Partner',
-              title: 'المحامي المؤسس والمدير العام',
+              title: formData.founderTitle.trim() || 'المحامي المؤسس والمدير العام',
               titleEn: 'Founding & Managing Partner',
               specialty: 'الاستشارات القانونية والتمثيل القضائي والتحكيم',
               specialtyEn: 'Legal Consultancy, Litigation & Arbitration',
@@ -206,9 +243,10 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
               languages: ['العربية', 'الإنجليزية'],
               bio: `المحامي المؤسس والمدير العام لمكتب ${formData.nameAr.trim()}، خبرة رائدة في الترافع وصياغة العقود والاستشارات النوعية.`,
               bioEn: `Founding & Managing Partner with extensive experience in legal counsel and litigation.`,
-              image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
-              email: formData.email.trim(),
+              image: formData.founderPhotoUrl.trim() || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
+              imageUrl: formData.founderPhotoUrl.trim() || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600',
               phone: formData.phone.trim(),
+              email: formData.email.trim(),
               linkedin: 'https://linkedin.com',
               barAdmission: 'نقابة المحامين',
               featured: true,
@@ -449,6 +487,119 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
                     placeholder={isAr ? 'مثال: المحامي أحمد النحوي' : 'e.g. Attorney Ahmad Nahwi'}
                     className="w-full pr-10 pl-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:border-amber-400 focus:outline-none"
                   />
+                </div>
+              </div>
+
+              {/* Personal Photo Upload for Founder Lawyer */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-amber-500/30 space-y-3 shadow-inner">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-amber-400" />
+                    <span>{isAr ? 'الصورة الشخصية للمحامي المسؤول (ستظهر في موقع المكتب):' : 'Managing Attorney Portrait Photo:'}</span>
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 font-medium">
+                    {isAr ? 'صورة الشريك' : 'Attorney Headshot'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
+                  {/* Avatar Preview */}
+                  <div className="relative group shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-slate-900 border-2 border-amber-400/60 shadow-lg flex items-center justify-center">
+                      {formData.founderPhotoUrl ? (
+                        <img
+                          src={formData.founderPhotoUrl}
+                          alt="Attorney Portrait"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-slate-500 gap-1">
+                          <User className="w-7 h-7 text-slate-400" />
+                          <span className="text-[9px] font-semibold text-slate-400">
+                            {isAr ? 'صورتك' : 'Your Photo'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <input
+                      ref={photoFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoFileSelect}
+                      className="hidden"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => photoFileInputRef.current?.click()}
+                      className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md transition cursor-pointer"
+                      title={isAr ? 'رفع صورة شخصية' : 'Upload photo'}
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Controls & Presets */}
+                  <div className="flex-1 space-y-2 text-center sm:text-right rtl:sm:text-right ltr:sm:text-left">
+                    <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                      <button
+                        type="button"
+                        disabled={isProcessingPhoto}
+                        onClick={() => photoFileInputRef.current?.click()}
+                        className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow cursor-pointer disabled:opacity-50"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>{isProcessingPhoto ? (isAr ? 'جاري المعالجة...' : 'Processing...') : (isAr ? 'رفع صورة شخصية من جهازك' : 'Upload Photo from Device')}</span>
+                      </button>
+
+                      {formData.founderPhotoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData(prev => ({ ...prev, founderPhotoUrl: '' }))}
+                          className="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>{isAr ? 'إزالة' : 'Remove'}</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      {isAr 
+                        ? 'ارفع صورتك الرسمية لتظهر في قسم الشركاء والمحامين وواجهة الموقع كشريك إداري للمكتب.' 
+                        : 'Upload your photo to be featured in the partners section and attorney profile.'}
+                    </p>
+
+                    {/* Presets */}
+                    <div className="pt-1">
+                      <span className="text-[10px] text-slate-400 block mb-1 font-medium">
+                        {isAr ? 'أو اختر صورة رمزية احترافية جاهزة:' : 'Or select professional portrait:'}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
+                        {LAWYER_PORTRAIT_PRESETS.map((preset) => (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, founderPhotoUrl: preset.url }))}
+                            className={`relative w-8 h-8 rounded-lg overflow-hidden border-2 transition cursor-pointer ${
+                              formData.founderPhotoUrl === preset.url
+                                ? 'border-amber-400 scale-110 shadow-md ring-2 ring-amber-400/40'
+                                : 'border-slate-700 opacity-70 hover:opacity-100 hover:border-slate-500'
+                            }`}
+                            title={preset.label}
+                          >
+                            <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+                            {formData.founderPhotoUrl === preset.url && (
+                              <div className="absolute inset-0 bg-amber-400/30 flex items-center justify-center text-white">
+                                <Check className="w-3 h-3 stroke-[3]" />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 

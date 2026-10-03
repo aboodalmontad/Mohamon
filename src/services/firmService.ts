@@ -1817,6 +1817,9 @@ class FirmService {
     themeColor?: string;
     populateTemplateData?: boolean;
     founderName?: string;
+    founderPhotoUrl?: string;
+    founderTitle?: string;
+    logoUrl?: string;
   }): Promise<{ success: boolean; firm?: LawFirm; message: string }> {
     // Generate clean unique slug
     let rawSlug = (info.slug || info.nameEn || info.nameAr)
@@ -1892,6 +1895,8 @@ class FirmService {
             id: `partner-${nowMs}-${idx + 1}`,
             name: firmFounder || p.name,
             nameEn: info.nameEn || p.nameEn,
+            title: info.founderTitle || p.title,
+            image: info.founderPhotoUrl || p.image,
             phone: firmPhone,
             email: firmEmail,
             bio: `المحامي المؤسس والشريك الإداري العام لمكتب ${info.nameAr}، خبرة رائدة في الترافع في القضايا التجارية الكبرى وصياغة العقود وإدارة التحكيم الدولي.`,
@@ -1924,6 +1929,38 @@ class FirmService {
         id: `blog-${nowMs}-${idx + 1}`,
         authorName: idx === 0 ? (firmFounder || bp.authorName) : bp.authorName,
       }));
+    } else if (firmFounder || info.founderPhotoUrl) {
+      // Even if blank template is chosen, add the founding lawyer profile with uploaded image
+      finalPartners = [{
+        id: `partner-${nowMs}-1`,
+        name: firmFounder || info.nameAr,
+        nameEn: info.nameEn || '',
+        nameTr: '',
+        title: info.founderTitle || 'المحامي المؤسس والشريك الإداري العام',
+        titleEn: 'Founding Partner & Managing Attorney',
+        titleTr: 'Kurucu Ortak Avukat',
+        specialty: 'الاستشارات والتمثيل القضائي والتحكيم',
+        specialtyEn: 'Legal Advisory & Litigation',
+        specialtyTr: 'Hukuk Danışmanlığı',
+        bio: `المحامي المؤسس والشريك الإداري لمكتب ${info.nameAr}.`,
+        bioEn: `Founding & Managing Partner at ${info.nameEn || info.nameAr}.`,
+        bioTr: '',
+        image: info.founderPhotoUrl || 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=600',
+        phone: firmPhone,
+        email: firmEmail,
+        experienceYears: 15,
+        featured: true,
+        isPartner: true,
+        barAdmission: 'نقابة وهيئة المحامين',
+        languages: ['العربية', 'الإنجليزية'],
+        socialLinks: { linkedin: '#', twitter: '#' },
+        education: ['بكالوريوس في الشريعة والقانون', 'ماجستير في القانون التجاري والأنظمة'],
+        educationEn: ['Bachelor of Laws (LL.B)', 'Master of Commercial Law (LL.M)'],
+        educationTr: [],
+        courtAdmissions: ['المحكمة العليا ومحاكم الاستئناف', 'كافة الهيئات القضائية ولجان الفصل'],
+        courtAdmissionsEn: ['Supreme Court & Courts of Appeal', 'All Judicial Committees'],
+        courtAdmissionsTr: [],
+      }];
     }
 
     const headquarterOffice = {

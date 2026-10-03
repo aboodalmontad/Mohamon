@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Building2, Globe, Sparkles, CheckCircle2, Copy, ExternalLink, 
   ShieldCheck, Lock, Phone, Mail, MapPin, Palette, ArrowRight, ArrowLeft,
-  X, Scale, Briefcase, HelpCircle, Layers, QrCode
+  X, Scale, Briefcase, HelpCircle, Layers, QrCode, Upload, User, Camera,
+  Image as ImageIcon, Trash2, Check
 } from 'lucide-react';
 import { firmService } from '../services/firmService';
 import { LawFirm } from '../types';
 import { COUNTRIES_LIST } from '../data/countries';
 import { FirmQRCodeCard } from './FirmQRCodeCard';
+import { processImageFile } from './ImageUploader';
 
 interface LawyerSiteBuilderModalProps {
   isOpen: boolean;
@@ -15,6 +17,14 @@ interface LawyerSiteBuilderModalProps {
   lang: 'ar' | 'en' | 'tr';
   onFirmCreated?: (newFirm: LawFirm) => void;
 }
+
+const LAWYER_PORTRAIT_PRESETS = [
+  { id: 'attorney-1', label: 'محامي تنفيذي', url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-2', label: 'مستشار وقور', url: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-3', label: 'محامية شريكة', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-4', label: 'شريك إداري', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600' },
+  { id: 'attorney-5', label: 'محامي تجاري', url: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&q=80&w=600' },
+];
 
 const PRESET_PRACTICES = [
   { id: 'corporate', nameAr: 'قضايا الشركات والاستثمار التجاري', nameEn: 'Corporate & Commercial Law' },
@@ -50,6 +60,12 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
   // Form State
   const [nameAr, setNameAr] = useState('');
   const [nameEn, setNameEn] = useState('');
+  const [founderName, setFounderName] = useState('');
+  const [founderTitle, setFounderTitle] = useState('المحامي المؤسس والشريك الإداري العام');
+  const [founderPhotoUrl, setFounderPhotoUrl] = useState('');
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+  const photoFileInputRef = useRef<HTMLInputElement>(null);
+
   const [taglineAr, setTaglineAr] = useState('خبرة قضائية عريقة واستشارات قانونية استراتيجية متميزة');
   const [cityAr, setCityAr] = useState('الرياض');
   const [countryAr, setCountryAr] = useState('المملكة العربية السعودية');
@@ -67,6 +83,21 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
   const [landingUrl, setLandingUrl] = useState('');
 
   if (!isOpen) return null;
+
+  const handlePhotoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsProcessingPhoto(true);
+      setErrorMsg('');
+      const processed = await processImageFile(file, 600, 600, 0.8);
+      setFounderPhotoUrl(processed);
+    } catch (err: any) {
+      setErrorMsg(err.message || (isAr ? 'فشل معالجة الصورة، يرجى اختيار ملف صورة صالح' : 'Failed to process image'));
+    } finally {
+      setIsProcessingPhoto(false);
+    }
+  };
 
   const togglePractice = (id: string) => {
     setSelectedPractices(prev => 
@@ -104,7 +135,9 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
         adminPassword: adminPassword.trim() || '123456',
         themeColor,
         populateTemplateData: useTemplateData,
-        founderName: nameAr.trim(),
+        founderName: (founderName || nameAr).trim(),
+        founderTitle: founderTitle.trim(),
+        founderPhotoUrl: founderPhotoUrl.trim(),
       });
 
       if (res.success && res.firm) {
@@ -295,9 +328,159 @@ export const LawyerSiteBuilderModal: React.FC<LawyerSiteBuilderModalProps> = ({
                   required
                   placeholder={isAr ? 'مثال: مكتب النحوي للمحاماة والاستشارات القانونية' : 'e.g. Al-Nahwi Law Firm'}
                   value={nameAr}
-                  onChange={(e) => setNameAr(e.target.value)}
+                  onChange={(e) => {
+                    setNameAr(e.target.value);
+                    if (!founderName) setFounderName(e.target.value);
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-[#c5a869] focus:outline-none"
                 />
+              </div>
+
+              {/* Founder Lawyer Profile & Personal Photo Section */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-[#c5a869]/30 space-y-3.5 shadow-inner">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-[#c5a869]" />
+                    <span className="text-xs font-bold text-white">
+                      {isAr ? 'بيانات وصورة المحامي المسؤول (ستظهر في الموقع):' : 'Managing Attorney Profile & Photo:'}
+                    </span>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c5a869]/20 text-[#ebd397] font-semibold">
+                    {isAr ? 'ملف المحامي' : 'Attorney Profile'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      {isAr ? 'اسم المحامي المسؤول / المؤسس:' : 'Attorney / Founder Name:'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isAr ? 'مثال: المحامي أحمد بن عبد الله النحوي' : 'e.g. Adv. Ahmad Al-Nahwi'}
+                      value={founderName}
+                      onChange={(e) => setFounderName(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                      {isAr ? 'المسمى والصفة القانونية:' : 'Professional Title:'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={isAr ? 'المحامي المؤسس والشريك الإداري العام' : 'Founding & Senior Managing Partner'}
+                      value={founderTitle}
+                      onChange={(e) => setFounderTitle(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs focus:border-[#c5a869] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Personal Photo Upload Box */}
+                <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+                  <div className="flex flex-col sm:flex-row items-center gap-4">
+                    {/* Avatar Preview */}
+                    <div className="relative group shrink-0">
+                      <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-950 border-2 border-[#c5a869]/60 shadow-lg flex items-center justify-center">
+                        {founderPhotoUrl ? (
+                          <img
+                            src={founderPhotoUrl}
+                            alt="Lawyer Portrait"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-slate-500 gap-1">
+                            <User className="w-8 h-8 text-slate-400" />
+                            <span className="text-[9px] font-semibold text-slate-400">
+                              {isAr ? 'صورتك' : 'Your Photo'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Hidden File Input */}
+                      <input
+                        ref={photoFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoFileSelect}
+                        className="hidden"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => photoFileInputRef.current?.click()}
+                        className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-xl bg-[#c5a869] hover:bg-[#b59859] text-slate-950 shadow-md transition cursor-pointer"
+                        title={isAr ? 'رفع صورة شخصية' : 'Upload photo'}
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Upload Controls & Presets */}
+                    <div className="flex-1 space-y-2 text-center sm:text-right rtl:sm:text-right ltr:sm:text-left">
+                      <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                        <button
+                          type="button"
+                          disabled={isProcessingPhoto}
+                          onClick={() => photoFileInputRef.current?.click()}
+                          className="px-3 py-1.5 rounded-lg bg-[#c5a869] hover:bg-[#b59859] text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow cursor-pointer disabled:opacity-50"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{isProcessingPhoto ? (isAr ? 'جاري المعالجة...' : 'Processing...') : (isAr ? 'رفع صورة شخصية من جهازك' : 'Upload Photo from Device')}</span>
+                        </button>
+
+                        {founderPhotoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setFounderPhotoUrl('')}
+                            className="px-2.5 py-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>{isAr ? 'إزالة' : 'Remove'}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <p className="text-[11px] text-slate-400 leading-relaxed">
+                        {isAr 
+                          ? 'ارفع صورتك الرسمية لتظهر في صفحة تعريف المكتب وقسم الشركاء والمحامين كصورة رسمية للمحامي المسؤول.' 
+                          : 'Upload your professional headshot to be featured in the managing partner profile & hero section.'}
+                      </p>
+
+                      {/* Curated Presets Selection */}
+                      <div className="pt-1">
+                        <span className="text-[10px] text-slate-400 block mb-1.5 font-medium">
+                          {isAr ? 'أو اختر من الصور الرمزية المهنية الجاهزة:' : 'Or choose from attorney presets:'}
+                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
+                          {LAWYER_PORTRAIT_PRESETS.map((preset) => (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => setFounderPhotoUrl(preset.url)}
+                              className={`relative w-8 h-8 rounded-lg overflow-hidden border-2 transition cursor-pointer ${
+                                founderPhotoUrl === preset.url
+                                  ? 'border-[#c5a869] scale-110 shadow-md ring-2 ring-[#c5a869]/40'
+                                  : 'border-slate-700 opacity-70 hover:opacity-100 hover:border-slate-500'
+                              }`}
+                              title={preset.label}
+                            >
+                              <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+                              {founderPhotoUrl === preset.url && (
+                                <div className="absolute inset-0 bg-[#c5a869]/30 flex items-center justify-center text-white">
+                                  <Check className="w-3 h-3 stroke-[3]" />
+                                </div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -397,6 +397,8 @@ export interface PricingPlan {
   priceUSD: number;
   priceSAR?: number;
   priceSYP?: number;
+  priceAED?: number;
+  priceTRY?: number;
   billingCycle: 'annual' | 'monthly' | 'lifetime' | 'custom';
   isPopular?: boolean;
   isActive: boolean;

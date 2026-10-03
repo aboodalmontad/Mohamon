@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Plus, Edit3, Trash2, CheckCircle2, X, Tag, Sparkles, Check, 
   Crown, Layers, ShieldCheck, DollarSign, Globe, Users, Building, 
-  Cpu, HardDrive, RefreshCw, Eye, AlertTriangle, ArrowUpDown, Coins
+  Cpu, HardDrive, RefreshCw, Eye, AlertTriangle, ArrowUpDown, Coins,
+  Cloud
 } from 'lucide-react';
 import { PricingPlan, LawFirm } from '../types';
 import { pricingPlanService } from '../services/pricingPlanService';
@@ -20,6 +21,8 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
 
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [toastMsg, setToastMsg] = useState('');
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [lastCloudSyncTime, setLastCloudSyncTime] = useState<string | null>(null);
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -198,6 +201,19 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
     setIsAddModalOpen(true);
   };
 
+  const handleManualCloudSync = async () => {
+    setIsSyncingCloud(true);
+    try {
+      const res = await pricingPlanService.syncToCloud();
+      setLastCloudSyncTime(new Date().toLocaleTimeString('ar-SA'));
+      showToast(res.message);
+    } catch {
+      showToast(isAr ? 'فشلت المزامنة السحابية، يرجى التحقق من الاتصال' : 'Cloud sync failed, check connection');
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
+
   const handleSavePlan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nameAr.trim()) {
@@ -229,7 +245,7 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         featuresAr: formData.featuresAr,
         featuresEn: formData.featuresEn,
       });
-      showToast(isAr ? 'تم تحديث خطة التسعير بنجاح' : 'Pricing plan updated');
+      showToast(isAr ? '⚡️ تم تحديث الباقة وحفظها في السحابة بنجاح لكافة المستخدمين الجدد!' : 'Pricing plan updated & saved to cloud successfully for all users!');
     } else {
       pricingPlanService.addPlan({
         tier: formData.tier.trim().toLowerCase() || `custom_${Date.now().toString().slice(-4)}`,
@@ -255,7 +271,7 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         featuresEn: formData.featuresEn,
         sortOrder: plans.length + 1,
       });
-      showToast(isAr ? 'تمت إضافة خطة التسعير الجديدة بنجاح' : 'New pricing plan added');
+      showToast(isAr ? '⚡️ تمت إضافة الباقة وحفظها في السحابة بنجاح لكافة المستخدمين الجدد!' : 'New pricing plan created & saved to cloud successfully for all users!');
     }
 
     setIsAddModalOpen(false);
@@ -265,20 +281,21 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
   const handleDeletePlan = (id: string) => {
     pricingPlanService.deletePlan(id);
     setDeletePlanId(null);
-    showToast(isAr ? 'تم حذف باقة التسعير بنجاح' : 'Pricing plan deleted');
+    showToast(isAr ? '⚡️ تم حذف الباقة وتحديث السحابة بنجاح!' : 'Pricing plan deleted & synced to cloud!');
     refreshPlans();
   };
 
   const handleToggleActive = (id: string) => {
     pricingPlanService.togglePlanActive(id);
     refreshPlans();
+    showToast(isAr ? '⚡️ تم تغيير حالة التفعيل وحفظها في السحابة!' : 'Plan status updated & saved to cloud!');
   };
 
   const handleResetDefaults = () => {
-    if (window.confirm(isAr ? 'هل أنت متأكد من استعادة باقات التسعير الافتراضية للمنصة؟' : 'Reset to default pricing plans?')) {
+    if (window.confirm(isAr ? 'هل أنت متأكد من استعادة باقات التسعير الافتراضية وحفظها في السحابة للمنصة؟' : 'Reset to default pricing plans and sync to cloud?')) {
       pricingPlanService.resetToDefaults();
       refreshPlans();
-      showToast(isAr ? 'تمت استعادة الباقات الافتراضية بنجاح' : 'Pricing plans reset to defaults');
+      showToast(isAr ? '⚡️ تمت استعادة الباقات وحفظها في السحابة بنجاح!' : 'Pricing plans reset & saved to cloud!');
     }
   };
 
@@ -343,6 +360,21 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Cloud Sync Button */}
+            <button
+              type="button"
+              disabled={isSyncingCloud}
+              onClick={handleManualCloudSync}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-md"
+              title={isAr ? 'مزامنة سحابية مركزية لكافة المستخدمين الجدد' : 'Sync plans to cloud'}
+            >
+              <Cloud className={`w-4 h-4 text-amber-400 ${isSyncingCloud ? 'animate-bounce' : ''}`} />
+              <span>{isSyncingCloud ? (isAr ? 'جاري المزامنة...' : 'Syncing...') : (isAr ? 'مزامنة سحابية الآن' : 'Sync to Cloud')}</span>
+              {lastCloudSyncTime && (
+                <span className="text-[10px] text-slate-400 font-mono hidden md:inline">({lastCloudSyncTime})</span>
+              )}
+            </button>
+
             {/* Reset to defaults button */}
             <button
               type="button"

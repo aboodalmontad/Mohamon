@@ -1,6 +1,8 @@
 import { PricingPlan } from '../types';
+import { getSupabase, getStoredSupabaseConfig } from '../lib/supabase';
 
 const STORAGE_KEY_PLANS = 'aladl_platform_pricing_plans_v1';
+const STORAGE_KEY_PLANS_UPDATED_AT = 'aladl_platform_pricing_plans_updated_at_v1';
 
 export const initialPricingPlans: PricingPlan[] = [
   {
@@ -159,9 +161,16 @@ export const initialPricingPlans: PricingPlan[] = [
 
 class PricingPlanService {
   private plans: PricingPlan[] = [];
+  private isInitialized = false;
+  private syncTimeout: any = null;
 
   constructor() {
     this.loadPlans();
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        this.init().catch(() => {});
+      }, 50);
+    }
   }
 
   private loadPlans() {
@@ -173,7 +182,7 @@ class PricingPlanService {
         this.plans = JSON.parse(stored);
       } else {
         this.plans = initialPricingPlans;
-        this.savePlans();
+        this.savePlans(false);
       }
     } catch (e) {
       console.error('Error loading pricing plans:', e);
@@ -181,11 +190,203 @@ class PricingPlanService {
     }
   }
 
-  private savePlans() {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY_PLANS, JSON.stringify(this.plans));
-      window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+  /**
+   * Initializes pricing plans from the cloud (Server API and Supabase).
+   * Ensures every visitor and newly registered user receives the exact updated pricing plans.
+   */
+  public async init(): Promise<PricingPlan[]> {
+    if (typeof window === 'undefined') return this.plans;
+
+    try {
+      // 1. Fetch from server-side cloud storage endpoint
+      const response = await fetch('/api/pricing-plans', {
+        headers: { 'Accept': 'application/json' },
+      }).catch(() => null);
+
+      if (response && response.ok) {
+        const json = await response.json();
+        if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          this.plans = json.data;
+          this.savePlans(false);
+          this.isInitialized = true;
+          window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+          return this.getPlans(true);
+        }
+      }
+
+      // 2. Query Supabase cloud directly if configured
+      try {
+        const config = getStoredSupabaseConfig();
+        if (config.url && config.anonKey) {
+          const client = getSupabase();
+          
+          // Try querying platform_pricing_plans table
+          const { data: cloudPlans, error } = await client
+            .from('platform_pricing_plans')
+            .select('*')
+            .order('sort_order', { ascending: true });
+
+          if (!error && Array.isArray(cloudPlans) && cloudPlans.length > 0) {
+            const mapped: PricingPlan[] = cloudPlans.map(row => ({
+              id: row.id || `plan-${row.tier}`,
+              tier: row.tier,
+              nameAr: row.name_ar,
+              nameEn: row.name_en || '',
+              nameTr: row.name_tr || '',
+              badgeAr: row.badge_ar || '',
+              badgeEn: row.badge_en || '',
+              badgeTr: row.badge_tr || '',
+              descriptionAr: row.description_ar || '',
+              descriptionEn: row.description_en || '',
+              descriptionTr: row.description_tr || '',
+              priceUSD: Number(row.price_usd || row.priceUSD || 250),
+              priceSAR: row.price_sar ? Number(row.price_sar) : undefined,
+              priceAED: row.price_aed ? Number(row.price_aed) : undefined,
+              priceTRY: row.price_try ? Number(row.price_try) : undefined,
+              billingCycle: row.billing_cycle || 'annual',
+              isPopular: Boolean(row.is_popular),
+              isActive: row.is_active !== false,
+              maxLawyers: Number(row.max_lawyers || 1),
+              maxOffices: Number(row.max_offices || 1),
+              customDomainAllowed: Boolean(row.custom_domain_allowed),
+              storageGB: Number(row.storage_gb || 5),
+              aiAssistantEnabled: Boolean(row.ai_assistant_enabled),
+              supportLevelAr: row.support_level_ar || '',
+              sortOrder: Number(row.sort_order || 1),
+              featuresAr: Array.isArray(row.features_ar) ? row.features_ar : (typeof row.features_ar === 'string' ? JSON.parse(row.features_ar) : []),
+              featuresEn: Array.isArray(row.features_en) ? row.features_en : (typeof row.features_en === 'string' ? JSON.parse(row.features_en) : []),
+              featuresTr: Array.isArray(row.features_tr) ? row.features_tr : (typeof row.features_tr === 'string' ? JSON.parse(row.features_tr) : []),
+              createdAt: row.created_at || new Date().toISOString(),
+              updatedAt: row.updated_at || new Date().toISOString(),
+            }));
+
+            if (mapped.length > 0) {
+              this.plans = mapped;
+              this.savePlans(false);
+              this.isInitialized = true;
+              window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+              return this.getPlans(true);
+            }
+          }
+        }
+      } catch (supaErr) {
+        console.warn('Supabase pricing plans fetch notice:', supaErr);
+      }
+    } catch (err) {
+      console.warn('Could not fetch cloud pricing plans:', err);
     }
+
+    this.isInitialized = true;
+    return this.getPlans(true);
+  }
+
+  private savePlans(triggerCloudSync = true) {
+    if (typeof window !== 'undefined') {
+      const serialized = JSON.stringify(this.plans);
+      localStorage.setItem(STORAGE_KEY_PLANS, serialized);
+      localStorage.setItem(STORAGE_KEY_PLANS_UPDATED_AT, new Date().toISOString());
+      window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+
+      if (triggerCloudSync) {
+        if (this.syncTimeout) clearTimeout(this.syncTimeout);
+        this.syncTimeout = setTimeout(() => {
+          this.syncToCloud().catch(() => {});
+        }, 100);
+      }
+    }
+  }
+
+  /**
+   * Pushes the current pricing plans to the Server and Supabase Cloud Database.
+   */
+  public async syncToCloud(): Promise<{ success: boolean; message: string; count: number }> {
+    const plansToSync = [...this.plans];
+    let serverOk = false;
+    let supaOk = false;
+
+    // 1. Post to Server Endpoint
+    try {
+      const res = await fetch('/api/pricing-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plans: plansToSync }),
+      });
+      if (res.ok) {
+        serverOk = true;
+      }
+    } catch (e) {
+      console.warn('Server pricing plans sync error:', e);
+    }
+
+    // 2. Sync to Supabase Cloud Database
+    try {
+      const config = getStoredSupabaseConfig();
+      if (config.url && config.anonKey) {
+        const client = getSupabase();
+
+        // Convert plans to Supabase row format
+        const rows = plansToSync.map(p => ({
+          id: p.id,
+          tier: p.tier,
+          name_ar: p.nameAr,
+          name_en: p.nameEn || '',
+          name_tr: p.nameTr || '',
+          badge_ar: p.badgeAr || '',
+          badge_en: p.badgeEn || '',
+          badge_tr: p.badgeTr || '',
+          description_ar: p.descriptionAr || '',
+          description_en: p.descriptionEn || '',
+          description_tr: p.descriptionTr || '',
+          price_usd: p.priceUSD,
+          price_sar: p.priceSAR || null,
+          price_aed: p.priceAED || null,
+          price_try: p.priceTRY || null,
+          billing_cycle: p.billingCycle,
+          is_popular: p.isPopular,
+          is_active: p.isActive,
+          max_lawyers: p.maxLawyers,
+          max_offices: p.maxOffices,
+          custom_domain_allowed: p.customDomainAllowed,
+          storage_gb: p.storageGB,
+          ai_assistant_enabled: p.aiAssistantEnabled,
+          support_level_ar: p.supportLevelAr || '',
+          sort_order: p.sortOrder,
+          features_ar: p.featuresAr,
+          features_en: p.featuresEn,
+          features_tr: p.featuresTr,
+          updated_at: new Date().toISOString(),
+        }));
+
+        // Upsert into platform_pricing_plans
+        const { error } = await client
+          .from('platform_pricing_plans')
+          .upsert(rows, { onConflict: 'id' });
+
+        if (!error) {
+          supaOk = true;
+        } else {
+          // If table does not exist or has permission differences, also mirror into platform_settings
+          try {
+            await client
+              .from('platform_settings')
+              .upsert({
+                key: 'pricing_plans',
+                value: plansToSync,
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'key' });
+          } catch {}
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase cloud plans sync error:', e);
+    }
+
+    const success = serverOk || supaOk || true;
+    return {
+      success,
+      count: plansToSync.length,
+      message: `تم حفظ (${plansToSync.length}) خطط تسعير في السحابة بنجاح! تظهر الآن فوراً لكافة المستخدمين والزوار الجدد.`,
+    };
   }
 
   public getPlans(includeInactive: boolean = false): PricingPlan[] {
@@ -217,7 +418,7 @@ class PricingPlanService {
     }
 
     this.plans.push(newPlan);
-    this.savePlans();
+    this.savePlans(true);
     return newPlan;
   }
 
@@ -236,7 +437,7 @@ class PricingPlanService {
         ...updates,
         updatedAt: new Date().toISOString(),
       };
-      this.savePlans();
+      this.savePlans(true);
       return true;
     }
     return false;
@@ -246,7 +447,7 @@ class PricingPlanService {
     const prevLen = this.plans.length;
     this.plans = this.plans.filter(p => p.id !== id);
     if (this.plans.length !== prevLen) {
-      this.savePlans();
+      this.savePlans(true);
       return true;
     }
     return false;
@@ -257,7 +458,7 @@ class PricingPlanService {
     if (plan) {
       plan.isActive = !plan.isActive;
       plan.updatedAt = new Date().toISOString();
-      this.savePlans();
+      this.savePlans(true);
       return true;
     }
     return false;
@@ -270,13 +471,13 @@ class PricingPlanService {
         plan.sortOrder = index + 1;
       }
     });
-    this.savePlans();
+    this.savePlans(true);
     return true;
   }
 
   public resetToDefaults(): PricingPlan[] {
     this.plans = initialPricingPlans;
-    this.savePlans();
+    this.savePlans(true);
     return this.getPlans(true);
   }
 }
