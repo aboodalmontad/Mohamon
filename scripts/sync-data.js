@@ -21,6 +21,7 @@ async function sync() {
 
   const firmsPath = path.join(publicDir, 'firms_data.json');
   const siteDataPath = path.join(publicDir, 'site_data.json');
+  const plansPath = path.join(publicDir, 'pricing_plans.json');
 
   try {
     const client = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -117,6 +118,9 @@ async function sync() {
       if (fs.existsSync(distDir)) {
         fs.copyFileSync(firmsPath, path.join(distDir, 'firms_data.json'));
         fs.copyFileSync(siteDataPath, path.join(distDir, 'site_data.json'));
+        if (fs.existsSync(plansPath)) {
+          fs.copyFileSync(plansPath, path.join(distDir, 'pricing_plans.json'));
+        }
         console.log('[sync-data] Copied data bundles to dist/');
       }
       return;

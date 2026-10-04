@@ -116,22 +116,34 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
   useEffect(() => {
     const handlePlansUpdated = () => {
       const activePlans = pricingPlanService.getPlans();
-      setPlans(activePlans);
-      if (activePlans.length > 0 && !activePlans.some(p => p.tier === formData.planTier)) {
-        const defaultPlan = activePlans.find(p => p.isPopular) || activePlans[0];
-        setFormData(prev => ({ ...prev, planTier: defaultPlan.tier }));
+      if (activePlans && activePlans.length > 0) {
+        setPlans(activePlans);
+        if (!activePlans.some(p => p.tier === formData.planTier)) {
+          const defaultPlan = activePlans.find(p => p.isPopular) || activePlans[0];
+          setFormData(prev => ({ ...prev, planTier: defaultPlan.tier }));
+        }
       }
     };
 
+    window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     handlePlansUpdated();
+
     if (isOpen) {
       if (initialPlanTier) {
         setFormData(prev => ({ ...prev, planTier: initialPlanTier as any }));
       }
-      pricingPlanService.init().catch(() => {});
+      pricingPlanService.init().then((freshPlans) => {
+        if (freshPlans && freshPlans.length > 0) {
+          const active = freshPlans.filter(p => p.isActive);
+          setPlans(active);
+          if (!active.some(p => p.tier === formData.planTier)) {
+            const defaultPlan = active.find(p => p.isPopular) || active[0];
+            setFormData(prev => ({ ...prev, planTier: defaultPlan.tier }));
+          }
+        }
+      }).catch(() => {});
     }
 
-    window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     return () => {
       window.removeEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     };

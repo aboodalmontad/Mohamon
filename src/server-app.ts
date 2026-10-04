@@ -377,24 +377,28 @@ app.post('/api/firms/delete', (req, res) => {
 let serverPlansMemoryCache: any[] | null = null;
 
 function getServerPricingPlans(): any[] {
-  if (serverPlansMemoryCache !== null) {
-    return serverPlansMemoryCache;
-  }
   try {
     if (fs.existsSync(PLANS_DATA_PATH)) {
-      serverPlansMemoryCache = JSON.parse(fs.readFileSync(PLANS_DATA_PATH, 'utf-8'));
-      return serverPlansMemoryCache || initialPricingPlans;
+      const fileData = JSON.parse(fs.readFileSync(PLANS_DATA_PATH, 'utf-8'));
+      if (Array.isArray(fileData) && fileData.length > 0) {
+        serverPlansMemoryCache = fileData;
+        return fileData;
+      }
     }
   } catch (e) {
     console.warn('Error reading PLANS_DATA_PATH into cache:', e);
   }
-  return initialPricingPlans;
+  return serverPlansMemoryCache || initialPricingPlans;
 }
 
 function setServerPricingPlans(plans: any[]) {
   serverPlansMemoryCache = plans;
   try {
     fs.writeFileSync(PLANS_DATA_PATH, JSON.stringify(plans, null, 2), 'utf-8');
+    const distPlansPath = path.join(process.cwd(), 'dist', 'pricing_plans.json');
+    if (fs.existsSync(path.join(process.cwd(), 'dist'))) {
+      fs.writeFileSync(distPlansPath, JSON.stringify(plans, null, 2), 'utf-8');
+    }
   } catch (e) {
     console.warn('Could not write PLANS_DATA_PATH:', e);
   }
@@ -402,6 +406,9 @@ function setServerPricingPlans(plans: any[]) {
 
 app.get('/api/pricing-plans', (_req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     return res.json({ success: true, data: getServerPricingPlans() });
   } catch (err: any) {
     return res.status(500).json({ success: false, data: initialPricingPlans, error: err.message });

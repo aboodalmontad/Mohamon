@@ -78,14 +78,36 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
 
   useEffect(() => {
     const handlePlansUpdated = () => {
-      setPlans(pricingPlanService.getPlans());
+      const activePlans = pricingPlanService.getPlans();
+      if (activePlans && activePlans.length > 0) {
+        setPlans(activePlans);
+      }
     };
-    pricingPlanService.init().catch(() => {});
+
     window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
+
+    // Initial async cloud fetch
+    pricingPlanService.init().then((freshPlans) => {
+      if (freshPlans && freshPlans.length > 0) {
+        setPlans(freshPlans.filter(p => p.isActive));
+      }
+    }).catch(() => {});
+
     return () => {
       window.removeEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     };
   }, []);
+
+  // Whenever user navigates to pricing view, ensure freshest live data
+  useEffect(() => {
+    if (currentPlatformView === 'pricing') {
+      pricingPlanService.init().then((freshPlans) => {
+        if (freshPlans && freshPlans.length > 0) {
+          setPlans(freshPlans.filter(p => p.isActive));
+        }
+      }).catch(() => {});
+    }
+  }, [currentPlatformView]);
   const isRtl = lang === 'ar';
   const ArrowIcon = isRtl ? ArrowLeft : ArrowRight;
 

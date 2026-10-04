@@ -288,22 +288,75 @@ class PricingPlanService {
   }
 
   /**
-   * Initializes pricing plans from the cloud (Server API and Supabase).
+   * Initializes pricing plans from the cloud (Server API, static fallback bundle, and Supabase).
    * Ensures every visitor and newly registered user receives the exact updated pricing plans.
    */
   public async init(): Promise<PricingPlan[]> {
     if (typeof window === 'undefined') return this.plans;
 
+    const normalizePlans = (rawList: any[]): PricingPlan[] => {
+      return rawList.map((p: any) => {
+        const curr = (p.currency || (p.priceSAR && !p.priceUSD ? 'SAR' : 'USD')).trim().toUpperCase();
+        let pr = 0;
+        if (p.price !== undefined && p.price !== null && !isNaN(Number(p.price))) {
+          pr = Number(p.price);
+        } else if (curr === 'SAR' && p.priceSAR !== undefined && p.priceSAR !== null) {
+          pr = Number(p.priceSAR);
+        } else if (curr === 'USD' && p.priceUSD !== undefined && p.priceUSD !== null) {
+          pr = Number(p.priceUSD);
+        } else {
+          pr = Number(p.priceUSD || p.priceSAR || 0);
+        }
+
+        return {
+          id: p.id || `plan-${p.tier || Date.now()}`,
+          tier: p.tier || 'starter',
+          nameAr: p.nameAr || p.name_ar || '',
+          nameEn: p.nameEn || p.name_en || '',
+          nameTr: p.nameTr || p.name_tr || '',
+          badgeAr: p.badgeAr || p.badge_ar || '',
+          badgeEn: p.badgeEn || p.badge_en || '',
+          badgeTr: p.badgeTr || p.badge_tr || '',
+          descriptionAr: p.descriptionAr || p.description_ar || '',
+          descriptionEn: p.descriptionEn || p.description_en || '',
+          descriptionTr: p.descriptionTr || p.description_tr || '',
+          price: pr,
+          currency: curr,
+          priceUSD: p.priceUSD !== undefined ? Number(p.priceUSD) : (p.price_usd !== undefined ? Number(p.price_usd) : (curr === 'USD' ? pr : Math.round(pr / 3.75))),
+          priceSAR: p.priceSAR !== undefined ? Number(p.priceSAR) : (p.price_sar !== undefined ? Number(p.price_sar) : (curr === 'SAR' ? pr : Math.round(pr * 3.75))),
+          priceAED: p.priceAED !== undefined ? Number(p.priceAED) : (p.price_aed !== undefined ? Number(p.price_aed) : undefined),
+          priceTRY: p.priceTRY !== undefined ? Number(p.priceTRY) : (p.price_try !== undefined ? Number(p.price_try) : undefined),
+          priceSYP: p.priceSYP !== undefined ? Number(p.priceSYP) : (p.price_syp !== undefined ? Number(p.price_syp) : undefined),
+          billingCycle: p.billingCycle || p.billing_cycle || 'annual',
+          isPopular: Boolean(p.isPopular !== undefined ? p.isPopular : p.is_popular),
+          isActive: p.isActive !== undefined ? Boolean(p.isActive) : (p.is_active !== undefined ? Boolean(p.is_active) : true),
+          maxLawyers: Number(p.maxLawyers || p.max_lawyers || 1),
+          maxOffices: Number(p.maxOffices || p.max_offices || 1),
+          customDomainAllowed: Boolean(p.customDomainAllowed !== undefined ? p.customDomainAllowed : p.custom_domain_allowed),
+          storageGB: Number(p.storageGB || p.storage_gb || 5),
+          aiAssistantEnabled: Boolean(p.aiAssistantEnabled !== undefined ? p.aiAssistantEnabled : p.ai_assistant_enabled),
+          supportLevelAr: p.supportLevelAr || p.support_level_ar || '',
+          sortOrder: Number(p.sortOrder || p.sort_order || 1),
+          featuresAr: Array.isArray(p.featuresAr) ? p.featuresAr : (Array.isArray(p.features_ar) ? p.features_ar : (typeof p.features_ar === 'string' ? JSON.parse(p.features_ar) : [])),
+          featuresEn: Array.isArray(p.featuresEn) ? p.featuresEn : (Array.isArray(p.features_en) ? p.features_en : (typeof p.features_en === 'string' ? JSON.parse(p.features_en) : [])),
+          featuresTr: Array.isArray(p.featuresTr) ? p.featuresTr : (Array.isArray(p.features_tr) ? p.features_tr : (typeof p.features_tr === 'string' ? JSON.parse(p.features_tr) : [])),
+          createdAt: p.createdAt || p.created_at || new Date().toISOString(),
+          updatedAt: p.updatedAt || p.updated_at || new Date().toISOString(),
+        };
+      });
+    };
+
     try {
-      // 1. Fetch from server-side cloud storage endpoint
-      const response = await fetch('/api/pricing-plans', {
-        headers: { 'Accept': 'application/json' },
+      // 1. Fetch from server-side cloud storage endpoint with cache busting
+      const response = await fetch(`/api/pricing-plans?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
       }).catch(() => null);
 
       if (response && response.ok) {
         const json = await response.json();
         if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          this.plans = json.data;
+          this.plans = normalizePlans(json.data);
           this.savePlans(false);
           this.isInitialized = true;
           window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
@@ -311,7 +364,26 @@ class PricingPlanService {
         }
       }
 
-      // 2. Query Supabase cloud directly if configured
+      // 2. Fetch directly from static bundle fallback
+      try {
+        const staticRes = await fetch(`/pricing_plans.json?t=${Date.now()}`, {
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' },
+        }).catch(() => null);
+
+        if (staticRes && staticRes.ok) {
+          const staticJson = await staticRes.json();
+          if (Array.isArray(staticJson) && staticJson.length > 0) {
+            this.plans = normalizePlans(staticJson);
+            this.savePlans(false);
+            this.isInitialized = true;
+            window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+            return this.getPlans(true);
+          }
+        }
+      } catch {}
+
+      // 3. Query Supabase cloud directly if configured
       try {
         const config = getStoredSupabaseConfig();
         if (config.url && config.anonKey) {
@@ -324,46 +396,26 @@ class PricingPlanService {
             .order('sort_order', { ascending: true });
 
           if (!error && Array.isArray(cloudPlans) && cloudPlans.length > 0) {
-            const mapped: PricingPlan[] = cloudPlans.map(row => ({
-              id: row.id || `plan-${row.tier}`,
-              tier: row.tier,
-              nameAr: row.name_ar,
-              nameEn: row.name_en || '',
-              nameTr: row.name_tr || '',
-              badgeAr: row.badge_ar || '',
-              badgeEn: row.badge_en || '',
-              badgeTr: row.badge_tr || '',
-              descriptionAr: row.description_ar || '',
-              descriptionEn: row.description_en || '',
-              descriptionTr: row.description_tr || '',
-              priceUSD: Number(row.price_usd || row.priceUSD || 250),
-              priceSAR: row.price_sar ? Number(row.price_sar) : undefined,
-              priceAED: row.price_aed ? Number(row.price_aed) : undefined,
-              priceTRY: row.price_try ? Number(row.price_try) : undefined,
-              billingCycle: row.billing_cycle || 'annual',
-              isPopular: Boolean(row.is_popular),
-              isActive: row.is_active !== false,
-              maxLawyers: Number(row.max_lawyers || 1),
-              maxOffices: Number(row.max_offices || 1),
-              customDomainAllowed: Boolean(row.custom_domain_allowed),
-              storageGB: Number(row.storage_gb || 5),
-              aiAssistantEnabled: Boolean(row.ai_assistant_enabled),
-              supportLevelAr: row.support_level_ar || '',
-              sortOrder: Number(row.sort_order || 1),
-              featuresAr: Array.isArray(row.features_ar) ? row.features_ar : (typeof row.features_ar === 'string' ? JSON.parse(row.features_ar) : []),
-              featuresEn: Array.isArray(row.features_en) ? row.features_en : (typeof row.features_en === 'string' ? JSON.parse(row.features_en) : []),
-              featuresTr: Array.isArray(row.features_tr) ? row.features_tr : (typeof row.features_tr === 'string' ? JSON.parse(row.features_tr) : []),
-              createdAt: row.created_at || new Date().toISOString(),
-              updatedAt: row.updated_at || new Date().toISOString(),
-            }));
+            this.plans = normalizePlans(cloudPlans);
+            this.savePlans(false);
+            this.isInitialized = true;
+            window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+            return this.getPlans(true);
+          }
 
-            if (mapped.length > 0) {
-              this.plans = mapped;
-              this.savePlans(false);
-              this.isInitialized = true;
-              window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
-              return this.getPlans(true);
-            }
+          // Fallback: Check platform_settings key
+          const { data: settingsRow } = await client
+            .from('platform_settings')
+            .select('value')
+            .eq('key', 'pricing_plans')
+            .maybeSingle();
+
+          if (settingsRow && Array.isArray(settingsRow.value) && settingsRow.value.length > 0) {
+            this.plans = normalizePlans(settingsRow.value);
+            this.savePlans(false);
+            this.isInitialized = true;
+            window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+            return this.getPlans(true);
           }
         }
       } catch (supaErr) {
@@ -434,10 +486,13 @@ class PricingPlanService {
           description_ar: p.descriptionAr || '',
           description_en: p.descriptionEn || '',
           description_tr: p.descriptionTr || '',
+          price: p.price !== undefined ? p.price : (p.currency === 'SAR' ? p.priceSAR : p.priceUSD),
+          currency: p.currency || (p.priceSAR && !p.priceUSD ? 'SAR' : 'USD'),
           price_usd: p.priceUSD,
           price_sar: p.priceSAR || null,
           price_aed: p.priceAED || null,
           price_try: p.priceTRY || null,
+          price_syp: p.priceSYP || null,
           billing_cycle: p.billingCycle,
           is_popular: p.isPopular,
           is_active: p.isActive,
