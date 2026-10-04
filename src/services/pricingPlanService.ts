@@ -351,27 +351,12 @@ class PricingPlanService {
       });
     };
 
-    // 1. Setup Firestore Realtime Sync
+    // 1. Setup Firestore Realtime Sync & Fetch
     try {
       if (db) {
         const firestoreDocRef = doc(db, 'platform_settings', 'pricing_plans');
         
-        // One-time getDoc
-        getDoc(firestoreDocRef).then((snapshot) => {
-          if (snapshot.exists()) {
-            const data = snapshot.data();
-            if (data && Array.isArray(data.plans) && data.plans.length > 0) {
-              this.plans = normalizePlans(data.plans);
-              this.savePlans(false);
-              this.isInitialized = true;
-              window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
-            }
-          }
-        }).catch((err) => {
-          console.warn('Firestore pricing plans load notice:', err);
-        });
-
-        // Realtime Listener
+        // Realtime Listener to continuously broadcast changes across all visitor tabs
         onSnapshot(firestoreDocRef, (snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.data();
@@ -385,6 +370,23 @@ class PricingPlanService {
         }, (err) => {
           console.warn('Firestore pricing plans realtime listener notice:', err);
         });
+
+        // Await direct fetch from Firestore
+        try {
+          const snapshot = await getDoc(firestoreDocRef);
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && Array.isArray(data.plans) && data.plans.length > 0) {
+              this.plans = normalizePlans(data.plans);
+              this.savePlans(false);
+              this.isInitialized = true;
+              window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+              return this.getPlans(true);
+            }
+          }
+        } catch (err) {
+          console.warn('Firestore pricing plans load notice:', err);
+        }
       }
     } catch (fsErr) {
       console.warn('Firestore init notice:', fsErr);

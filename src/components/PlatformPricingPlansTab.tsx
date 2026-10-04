@@ -111,6 +111,7 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
 
   useEffect(() => {
     refreshPlans();
+    pricingPlanService.init().then(() => refreshPlans()).catch(() => {});
     const handlePlansUpdated = () => refreshPlans();
     window.addEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     return () => {
