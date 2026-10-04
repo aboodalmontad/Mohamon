@@ -482,7 +482,7 @@ class PricingPlanService {
     return {
       success,
       count: plansToSync.length,
-      message: `تم حفظ (${plansToSync.length}) خطط تسعير في السحابة بنجاح! تظهر الآن فوراً لكافة المستخدمين والزوار الجدد.`,
+      message: `تم حفظ ونشر (${plansToSync.length}) باقات تسعير بنجاح! تظهر الآن فوراً لكافة زوار المنصة والمشتركين الجدد.`,
     };
   }
 

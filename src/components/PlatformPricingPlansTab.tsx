@@ -28,6 +28,17 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<PricingPlan | null>(null);
   const [deletePlanId, setDeletePlanId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [modalSuccessMsg, setModalSuccessMsg] = useState('');
+
+  // Prominent Save Feedback Notification Banner
+  const [saveSuccessNotification, setSaveSuccessNotification] = useState<{
+    type: 'edit' | 'add';
+    planName: string;
+    priceFormatted: string;
+    timestamp: number;
+  } | null>(null);
+  const [highlightedPlanId, setHighlightedPlanId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -137,6 +148,8 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
 
   const handleOpenAdd = () => {
     setEditingPlan(null);
+    setModalSuccessMsg('');
+    setIsSaving(false);
     setFormData({
       tier: `plan_${Date.now().toString().slice(-4)}`,
       nameAr: '',
@@ -179,6 +192,8 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
 
   const handleOpenEdit = (plan: PricingPlan) => {
     setEditingPlan(plan);
+    setModalSuccessMsg('');
+    setIsSaving(false);
     setFormData({
       tier: plan.tier,
       nameAr: plan.nameAr,
@@ -213,10 +228,19 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
     setIsSyncingCloud(true);
     try {
       const res = await pricingPlanService.syncToCloud();
-      setLastCloudSyncTime(new Date().toLocaleTimeString('ar-SA'));
-      showToast(res.message);
+      const timeStr = new Date().toLocaleTimeString(isAr ? 'ar-SA' : 'en-US');
+      setLastCloudSyncTime(timeStr);
+
+      setSaveSuccessNotification({
+        type: 'edit',
+        planName: isAr ? 'كافة باقات المنصة' : 'All Platform Plans',
+        priceFormatted: isAr ? `${plans.length} باقة منشورة ومحدثة` : `${plans.length} published plans`,
+        timestamp: Date.now(),
+      });
+
+      showToast(isAr ? '⚡️ تم حفظ الباقات ونشرها بنجاح! يشاهدها الآن جميع زوار المنصة فوراً.' : 'Plans saved & published successfully to all platform visitors!');
     } catch {
-      showToast(isAr ? 'فشلت المزامنة السحابية، يرجى التحقق من الاتصال' : 'Cloud sync failed, check connection');
+      showToast(isAr ? 'فشل الحفظ والنشر، يرجى التحقق من الاتصال بالشبكة' : 'Save & publish failed, check connection');
     } finally {
       setIsSyncingCloud(false);
     }
@@ -229,72 +253,127 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
       return;
     }
 
-    const chosenCurrency = formData.currency || 'SAR';
-    const chosenPrice = Number(formData.price) || 0;
-    const priceUSD = chosenCurrency === 'USD' ? chosenPrice : (chosenCurrency === 'SAR' ? Math.round(chosenPrice / 3.75) : Number(formData.priceUSD) || chosenPrice);
-    const priceSAR = chosenCurrency === 'SAR' ? chosenPrice : (chosenCurrency === 'USD' ? Math.round(chosenPrice * 3.75) : Number(formData.priceSAR) || chosenPrice);
+    setIsSaving(true);
+    setModalSuccessMsg('');
 
-    if (editingPlan) {
-      pricingPlanService.updatePlan(editingPlan.id, {
-        tier: formData.tier.trim().toLowerCase(),
-        nameAr: formData.nameAr.trim(),
-        nameEn: formData.nameEn.trim() || formData.nameAr.trim(),
-        badgeAr: formData.badgeAr.trim() || undefined,
-        badgeEn: formData.badgeEn.trim() || undefined,
-        descriptionAr: formData.descriptionAr.trim(),
-        descriptionEn: formData.descriptionEn.trim(),
-        price: chosenPrice,
-        currency: chosenCurrency,
-        priceSAR,
-        priceUSD,
-        priceSYP: Number(formData.priceSYP) || 0,
-        billingCycle: formData.billingCycle,
-        isPopular: formData.isPopular,
-        isActive: formData.isActive,
-        maxLawyers: Number(formData.maxLawyers) || 1,
-        maxOffices: Number(formData.maxOffices) || 1,
-        customDomainAllowed: formData.customDomainAllowed,
-        storageGB: Number(formData.storageGB) || 10,
-        aiAssistantEnabled: formData.aiAssistantEnabled,
-        supportLevelAr: formData.supportLevelAr.trim(),
-        featuresAr: formData.featuresAr,
-        featuresEn: formData.featuresEn,
-      });
-      await pricingPlanService.syncToCloud();
-      showToast(isAr ? '⚡️ تم تحديث الباقة وحفظها في قاعدة البيانات السحابية بنجاح لكافة المستخدمين الجدد!' : 'Pricing plan updated & saved to cloud successfully for all users!');
-    } else {
-      pricingPlanService.addPlan({
-        tier: formData.tier.trim().toLowerCase() || `custom_${Date.now().toString().slice(-4)}`,
-        nameAr: formData.nameAr.trim(),
-        nameEn: formData.nameEn.trim() || formData.nameAr.trim(),
-        badgeAr: formData.badgeAr.trim() || undefined,
-        badgeEn: formData.badgeEn.trim() || undefined,
-        descriptionAr: formData.descriptionAr.trim(),
-        descriptionEn: formData.descriptionEn.trim(),
-        price: chosenPrice,
-        currency: chosenCurrency,
-        priceSAR,
-        priceUSD,
-        priceSYP: Number(formData.priceSYP) || 0,
-        billingCycle: formData.billingCycle,
-        isPopular: formData.isPopular,
-        isActive: formData.isActive,
-        maxLawyers: Number(formData.maxLawyers) || 1,
-        maxOffices: Number(formData.maxOffices) || 1,
-        customDomainAllowed: formData.customDomainAllowed,
-        storageGB: Number(formData.storageGB) || 10,
-        aiAssistantEnabled: formData.aiAssistantEnabled,
-        supportLevelAr: formData.supportLevelAr.trim(),
-        featuresAr: formData.featuresAr,
-        featuresEn: formData.featuresEn,
-        sortOrder: plans.length + 1,
-      });
-      await pricingPlanService.syncToCloud();
-      showToast(isAr ? '⚡️ تمت إضافة الباقة وحفظها في قاعدة البيانات السحابية بنجاح لكافة المستخدمين الجدد!' : 'New pricing plan created & saved to cloud successfully for all users!');
+    try {
+      const chosenCurrency = formData.currency || 'SAR';
+      const chosenPrice = Number(formData.price) || 0;
+      const priceUSD = chosenCurrency === 'USD' ? chosenPrice : (chosenCurrency === 'SAR' ? Math.round(chosenPrice / 3.75) : Number(formData.priceUSD) || chosenPrice);
+      const priceSAR = chosenCurrency === 'SAR' ? chosenPrice : (chosenCurrency === 'USD' ? Math.round(chosenPrice * 3.75) : Number(formData.priceSAR) || chosenPrice);
+      const planDisplayName = isAr ? formData.nameAr.trim() : (formData.nameEn.trim() || formData.nameAr.trim());
+
+      const dummyPlanForFormat = { price: chosenPrice, currency: chosenCurrency, priceSAR, priceUSD } as any;
+      const priceFormatted = formatPlanPrice(dummyPlanForFormat, isAr ? 'ar' : 'en');
+
+      let savedId = '';
+
+      if (editingPlan) {
+        savedId = editingPlan.id;
+        pricingPlanService.updatePlan(editingPlan.id, {
+          tier: formData.tier.trim().toLowerCase(),
+          nameAr: formData.nameAr.trim(),
+          nameEn: formData.nameEn.trim() || formData.nameAr.trim(),
+          badgeAr: formData.badgeAr.trim() || undefined,
+          badgeEn: formData.badgeEn.trim() || undefined,
+          descriptionAr: formData.descriptionAr.trim(),
+          descriptionEn: formData.descriptionEn.trim(),
+          price: chosenPrice,
+          currency: chosenCurrency,
+          priceSAR,
+          priceUSD,
+          priceSYP: Number(formData.priceSYP) || 0,
+          billingCycle: formData.billingCycle,
+          isPopular: formData.isPopular,
+          isActive: formData.isActive,
+          maxLawyers: Number(formData.maxLawyers) || 1,
+          maxOffices: Number(formData.maxOffices) || 1,
+          customDomainAllowed: formData.customDomainAllowed,
+          storageGB: Number(formData.storageGB) || 10,
+          aiAssistantEnabled: formData.aiAssistantEnabled,
+          supportLevelAr: formData.supportLevelAr.trim(),
+          featuresAr: formData.featuresAr,
+          featuresEn: formData.featuresEn,
+        });
+        await pricingPlanService.syncToCloud();
+
+        // 1. Show immediate success in modal
+        setModalSuccessMsg(isAr ? '✓ تم حفظ التعديل بنجاح!' : '✓ Modification saved successfully!');
+
+        // 2. Set prominent banner at top of tab
+        setSaveSuccessNotification({
+          type: 'edit',
+          planName: planDisplayName,
+          priceFormatted,
+          timestamp: Date.now(),
+        });
+        setHighlightedPlanId(savedId);
+
+        showToast(isAr ? `✓ تم حفظ تعديل باقة (${planDisplayName}) بنجاح ومزامنتها سحابياً!` : `Plan (${planDisplayName}) modification saved successfully!`);
+      } else {
+        const newPlan = pricingPlanService.addPlan({
+          tier: formData.tier.trim().toLowerCase() || `custom_${Date.now().toString().slice(-4)}`,
+          nameAr: formData.nameAr.trim(),
+          nameEn: formData.nameEn.trim() || formData.nameAr.trim(),
+          badgeAr: formData.badgeAr.trim() || undefined,
+          badgeEn: formData.badgeEn.trim() || undefined,
+          descriptionAr: formData.descriptionAr.trim(),
+          descriptionEn: formData.descriptionEn.trim(),
+          price: chosenPrice,
+          currency: chosenCurrency,
+          priceSAR,
+          priceUSD,
+          priceSYP: Number(formData.priceSYP) || 0,
+          billingCycle: formData.billingCycle,
+          isPopular: formData.isPopular,
+          isActive: formData.isActive,
+          maxLawyers: Number(formData.maxLawyers) || 1,
+          maxOffices: Number(formData.maxOffices) || 1,
+          customDomainAllowed: formData.customDomainAllowed,
+          storageGB: Number(formData.storageGB) || 10,
+          aiAssistantEnabled: formData.aiAssistantEnabled,
+          supportLevelAr: formData.supportLevelAr.trim(),
+          featuresAr: formData.featuresAr,
+          featuresEn: formData.featuresEn,
+          sortOrder: plans.length + 1,
+        });
+        savedId = newPlan.id;
+        await pricingPlanService.syncToCloud();
+
+        // 1. Show immediate success in modal
+        setModalSuccessMsg(isAr ? '✓ تمت إضافة الباقة الجديدة وحفظها بنجاح!' : '✓ New plan created & saved successfully!');
+
+        // 2. Set prominent banner at top of tab
+        setSaveSuccessNotification({
+          type: 'add',
+          planName: planDisplayName,
+          priceFormatted,
+          timestamp: Date.now(),
+        });
+        setHighlightedPlanId(savedId);
+
+        showToast(isAr ? `✓ تمت إضافة باقة (${planDisplayName}) بنجاح ومزامنتها سحابياً!` : `New plan (${planDisplayName}) created & saved successfully!`);
+      }
+
+      refreshPlans();
+
+      // Smoothly close modal after user perceives success
+      setTimeout(() => {
+        setIsAddModalOpen(false);
+        setIsSaving(false);
+        setModalSuccessMsg('');
+      }, 700);
+
+      // Clear row highlight after 8 seconds
+      setTimeout(() => {
+        setHighlightedPlanId(null);
+      }, 8000);
+
+    } catch (err) {
+      console.error(err);
+      setIsSaving(false);
+      showToast(isAr ? 'حدث خطأ أثناء الحفظ، يرجى المحاولة ثانية' : 'Error saving plan, please try again');
     }
-
-    setIsAddModalOpen(false);
-    refreshPlans();
   };
 
   const handleDeletePlan = async (id: string) => {
@@ -382,18 +461,20 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
-            {/* Cloud Sync Button */}
+            {/* Save & Publish Button (Formerly Cloud Sync) */}
             <button
               type="button"
               disabled={isSyncingCloud}
               onClick={handleManualCloudSync}
-              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-md"
-              title={isAr ? 'مزامنة سحابية مركزية لكافة المستخدمين الجدد' : 'Sync plans to cloud'}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:brightness-110 text-slate-950 text-xs font-black flex items-center gap-2 transition cursor-pointer disabled:opacity-50 shadow-lg shadow-emerald-500/25 border border-emerald-400 active:scale-95"
+              title={isAr ? 'حفظ ونشر الباقات سحابياً ليشاهدها جميع زوار المنصة والمشتركين الجدد فوراً' : 'Save and publish pricing plans for all visitors'}
             >
-              <Cloud className={`w-4 h-4 text-amber-400 ${isSyncingCloud ? 'animate-bounce' : ''}`} />
-              <span>{isSyncingCloud ? (isAr ? 'جاري المزامنة...' : 'Syncing...') : (isAr ? 'مزامنة سحابية الآن' : 'Sync to Cloud')}</span>
+              <Cloud className={`w-4 h-4 text-slate-950 ${isSyncingCloud ? 'animate-bounce' : ''}`} />
+              <span>{isSyncingCloud ? (isAr ? 'جاري الحفظ والنشر...' : 'Publishing...') : (isAr ? 'حفظ ونشر' : 'Save & Publish')}</span>
               {lastCloudSyncTime && (
-                <span className="text-[10px] text-slate-400 font-mono hidden md:inline">({lastCloudSyncTime})</span>
+                <span className="text-[10px] bg-slate-950/20 px-1.5 py-0.5 rounded text-slate-950 font-mono hidden md:inline font-bold">
+                  {lastCloudSyncTime}
+                </span>
               )}
             </button>
 
@@ -468,20 +549,79 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         </div>
       </div>
 
+      {/* PROMINENT SAVE / UPDATE SUCCESS BANNER */}
+      {saveSuccessNotification && (
+        <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-slate-900 to-emerald-950/90 border-2 border-emerald-500 shadow-2xl shadow-emerald-500/25 relative overflow-hidden animate-fade-in">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-lg shadow-emerald-500/30">
+                <Check className="w-7 h-7 stroke-[3]" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black text-white">
+                    {saveSuccessNotification.type === 'edit'
+                      ? (isAr ? '✓ تم حفظ تعديل الباقة بنجاح!' : '✓ Plan Modification Saved Successfully!')
+                      : (isAr ? '✓ تمت إضافة الباقة الجديدة بنجاح!' : '✓ New Plan Added Successfully!')}
+                  </h3>
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/25 text-emerald-300 font-bold border border-emerald-500/40">
+                    {isAr ? 'مزامنة سحابية نشطة' : 'Synced to Cloud'}
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-emerald-200/90 leading-relaxed">
+                  {isAr ? (
+                    <>
+                      تم حفظ باقة <strong className="text-white font-bold underline decoration-amber-400 underline-offset-4">{saveSuccessNotification.planName}</strong> بسعر <strong className="text-amber-300 font-mono font-bold">{saveSuccessNotification.priceFormatted}</strong>، وتم تحديث قاعدة البيانات السحابية لتعكس التعديلات فورياً في صفحة خطط وباقات الأسعار وفي نموذج تسجيل المكاتب الجديدة لكافة المستخدمين.
+                    </>
+                  ) : (
+                    <>
+                      Plan <strong className="text-white">{saveSuccessNotification.planName}</strong> was saved with price <strong className="text-amber-300">{saveSuccessNotification.priceFormatted}</strong> and synced to the cloud.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => setSaveSuccessNotification(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer border border-slate-700 shadow-md"
+              >
+                <span>{isAr ? 'إغلاق الإشعار' : 'Dismiss'}</span>
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PLANS CARDS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {plans.map((plan) => {
           const subscriberCount = stats.firmCountByTier[plan.tier] || 0;
+          const isHighlighted = highlightedPlanId === plan.id;
 
           return (
             <div
               key={plan.id}
-              className={`rounded-3xl border transition-all duration-300 flex flex-col justify-between overflow-hidden relative shadow-xl ${
-                plan.isPopular
+              className={`rounded-3xl border transition-all duration-500 flex flex-col justify-between overflow-hidden relative shadow-xl ${
+                isHighlighted
+                  ? 'border-emerald-400 ring-2 ring-emerald-400/80 shadow-2xl shadow-emerald-500/30 scale-[1.02] bg-emerald-950/20'
+                  : plan.isPopular
                   ? 'bg-gradient-to-b from-slate-900 via-slate-900 to-amber-950/20 border-amber-400/60 ring-1 ring-amber-400/40'
                   : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
               } ${!plan.isActive ? 'opacity-60 grayscale-[30%]' : ''}`}
             >
+              {/* Highlight Badge */}
+              {isHighlighted && (
+                <div className="absolute top-2 left-2 z-20 px-3 py-1 rounded-full bg-emerald-500 text-slate-950 font-black text-[11px] shadow-lg flex items-center gap-1 animate-bounce">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>{isAr ? 'تم حفظ التعديل حديثاً' : 'Recently Saved'}</span>
+                </div>
+              )}
               {/* Popular Badge */}
               {plan.isPopular && (
                 <div className="absolute top-0 right-8 rtl:right-8 rtl:left-auto bg-gradient-to-r from-amber-400 via-[#c5a869] to-amber-600 text-slate-950 font-black text-[10px] px-3.5 py-1 rounded-b-xl shadow-lg flex items-center gap-1">
@@ -643,6 +783,21 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* In-Modal Success Feedback Banner */}
+            {modalSuccessMsg && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/25 to-teal-500/20 border-2 border-emerald-400 text-emerald-200 font-bold text-sm flex items-center gap-3 animate-fade-in shadow-xl shadow-emerald-500/10">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black shrink-0 shadow-md">
+                  <Check className="w-5 h-5 stroke-[3]" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-white font-black text-sm">{modalSuccessMsg}</div>
+                  <div className="text-emerald-300/80 text-xs mt-0.5">
+                    {isAr ? 'تم تحديث البيانات والمزامنة السحابية بنجاح' : 'Data updated and synced to cloud successfully'}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Form */}
             <form onSubmit={handleSavePlan} className="space-y-4 text-xs">
@@ -928,18 +1083,29 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold transition cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-slate-300 font-bold transition cursor-pointer"
                 >
                   {isAr ? 'إلغاء' : 'Cancel'}
                 </button>
 
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 hover:brightness-110 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer active:scale-95"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-600 hover:brightness-110 disabled:opacity-60 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer active:scale-95"
                 >
-                  <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
-                  <span>{editingPlan ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إنشاء وتدشين الباقة' : 'Create Plan')}</span>
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 text-slate-950 animate-spin" />
+                      <span>{isAr ? 'جارٍ حفظ التعديل...' : 'Saving...'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                      <span>{editingPlan ? (isAr ? 'حفظ التعديلات' : 'Save Changes') : (isAr ? 'إنشاء وتدشين الباقة' : 'Create Plan')}</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
