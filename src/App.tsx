@@ -111,8 +111,8 @@ export default function App() {
         const urlParams = new URLSearchParams(window.location.search);
         const viewParam = urlParams.get('view');
         
-        // 1. Explicit request for Platform Landing View (?view=platform or #platform)
-        if (viewParam === 'platform' || window.location.hash === '#platform') {
+        // 1. Explicit request for Platform Landing View (?view=platform or #platform or #pricing)
+        if (viewParam === 'platform' || viewParam === 'pricing' || window.location.hash === '#platform' || window.location.hash === '#pricing') {
           setIsPlatformView(true);
           refreshData();
           setIsInitializing(false);
@@ -137,7 +137,7 @@ export default function App() {
         const requestedFirmSlug = domainFirm ? domainFirm.slug : (urlParams.get('firm') || urlParams.get('slug'));
 
         // 3. If NO explicit firm is requested, default to Platform Landing View!
-        if (!requestedFirmSlug || viewParam === 'platform' || window.location.hash === '#platform') {
+        if (!requestedFirmSlug || viewParam === 'platform' || viewParam === 'pricing' || window.location.hash === '#platform' || window.location.hash === '#pricing') {
           setIsPlatformView(true);
           setIsInitializing(false);
           firmService.init().catch(() => {});
@@ -197,7 +197,7 @@ export default function App() {
       const urlSlug = urlParams.get('firm') || urlParams.get('slug');
       const viewParam = urlParams.get('view');
 
-      if (!urlSlug || viewParam === 'platform' || window.location.hash === '#platform') {
+      if (!urlSlug || viewParam === 'platform' || viewParam === 'pricing' || window.location.hash === '#platform' || window.location.hash === '#pricing') {
         setIsPlatformView(true);
         refreshData();
       } else {

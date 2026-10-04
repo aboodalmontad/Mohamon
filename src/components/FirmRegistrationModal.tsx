@@ -25,6 +25,7 @@ interface FirmRegistrationModalProps {
   onClose: () => void;
   lang: Language;
   onFirmRegistered?: (firm: LawFirm) => void;
+  initialPlanTier?: string;
 }
 
 const generateCleanSlug = (text: string) => {
@@ -58,7 +59,8 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
   isOpen, 
   onClose, 
   lang,
-  onFirmRegistered
+  onFirmRegistered,
+  initialPlanTier
 }) => {
   const isAr = lang === 'ar';
   const isTr = lang === 'tr';
@@ -123,6 +125,9 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
 
     handlePlansUpdated();
     if (isOpen) {
+      if (initialPlanTier) {
+        setFormData(prev => ({ ...prev, planTier: initialPlanTier as any }));
+      }
       pricingPlanService.init().catch(() => {});
     }
 
@@ -130,7 +135,7 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
     return () => {
       window.removeEventListener('aladl_pricing_plans_updated', handlePlansUpdated);
     };
-  }, [isOpen]);
+  }, [isOpen, initialPlanTier]);
 
   if (!isOpen) return null;
 

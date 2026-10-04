@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, 
   MapPin, Scale, Building, RefreshCw, QrCode, Sparkles, Check, 
-  Search, X, Filter, RotateCcw 
+  Search, X, Filter, RotateCcw, CheckCircle2, HelpCircle, Zap, 
+  ChevronLeft, ChevronRight, Layers, ArrowUpRight
 } from 'lucide-react';
 import { FirmRegistrationModal } from './FirmRegistrationModal';
 import { FirmQRCodeModal } from './FirmQRCodeModal';
@@ -23,15 +24,57 @@ interface PlatformLandingProps {
 
 export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, lang, onChangeLang, onSelectFirm }) => {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+  const [selectedPlanTier, setSelectedPlanTier] = useState<string | undefined>(undefined);
   const [activeFirms, setActiveFirms] = useState<LawFirm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
   const [qrModalFirm, setQrModalFirm] = useState<LawFirm | null>(null);
   const [plans, setPlans] = useState<PricingPlan[]>(() => pricingPlanService.getPlans());
 
+  // Platform multi-page view state: 'home' (Page 1) or 'pricing' (Page 2 - Dedicated Pricing Plans Page)
+  const [currentPlatformView, setCurrentPlatformView] = useState<'home' | 'pricing'>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('subview');
+      if (p === 'pricing' || window.location.hash === '#pricing') {
+        return 'pricing';
+      }
+    }
+    return 'home';
+  });
+
+  const navigateToView = (view: 'home' | 'pricing') => {
+    setCurrentPlatformView(view);
+    if (typeof window !== 'undefined') {
+      if (view === 'pricing') {
+        window.history.pushState({ platformView: 'pricing' }, '', '#pricing');
+      } else {
+        const cleanUrl = window.location.pathname + (window.location.search.replace(/[?&]subview=pricing/, ''));
+        window.history.pushState({ platformView: 'home' }, '', cleanUrl || '/');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Search & Filter state for office names & cities
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState<string>('all');
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const p = new URLSearchParams(window.location.search).get('subview');
+      if (p === 'pricing' || window.location.hash === '#pricing') {
+        setCurrentPlatformView('pricing');
+      } else {
+        setCurrentPlatformView('home');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+    };
+  }, []);
 
   useEffect(() => {
     const handlePlansUpdated = () => {
@@ -153,7 +196,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-3">
               {settings.platformLogoUrl ? (
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateToView('home')}>
                   <img
                     src={settings.platformLogoUrl}
                     alt={isRtl ? settings.platformNameAr : settings.platformNameEn}
@@ -165,7 +208,7 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateToView('home')}>
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#c5a869] to-[#ebd397] flex items-center justify-center shadow-lg shadow-[#c5a869]/20">
                     <Shield className="w-6 h-6 text-[#181512]" />
                   </div>
@@ -176,6 +219,48 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 </div>
               )}
             </div>
+
+            {/* Platform Multi-Page Navigation Tabs */}
+            <nav className="hidden md:flex items-center gap-1.5 bg-white/5 border border-white/10 p-1 rounded-xl text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => navigateToView('home')}
+                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  currentPlatformView === 'home'
+                    ? 'bg-[#c5a869] text-slate-950 font-bold shadow-sm'
+                    : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {isRtl ? 'الصفحة الرئيسية' : 'Home'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentPlatformView !== 'home') {
+                    navigateToView('home');
+                    setTimeout(() => {
+                      document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  } else {
+                    document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="px-3.5 py-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+              >
+                {isRtl ? 'دليل المكاتب' : 'Directory'}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigateToView('pricing')}
+                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                  currentPlatformView === 'pricing'
+                    ? 'bg-[#c5a869] text-slate-950 font-bold shadow-sm'
+                    : 'text-white/70 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span>{isRtl ? 'خطط وباقات الأسعار' : 'Pricing Plans'}</span>
+              </button>
+            </nav>
             
             <div className="flex items-center gap-3 sm:gap-4">
               {onChangeLang && (
@@ -234,8 +319,13 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="pt-32 pb-20 relative overflow-hidden">
+      {/* ============================================================== */}
+      {/* PAGE 1: PLATFORM HOME / DIRECTORY VIEW                        */}
+      {/* ============================================================== */}
+      {currentPlatformView === 'home' && (
+        <>
+          {/* Hero Section */}
+          <main className="pt-32 pb-20 relative overflow-hidden">
         {/* Glow Effects */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#c5a869]/20 blur-[120px] rounded-full pointer-events-none" />
         {/* Hero Banner Background Image */}
@@ -265,19 +355,26 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               {isRtl ? settings.heroSubheadingAr : lang === 'tr' ? translateTextSync(settings.heroSubheadingAr, 'tr') : settings.heroSubheadingEn}
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 flex-wrap">
               <button 
                 onClick={() => setIsRegistrationOpen(true)}
-                className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 text-white px-10 py-4 rounded-xl text-lg font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl"
+                className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-8 py-4 rounded-xl text-base sm:text-lg font-black transition-all shadow-xl shadow-[#c5a869]/25 flex items-center justify-center gap-2 cursor-pointer transform hover:scale-[1.02]"
               >
-                <UserPlus className="w-5 h-5 text-[#c5a869]" />
+                <UserPlus className="w-5 h-5 text-[#181512]" />
                 <span>{isRtl ? 'سجل مكتبك الآن' : lang === 'tr' ? 'Büronuzu Şimdi Kaydedin' : 'Register Your Firm'}</span>
               </button>
               <button 
-                onClick={() => document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' })}
-                className="w-full sm:w-auto bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] px-10 py-4 rounded-xl text-lg font-bold transition-all shadow-xl shadow-[#c5a869]/20 flex items-center justify-center gap-2 cursor-pointer"
+                onClick={() => navigateToView('pricing')}
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-[#c5a869]/50 hover:bg-white/20 text-[#ebd397] hover:text-white px-8 py-4 rounded-xl text-base sm:text-lg font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xl"
               >
-                <Building className="w-5 h-5" />
+                <Sparkles className="w-5 h-5 text-[#c5a869]" />
+                <span>{isRtl ? 'خطط وباقات الأسعار ←' : 'Pricing Plans →'}</span>
+              </button>
+              <button 
+                onClick={() => document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' })}
+                className="w-full sm:w-auto bg-black/40 hover:bg-black/60 border border-white/15 text-white/90 hover:text-white px-6 py-4 rounded-xl text-base font-semibold transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Building className="w-4 h-4 text-white/60" />
                 <span>{isRtl ? settings.ctaSecondaryAr : lang === 'tr' ? 'Onaylı Büroları Keşfet' : settings.ctaSecondaryEn}</span>
               </button>
             </div>
@@ -601,108 +698,275 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
         </div>
       </section>
 
-      {/* Platform Pricing Plans Section */}
-      <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-950 border-t border-white/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#c5a869]/10 via-transparent to-transparent pointer-events-none" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#c5a869]/10 border border-[#c5a869]/30 text-[#c5a869] text-xs font-semibold">
+        {/* Next Page Transition: Dedicated Pricing Plans Page */}
+        <section id="next-page-pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-[#181512] to-slate-950 border-t border-white/10 relative overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#c5a869]/15 via-transparent to-transparent pointer-events-none" />
+          <div className="max-w-4xl mx-auto relative z-10 text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#c5a869]/15 border border-[#c5a869]/30 text-[#c5a869] text-xs font-bold tracking-wide shadow-md">
               <Sparkles className="w-4 h-4" />
-              <span>{isRtl ? 'باقات الاشتراك والأسعار' : lang === 'tr' ? 'Abonelik Planları ve Fiyatlandırma' : 'Subscription Plans & Pricing'}</span>
+              <span>{isRtl ? 'خطط وباقات الأسعار' : 'Pricing Plans & Tiers'}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              {isRtl ? 'خطط أسعار شفافة ومرنة تناسب كافة المكاتب القانونية' : lang === 'tr' ? 'Tüm Hukuk Büroları İçin Esnek ve Şeffaf Fiyatlandırma' : 'Transparent & Flexible Pricing Plans for Every Law Firm'}
+
+            <h2 className="text-3xl sm:text-5xl font-serif text-white font-bold leading-tight">
+              {isRtl ? 'استكشف باقات الاشتراك واختر الخطة المثالية لمكتبك' : 'Explore Subscription Plans & Choose Your Ideal Plan'}
             </h2>
-            <p className="text-slate-400 text-sm sm:text-base">
-              {isRtl ? 'أنشئ موقع مكتبك الرسمي وانضم إلى المنصة الآن مع إمكانية إدارة شؤونك القانونية بكل كفاءة وسهولة.' : lang === 'tr' ? 'Büronuzun resmi web sitesini oluşturun ve hukuki süreçlerinizi kolayca yönetin.' : 'Launch your official firm website and manage legal operations with ease.'}
+
+            <p className="text-slate-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              {isRtl
+                ? 'خطط أسعار واضحة بدون أي رسوم خفية، مع دعم فني متكامل، نطاق مخصص، ونظام رقمي شامل لإدارة الاستشارات والعملاء.'
+                : 'Transparent pricing with no hidden fees, comprehensive support, custom domain, and integrated legal office management.'}
+            </p>
+
+            <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigateToView('pricing')}
+                className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-[#181512] font-black text-base shadow-xl shadow-[#c5a869]/25 flex items-center justify-center gap-3 transition-all cursor-pointer transform hover:scale-[1.02]"
+              >
+                <span>{isRtl ? 'الانتقال إلى صفحة باقات الأسعار' : 'Go to Pricing Plans Page'}</span>
+                {isRtl ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsRegistrationOpen(true)}
+                className="w-full sm:w-auto px-6 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition cursor-pointer"
+              >
+                <span>{isRtl ? 'تسجيل مكتب مباشر' : 'Direct Firm Registration'}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        </>
+      )}
+
+      {/* ============================================================== */}
+      {/* PAGE 2: DEDICATED PRICING PLANS PAGE (الصفحة التي تلي الرئيسية) */}
+      {/* ============================================================== */}
+      {currentPlatformView === 'pricing' && (
+        <div className="pt-28 pb-20 relative z-10 animate-fade-in">
+          {/* Top Breadcrumb & Page Navigation Bar */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-3 px-5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <button
+                  type="button"
+                  onClick={() => navigateToView('home')}
+                  className="text-white/60 hover:text-[#c5a869] transition-colors flex items-center gap-1 cursor-pointer font-medium"
+                >
+                  <Building className="w-3.5 h-3.5 text-[#c5a869]" />
+                  <span>{isRtl ? 'الصفحة الرئيسية' : 'Home'}</span>
+                </button>
+                <span className="text-white/30">/</span>
+                <span className="text-[#c5a869] font-bold flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{isRtl ? 'خطط وباقات الأسعار' : 'Pricing Plans'}</span>
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigateToView('home')}
+                className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white text-xs font-bold flex items-center gap-2 transition cursor-pointer self-start sm:self-auto"
+              >
+                {isRtl ? <ArrowRight className="w-4 h-4 text-[#c5a869]" /> : <ArrowLeft className="w-4 h-4 text-[#c5a869]" />}
+                <span>{isRtl ? 'العودة إلى الصفحة الرئيسية' : 'Back to Home Page'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Pricing Dedicated Hero */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#c5a869]/15 border border-[#c5a869]/30 text-[#c5a869] text-xs font-bold mb-4 shadow-sm">
+              <Sparkles className="w-4 h-4" />
+              <span>{isRtl ? 'خطط وباقات الاشتراك والأسعار' : 'Subscription Plans & Pricing'}</span>
+            </div>
+            <h1 className="text-4xl sm:text-6xl font-serif text-white font-extrabold mb-4 tracking-tight leading-tight">
+              {isRtl ? 'خطط أسعار واضحة ومرنة تناسب كافة المكاتب القانونية' : 'Transparent & Flexible Pricing Plans for Every Law Firm'}
+            </h1>
+            <p className="text-slate-300 text-sm sm:text-base max-w-3xl mx-auto leading-relaxed">
+              {isRtl
+                ? 'أنشئ موقع مكتبك الرسمي وانضم إلى المنصة الآن مع إمكانية إدارة شؤونك القانونية، موكليك، واستشاراتك بكل كفاءة وسرية تامة.'
+                : 'Launch your official firm website and manage legal operations, clients, and consultations with absolute confidentiality.'}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {plans
-              .filter(p => p.isActive)
-              .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
-              .map(plan => {
-                const priceDisplay = lang === 'ar' ? `${plan.priceSAR} ر.س` : lang === 'tr' ? `${plan.priceTRY || plan.priceSAR} ₺` : `$${plan.priceUSD}`;
-                const cycleText = plan.billingCycle === 'annual' ? (isRtl ? '/ سنوياً' : ' / year') : (isRtl ? '/ شهرياً' : ' / month');
+          {/* Pricing Plans Grid */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {plans
+                .filter(p => p.isActive)
+                .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+                .map(plan => {
+                  const priceDisplay = lang === 'ar' ? `${plan.priceSAR} ر.س` : lang === 'tr' ? `${plan.priceTRY || plan.priceSAR} ₺` : `$${plan.priceUSD}`;
+                  const cycleText = plan.billingCycle === 'annual' ? (isRtl ? '/ سنوياً' : ' / year') : (isRtl ? '/ شهرياً' : ' / month');
 
-                return (
-                  <div 
-                    key={plan.id}
-                    className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
-                      plan.isPopular 
-                        ? 'bg-gradient-to-b from-slate-900 to-slate-900/90 border-2 border-[#c5a869] shadow-2xl shadow-[#c5a869]/10 scale-105 z-10' 
-                        : 'bg-slate-900/60 border border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    {plan.isPopular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#c5a869] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md">
-                        {isRtl ? (plan.badgeAr || 'الأكثر طلباً واختياراً') : (plan.badgeEn || 'Most Popular')}
-                      </div>
-                    )}
-
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold text-white font-serif-title">{isRtl ? plan.nameAr : plan.nameEn}</h3>
-                        <span className="text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-mono">
-                          {plan.tier}
-                        </span>
-                      </div>
-
-                      <p className="text-xs text-slate-400 mb-6 min-h-[36px] leading-relaxed">
-                        {isRtl ? plan.descriptionAr : plan.descriptionEn}
-                      </p>
-
-                      <div className="mb-6 pb-6 border-b border-white/10 flex items-baseline gap-2">
-                        <span className="text-3xl sm:text-4xl font-black text-[#c5a869] font-serif-title">{priceDisplay}</span>
-                        <span className="text-xs text-slate-400">{cycleText}</span>
-                      </div>
-
-                      <div className="space-y-3 mb-8">
-                        <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
-                          {isRtl ? 'الميزات والقدرات المشمولة:' : 'Included Features & Capabilities:'}
-                        </div>
-                        
-                        <div className="flex items-center gap-2 text-xs text-slate-300">
-                          <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
-                          <span>{isRtl ? `عدد المحامين: ${plan.maxLawyers === 999 ? 'غير محدود' : plan.maxLawyers}` : `Lawyers: ${plan.maxLawyers === 999 ? 'Unlimited' : plan.maxLawyers}`}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-300">
-                          <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
-                          <span>{isRtl ? `مساحة التخزين المشفرة: ${plan.storageGB} جيجابايت` : `Secure Storage: ${plan.storageGB} GB`}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-300">
-                          <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
-                          <span>{isRtl ? `الدعم الفني: ${plan.supportLevelAr}` : `Support: ${plan.supportLevelAr}`}</span>
-                        </div>
-
-                        {(isRtl ? plan.featuresAr : plan.featuresEn)?.map((feat, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-xs text-slate-300">
-                            <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
-                            <span>{feat}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsRegistrationOpen(true)}
-                      className={`w-full py-3 px-6 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
-                        plan.isPopular
-                          ? 'bg-[#c5a869] hover:bg-[#b09358] text-slate-950 shadow-[#c5a869]/20'
-                          : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                  return (
+                    <div 
+                      key={plan.id}
+                      className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                        plan.isPopular 
+                          ? 'bg-gradient-to-b from-slate-900 to-slate-900/90 border-2 border-[#c5a869] shadow-2xl shadow-[#c5a869]/15 scale-105 z-10' 
+                          : 'bg-slate-900/70 border border-white/10 hover:border-white/20'
                       }`}
                     >
-                      <span>{isRtl ? 'اختر هذه الباقة وسجل الآن' : lang === 'tr' ? 'Bu Planı Seç ve Kaydol' : 'Select Plan & Register Now'}</span>
-                      {isRtl ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
-                    </button>
+                      {plan.isPopular && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#c5a869] text-slate-950 font-bold text-xs uppercase tracking-wider shadow-md">
+                          {isRtl ? (plan.badgeAr || 'الأكثر طلباً واختياراً') : (plan.badgeEn || 'Most Popular')}
+                        </div>
+                      )}
+
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xl font-bold text-white font-serif-title">{isRtl ? plan.nameAr : plan.nameEn}</h3>
+                          <span className="text-xs px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-slate-300 font-mono">
+                            {plan.tier}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-slate-400 mb-6 min-h-[36px] leading-relaxed">
+                          {isRtl ? plan.descriptionAr : plan.descriptionEn}
+                        </p>
+
+                        <div className="mb-6 pb-6 border-b border-white/10 flex items-baseline gap-2">
+                          <span className="text-3xl sm:text-4xl font-black text-[#c5a869] font-serif-title">{priceDisplay}</span>
+                          <span className="text-xs text-slate-400">{cycleText}</span>
+                        </div>
+
+                        <div className="space-y-3 mb-8">
+                          <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                            {isRtl ? 'الميزات والقدرات المشمولة:' : 'Included Features & Capabilities:'}
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                            <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                            <span>{isRtl ? `عدد المحامين: ${plan.maxLawyers === 999 ? 'غير محدود' : plan.maxLawyers}` : `Lawyers: ${plan.maxLawyers === 999 ? 'Unlimited' : plan.maxLawyers}`}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                            <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                            <span>{isRtl ? `مساحة التخزين المشفرة: ${plan.storageGB} جيجابايت` : `Secure Storage: ${plan.storageGB} GB`}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-slate-300">
+                            <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                            <span>{isRtl ? `الدعم الفني: ${plan.supportLevelAr}` : `Support: ${plan.supportLevelAr}`}</span>
+                          </div>
+
+                          {(isRtl ? plan.featuresAr : plan.featuresEn)?.map((feat, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-xs text-slate-300">
+                              <Check className="w-4 h-4 text-[#c5a869] shrink-0" />
+                              <span>{feat}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlanTier(plan.tier);
+                          setIsRegistrationOpen(true);
+                        }}
+                        className={`w-full py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
+                          plan.isPopular
+                            ? 'bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-slate-950 shadow-[#c5a869]/25 font-black'
+                            : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
+                        }`}
+                      >
+                        <span>{isRtl ? 'اختر هذه الباقة وسجل الآن' : 'Select Plan & Register Now'}</span>
+                        {isRtl ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* What Every Plan Includes */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+            <div className="p-8 sm:p-12 rounded-3xl bg-slate-900/60 border border-white/10">
+              <div className="text-center max-w-2xl mx-auto mb-10">
+                <h3 className="text-2xl font-serif text-white font-bold mb-2">
+                  {isRtl ? 'مزايا أساسية مشمولة في كافة الباقات' : 'Core Features Included in All Plans'}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-400">
+                  {isRtl ? 'تحصل على كامل البنية التحتية المتطورة لدعم أعمال مكتبك من اليوم الأول' : 'Comprehensive infrastructure to support your legal practice from day one'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#c5a869]/10 text-[#c5a869] flex items-center justify-center font-bold">
+                    <Globe className="w-5 h-5" />
                   </div>
-                );
-              })}
+                  <h4 className="font-bold text-white text-sm">{isRtl ? 'نطاق رسمي وهوية خاصة' : 'Custom Domain & Identity'}</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {isRtl ? 'رابط معتمد لمكتبك مع إمكانية ربط نطاقك المستقل (.com / .sa)' : 'Dedicated link with custom domain support'}
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#c5a869]/10 text-[#c5a869] flex items-center justify-center font-bold">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-bold text-white text-sm">{isRtl ? 'لوحة تحكم كاملة' : 'Full Management Console'}</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {isRtl ? 'إدارة التخصصات، المحامين، المقالات، واستقبال الاستشارات' : 'Manage practice areas, lawyers, and consultation bookings'}
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#c5a869]/10 text-[#c5a869] flex items-center justify-center font-bold">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-bold text-white text-sm">{isRtl ? 'حماية وتشفير متقدم' : 'Advanced Encryption'}</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {isRtl ? 'سيرفرات سحابية مشفرة، شهادة SSL، وحماية سرية بيانات الموكلين' : 'Encrypted cloud servers, SSL, and full client confidentiality'}
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/5 border border-white/5 space-y-2">
+                  <div className="w-10 h-10 rounded-xl bg-[#c5a869]/10 text-[#c5a869] flex items-center justify-center font-bold">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <h4 className="font-bold text-white text-sm">{isRtl ? 'تفعيل فوري' : 'Instant Activation'}</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {isRtl ? 'ينطلق موقع مكتبك للعمل مباشرة بعد التسجيل بدون أي انتظار' : 'Your law firm website launches immediately upon registration'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Action Card */}
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+            <div className="p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900 border border-[#c5a869]/30 shadow-2xl">
+              <h3 className="text-2xl font-serif text-white font-bold mb-2">
+                {isRtl ? 'هل أنت مستعد للانضمام وإطلاق موقع مكتبك؟' : 'Ready to launch your law firm website?'}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto mb-6">
+                {isRtl ? 'سجل مكتبك الآن خلال دقائق وانضم إلى نخبة مكاتب المحاماة المعتمدة في المنصة.' : 'Register your firm in minutes and join elite registered law practices.'}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setIsRegistrationOpen(true)}
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#c5a869] to-[#ebd397] hover:from-[#b38a38] hover:to-[#c5a869] text-slate-950 font-black text-sm transition shadow-xl shadow-[#c5a869]/25 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>{isRtl ? 'سجل مكتبك الآن' : 'Register Your Firm'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigateToView('home')}
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isRtl ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                  <span>{isRtl ? 'العودة إلى الصفحة الرئيسية' : 'Back to Home Page'}</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
+      )}
 
       {/* Platform Executive Footer */}
       <footer className="bg-slate-950 border-t border-white/10 py-12 px-4 sm:px-6 lg:px-8 relative z-10 text-white/70">
@@ -732,11 +996,38 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
           <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-white/60">
             <button
               onClick={() => {
-                document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+                if (currentPlatformView !== 'home') {
+                  navigateToView('home');
+                } else {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              className="hover:text-[#c5a869] transition-colors cursor-pointer"
+            >
+              {isRtl ? 'الصفحة الرئيسية' : 'Home'}
+            </button>
+            <button
+              onClick={() => {
+                if (currentPlatformView !== 'home') {
+                  navigateToView('home');
+                  setTimeout(() => {
+                    document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                } else {
+                  document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+                }
               }}
               className="hover:text-[#c5a869] transition-colors cursor-pointer"
             >
               {isRtl ? 'دليل وبحث المكاتب' : 'Directory & Search'}
+            </button>
+            <button
+              onClick={() => navigateToView('pricing')}
+              className={`hover:text-[#c5a869] transition-colors cursor-pointer font-bold flex items-center gap-1 ${
+                currentPlatformView === 'pricing' ? 'text-[#c5a869]' : ''
+              }`}
+            >
+              <span>{isRtl ? 'خطط وباقات الأسعار' : 'Pricing Plans'}</span>
             </button>
             <button
               onClick={() => setIsRegistrationOpen(true)}
@@ -767,13 +1058,15 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
       {isRegistrationOpen && (
         <FirmRegistrationModal 
           isOpen={isRegistrationOpen} 
+          initialPlanTier={selectedPlanTier}
           onClose={() => {
             setIsRegistrationOpen(false);
+            setSelectedPlanTier(undefined);
             loadFirms();
           }} 
           onFirmRegistered={() => {
             loadFirms();
-          }}
+          }} 
           lang={lang} 
         />
       )}
