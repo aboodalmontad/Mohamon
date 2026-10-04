@@ -9,7 +9,7 @@ import { FirmRegistrationModal } from './FirmRegistrationModal';
 import { FirmQRCodeModal } from './FirmQRCodeModal';
 import { Language, LawFirm, PricingPlan } from '../types';
 import { firmService, createDefaultFirms } from '../services/firmService';
-import { pricingPlanService } from '../services/pricingPlanService';
+import { pricingPlanService, formatPlanPrice, formatBillingCycle } from '../services/pricingPlanService';
 import { storageService } from '../services/storageService';
 import { PlatformSettings } from '../types';
 import { getLocalized } from '../services/i18n';
@@ -797,8 +797,8 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                 .filter(p => p.isActive)
                 .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
                 .map(plan => {
-                  const priceDisplay = lang === 'ar' ? `${plan.priceSAR} ر.س` : lang === 'tr' ? `${plan.priceTRY || plan.priceSAR} ₺` : `$${plan.priceUSD}`;
-                  const cycleText = plan.billingCycle === 'annual' ? (isRtl ? '/ سنوياً' : ' / year') : (isRtl ? '/ شهرياً' : ' / month');
+                  const priceDisplay = formatPlanPrice(plan, lang);
+                  const cycleText = formatBillingCycle(plan.billingCycle, lang);
 
                   return (
                     <div 

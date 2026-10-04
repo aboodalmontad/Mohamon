@@ -400,6 +400,8 @@ export interface PricingPlan {
   priceSYP?: number;
   priceAED?: number;
   priceTRY?: number;
+  price?: number;
+  currency?: string;
   billingCycle: 'annual' | 'monthly' | 'lifetime' | 'custom';
   isPopular?: boolean;
   isActive: boolean;

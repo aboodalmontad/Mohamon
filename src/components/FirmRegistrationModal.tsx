@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Language, LawFirm, SubscriptionPlanTier, PricingPlan } from '../types';
 import { firmService } from '../services/firmService';
-import { pricingPlanService } from '../services/pricingPlanService';
+import { pricingPlanService, formatPlanPrice, formatBillingCycle } from '../services/pricingPlanService';
 import { COUNTRIES_LIST } from '../data/countries';
 import { initialPracticeAreas, initialCaseStudies, initialTestimonials, initialBlogPosts } from '../data/initialData';
 import { processImageFile } from './ImageUploader';
@@ -815,7 +815,7 @@ export const FirmRegistrationModal: React.FC<FirmRegistrationModalProps> = ({
 
                         <div className="mt-3 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px]">
                           <span className="text-slate-400">{isAr ? 'الباقة الرسمية' : 'Official Plan'}</span>
-                          <span className="font-bold text-amber-300 font-mono">${(p.priceUSD || 0).toLocaleString()} / {p.billingCycle === 'annual' ? (isAr ? 'سنة' : 'year') : (isAr ? 'شهر' : 'month')}</span>
+                          <span className="font-bold text-amber-300 font-mono">{formatPlanPrice(p, lang)} {formatBillingCycle(p.billingCycle, lang)}</span>
                         </div>
                       </div>
                     );

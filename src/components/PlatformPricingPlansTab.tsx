@@ -6,7 +6,7 @@ import {
   Cloud
 } from 'lucide-react';
 import { PricingPlan, LawFirm } from '../types';
-import { pricingPlanService } from '../services/pricingPlanService';
+import { pricingPlanService, formatPlanPrice } from '../services/pricingPlanService';
 
 interface PlatformPricingPlansTabProps {
   firms?: LawFirm[];
@@ -38,6 +38,8 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
     badgeEn: string;
     descriptionAr: string;
     descriptionEn: string;
+    price: number;
+    currency: string;
     priceSAR: number;
     priceUSD: number;
     priceSYP: number;
@@ -62,7 +64,9 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
     badgeEn: '',
     descriptionAr: '',
     descriptionEn: '',
-    priceSAR: 3000,
+    price: 1500,
+    currency: 'SAR',
+    priceSAR: 1500,
     priceUSD: 400,
     priceSYP: 4500000,
     billingCycle: 'annual',
@@ -141,8 +145,10 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
       badgeEn: '',
       descriptionAr: '',
       descriptionEn: '',
-      priceSAR: 3500,
-      priceUSD: 450,
+      price: 1500,
+      currency: 'SAR',
+      priceSAR: 1500,
+      priceUSD: 400,
       priceSYP: 5250000,
       billingCycle: 'annual',
       isPopular: false,
@@ -181,9 +187,11 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
       badgeEn: plan.badgeEn || '',
       descriptionAr: plan.descriptionAr,
       descriptionEn: plan.descriptionEn,
-      priceSAR: plan.priceSAR,
-      priceUSD: plan.priceUSD,
-      priceSYP: plan.priceSYP || plan.priceSAR * 1500,
+      price: plan.price !== undefined && plan.price !== null ? plan.price : (plan.currency === 'SAR' ? (plan.priceSAR || 1500) : (plan.priceUSD || 400)),
+      currency: plan.currency || (plan.priceSAR && !plan.priceUSD ? 'SAR' : 'USD'),
+      priceSAR: plan.priceSAR || 0,
+      priceUSD: plan.priceUSD || 0,
+      priceSYP: plan.priceSYP || 0,
       billingCycle: plan.billingCycle,
       isPopular: !!plan.isPopular,
       isActive: plan.isActive,
@@ -221,6 +229,11 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
       return;
     }
 
+    const chosenCurrency = formData.currency || 'SAR';
+    const chosenPrice = Number(formData.price) || 0;
+    const priceUSD = chosenCurrency === 'USD' ? chosenPrice : (chosenCurrency === 'SAR' ? Math.round(chosenPrice / 3.75) : Number(formData.priceUSD) || chosenPrice);
+    const priceSAR = chosenCurrency === 'SAR' ? chosenPrice : (chosenCurrency === 'USD' ? Math.round(chosenPrice * 3.75) : Number(formData.priceSAR) || chosenPrice);
+
     if (editingPlan) {
       pricingPlanService.updatePlan(editingPlan.id, {
         tier: formData.tier.trim().toLowerCase(),
@@ -230,8 +243,10 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         badgeEn: formData.badgeEn.trim() || undefined,
         descriptionAr: formData.descriptionAr.trim(),
         descriptionEn: formData.descriptionEn.trim(),
-        priceSAR: Number(formData.priceSAR) || 0,
-        priceUSD: Number(formData.priceUSD) || 0,
+        price: chosenPrice,
+        currency: chosenCurrency,
+        priceSAR,
+        priceUSD,
         priceSYP: Number(formData.priceSYP) || 0,
         billingCycle: formData.billingCycle,
         isPopular: formData.isPopular,
@@ -256,8 +271,10 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
         badgeEn: formData.badgeEn.trim() || undefined,
         descriptionAr: formData.descriptionAr.trim(),
         descriptionEn: formData.descriptionEn.trim(),
-        priceSAR: Number(formData.priceSAR) || 0,
-        priceUSD: Number(formData.priceUSD) || 0,
+        price: chosenPrice,
+        currency: chosenCurrency,
+        priceSAR,
+        priceUSD,
         priceSYP: Number(formData.priceSYP) || 0,
         billingCycle: formData.billingCycle,
         isPopular: formData.isPopular,
@@ -324,7 +341,7 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
   };
 
   const formatPrice = (plan: PricingPlan) => {
-    return `$${(plan.priceUSD || 0).toLocaleString()}`;
+    return formatPlanPrice(plan, isAr ? 'ar' : 'en');
   };
 
   return (
@@ -703,32 +720,67 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
                 />
               </div>
 
-              {/* Pricing in USD */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              {/* Pricing & Currency */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
                 <h4 className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
-                  <DollarSign className="w-4 h-4" />
-                  <span>{isAr ? 'سعر الاشتراك ودورة الفوترة بالدولار ($ USD)' : 'Subscription Price & Billing Cycle'}</span>
+                  <Coins className="w-4 h-4 text-amber-400" />
+                  <span>{isAr ? 'سعر الاشتراك، العملة المعتمدة، ودورة الفوترة' : 'Subscription Price, Currency & Billing Cycle'}</span>
                 </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Currency Selector */}
                   <div>
-                    <label className="block text-slate-400 mb-1">{isAr ? 'السعر ($ USD) *:' : 'Price ($ USD) *:'}</label>
+                    <label className="block text-slate-400 mb-1 text-xs">{isAr ? 'العملة المعتمدة للباقة *:' : 'Plan Currency *:'}</label>
+                    <select
+                      value={formData.currency || 'SAR'}
+                      onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-bold text-xs sm:text-sm focus:border-amber-400 focus:outline-none cursor-pointer"
+                    >
+                      <option value="SAR">{isAr ? 'ريال سعودي (ر.س SAR)' : 'Saudi Riyal (SAR)'}</option>
+                      <option value="USD">{isAr ? 'دولار أمريكي ($ USD)' : 'US Dollar (USD)'}</option>
+                      <option value="AED">{isAr ? 'درهم إماراتي (د.إ AED)' : 'UAE Dirham (AED)'}</option>
+                      <option value="EUR">{isAr ? 'يورو (€ EUR)' : 'Euro (EUR)'}</option>
+                      <option value="TRY">{isAr ? 'ليرة تركية (₺ TRY)' : 'Turkish Lira (TRY)'}</option>
+                      <option value="KWD">{isAr ? 'دينار كويتي (د.ك KWD)' : 'Kuwaiti Dinar (KWD)'}</option>
+                      <option value="QAR">{isAr ? 'ريال قطري (ر.ق QAR)' : 'Qatari Riyal (QAR)'}</option>
+                      <option value="BHD">{isAr ? 'دينار بحريني (د.ب BHD)' : 'Bahraini Dinar (BHD)'}</option>
+                      <option value="OMR">{isAr ? 'ريال عماني (ر.ع OMR)' : 'Omani Rial (OMR)'}</option>
+                      <option value="JOD">{isAr ? 'دينار أردني (د.أ JOD)' : 'Jordanian Dinar (JOD)'}</option>
+                      <option value="EGP">{isAr ? 'جنيه مصري (ج.م EGP)' : 'Egyptian Pound (EGP)'}</option>
+                      <option value="SYP">{isAr ? 'ليرة سورية (ل.س SYP)' : 'Syrian Pound (SYP)'}</option>
+                    </select>
+                  </div>
+
+                  {/* Price in Selected Currency */}
+                  <div>
+                    <label className="block text-slate-400 mb-1 text-xs">
+                      {isAr ? `سعر الباقة (${formData.currency || 'SAR'}) *:` : `Plan Price (${formData.currency || 'SAR'}) *:`}
+                    </label>
                     <input
                       type="number"
                       min="0"
                       required
-                      value={formData.priceUSD}
-                      onChange={(e) => setFormData({ ...formData, priceUSD: Number(e.target.value) || 0 })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white font-mono font-bold focus:border-amber-400 focus:outline-none"
+                      value={formData.price}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0;
+                        setFormData({ 
+                          ...formData, 
+                          price: val,
+                          priceUSD: formData.currency === 'USD' ? val : (formData.currency === 'SAR' ? Math.round(val / 3.75) : (formData.priceUSD || val)),
+                          priceSAR: formData.currency === 'SAR' ? val : (formData.currency === 'USD' ? Math.round(val * 3.75) : (formData.priceSAR || val))
+                        });
+                      }}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-amber-300 font-mono font-bold text-xs sm:text-sm focus:border-amber-400 focus:outline-none"
                     />
                   </div>
 
+                  {/* Billing Cycle */}
                   <div>
-                    <label className="block text-slate-400 mb-1">{isAr ? 'دورة الفوترة:' : 'Billing Cycle:'}</label>
+                    <label className="block text-slate-400 mb-1 text-xs">{isAr ? 'دورة الفوترة:' : 'Billing Cycle:'}</label>
                     <select
                       value={formData.billingCycle}
                       onChange={(e) => setFormData({ ...formData, billingCycle: e.target.value as any })}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white focus:border-amber-400 focus:outline-none cursor-pointer"
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs sm:text-sm focus:border-amber-400 focus:outline-none cursor-pointer"
                     >
                       <option value="annual">{isAr ? 'سنوي (Annual)' : 'Annual'}</option>
                       <option value="monthly">{isAr ? 'شهري (Monthly)' : 'Monthly'}</option>

@@ -1,8 +1,88 @@
-import { PricingPlan } from '../types';
+import { PricingPlan, Language } from '../types';
 import { getSupabase, getStoredSupabaseConfig } from '../lib/supabase';
 
 const STORAGE_KEY_PLANS = 'aladl_platform_pricing_plans_v1';
 const STORAGE_KEY_PLANS_UPDATED_AT = 'aladl_platform_pricing_plans_updated_at_v1';
+
+/**
+ * Universal price and currency formatter:
+ * Extracts the exact price and currency configured by the platform manager on the plan.
+ */
+export const formatPlanPrice = (plan: PricingPlan, lang: Language = 'ar'): string => {
+  if (!plan) return '';
+
+  // 1. Determine currency specified by platform manager on the plan
+  const rawCurrency = (plan.currency || (plan.priceSAR && !plan.priceUSD ? 'SAR' : 'USD')).trim().toUpperCase();
+
+  // 2. Determine price amount
+  let amount: number = 0;
+  if (plan.price !== undefined && plan.price !== null && !isNaN(Number(plan.price)) && Number(plan.price) > 0) {
+    amount = Number(plan.price);
+  } else if (rawCurrency === 'SAR' && plan.priceSAR !== undefined && plan.priceSAR !== null) {
+    amount = Number(plan.priceSAR);
+  } else if (rawCurrency === 'USD' && plan.priceUSD !== undefined && plan.priceUSD !== null) {
+    amount = Number(plan.priceUSD);
+  } else if (rawCurrency === 'AED' && plan.priceAED !== undefined && plan.priceAED !== null) {
+    amount = Number(plan.priceAED);
+  } else if (rawCurrency === 'TRY' && plan.priceTRY !== undefined && plan.priceTRY !== null) {
+    amount = Number(plan.priceTRY);
+  } else if (rawCurrency === 'SYP' && plan.priceSYP !== undefined && plan.priceSYP !== null) {
+    amount = Number(plan.priceSYP);
+  } else {
+    amount = Number(plan.priceUSD || plan.priceSAR || plan.price || 0);
+  }
+
+  const isAr = lang === 'ar';
+  const isTr = lang === 'tr';
+  const formattedNum = Number(amount || 0).toLocaleString();
+
+  // 3. Format with localized currency symbol or label
+  switch (rawCurrency) {
+    case 'SAR':
+      return isAr ? `${formattedNum} ر.س` : isTr ? `${formattedNum} SAR` : `${formattedNum} SAR`;
+    case 'USD':
+      return isAr ? `${formattedNum} $` : isTr ? `$${formattedNum}` : `$${formattedNum}`;
+    case 'AED':
+      return isAr ? `${formattedNum} د.إ` : `${formattedNum} AED`;
+    case 'EUR':
+      return isAr ? `${formattedNum} €` : `€${formattedNum}`;
+    case 'TRY':
+      return isAr ? `${formattedNum} ₺` : `${formattedNum} ₺`;
+    case 'KWD':
+      return isAr ? `${formattedNum} د.ك` : `${formattedNum} KWD`;
+    case 'QAR':
+      return isAr ? `${formattedNum} ر.ق` : `${formattedNum} QAR`;
+    case 'BHD':
+      return isAr ? `${formattedNum} د.ب` : `${formattedNum} BHD`;
+    case 'OMR':
+      return isAr ? `${formattedNum} ر.ع` : `${formattedNum} OMR`;
+    case 'JOD':
+      return isAr ? `${formattedNum} د.أ` : `${formattedNum} JOD`;
+    case 'EGP':
+      return isAr ? `${formattedNum} ج.م` : `${formattedNum} EGP`;
+    case 'SYP':
+      return isAr ? `${formattedNum} ل.س` : `${formattedNum} SYP`;
+    default:
+      return `${formattedNum} ${rawCurrency}`;
+  }
+};
+
+export const formatBillingCycle = (cycle: string, lang: Language = 'ar'): string => {
+  const isAr = lang === 'ar';
+  const isTr = lang === 'tr';
+  switch (cycle) {
+    case 'annual':
+      return isAr ? '/ سنوياً' : isTr ? '/ Yıllık' : '/ year';
+    case 'monthly':
+      return isAr ? '/ شهرياً' : isTr ? '/ Aylık' : '/ month';
+    case 'lifetime':
+      return isAr ? '/ مدى الحياة' : isTr ? '/ Ömür boyu' : '/ lifetime';
+    case 'custom':
+      return isAr ? '/ مخصص' : isTr ? '/ Özel' : '/ custom';
+    default:
+      return isAr ? '/ سنوياً' : '/ year';
+  }
+};
 
 export const initialPricingPlans: PricingPlan[] = [
   {
@@ -17,7 +97,10 @@ export const initialPricingPlans: PricingPlan[] = [
     descriptionAr: 'حل متكامل لإطلاق موقع قانوني رسمي بمظهر مهني وتلقي الاستشارات أونلاين.',
     descriptionEn: 'Essential foundation for establishing a prestigious online legal presence.',
     descriptionTr: 'Prestijli bir çevrimiçi varlık için temel hukuk bürosu paketi.',
+    price: 250,
+    currency: 'USD',
     priceUSD: 250,
+    priceSAR: 950,
     billingCycle: 'annual',
     isPopular: false,
     isActive: true,
@@ -66,7 +149,10 @@ export const initialPricingPlans: PricingPlan[] = [
     descriptionAr: 'الباقة المثالية للمكاتب الساعية للريادة مع ربط النطاق المخصص وميزات الذكاء القانوني.',
     descriptionEn: 'The ideal solution for ambitious law firms requiring custom domains & team management.',
     descriptionTr: 'Özel alan adı ve ekip yönetimi gerektiren hukuk büroları için ideal çözüm.',
+    price: 450,
+    currency: 'USD',
     priceUSD: 450,
+    priceSAR: 1700,
     billingCycle: 'annual',
     isPopular: true,
     isActive: true,
@@ -118,7 +204,10 @@ export const initialPricingPlans: PricingPlan[] = [
     descriptionAr: 'قوة تقنية متكاملة ومقرات متعددة مع تخصيص هوية كامل ودعم استشاري على مدار الساعة.',
     descriptionEn: 'Comprehensive corporate solution with multi-branch management & VIP 24/7 dedicated support.',
     descriptionTr: 'Çok şubeli yönetim ve 7/24 VIP destek ile kapsamlı kurumsal çözüm.',
+    price: 850,
+    currency: 'USD',
     priceUSD: 850,
+    priceSAR: 3200,
     billingCycle: 'annual',
     isPopular: false,
     isActive: true,
@@ -179,7 +268,15 @@ class PricingPlanService {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_PLANS);
       if (stored) {
-        this.plans = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        this.plans = Array.isArray(parsed) && parsed.length > 0 
+          ? parsed.map((p: any) => ({
+              ...p,
+              price: p.price ?? (p.priceUSD || p.priceSAR || 0),
+              currency: p.currency || (p.priceSAR && !p.priceUSD ? 'SAR' : 'USD'),
+              priceSAR: p.priceSAR ?? (p.priceUSD ? Math.round(p.priceUSD * 3.75) : 0),
+            }))
+          : initialPricingPlans;
       } else {
         this.plans = initialPricingPlans;
         this.savePlans(false);
