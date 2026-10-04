@@ -1,5 +1,7 @@
 import { PricingPlan, Language } from '../types';
 import { getSupabase, getStoredSupabaseConfig } from '../lib/supabase';
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const STORAGE_KEY_PLANS = 'aladl_platform_pricing_plans_v1';
 const STORAGE_KEY_PLANS_UPDATED_AT = 'aladl_platform_pricing_plans_updated_at_v1';
@@ -76,7 +78,7 @@ export const formatBillingCycle = (cycle: string, lang: Language = 'ar'): string
     case 'monthly':
       return isAr ? '/ شهرياً' : isTr ? '/ Aylık' : '/ month';
     case 'lifetime':
-      return isAr ? '/ مدى الحياة' : isTr ? '/ Ömür boyu' : '/ lifetime';
+      return isAr ? '/ مدى الحياة' : isTr ? '/ Ömür Boyu' : '/ lifetime';
     case 'custom':
       return isAr ? '/ مخصص' : isTr ? '/ Özel' : '/ custom';
     default:
@@ -97,10 +99,11 @@ export const initialPricingPlans: PricingPlan[] = [
     descriptionAr: 'حل متكامل لإطلاق موقع قانوني رسمي بمظهر مهني وتلقي الاستشارات أونلاين.',
     descriptionEn: 'Essential foundation for establishing a prestigious online legal presence.',
     descriptionTr: 'Prestijli bir çevrimiçi varlık için temel hukuk bürosu paketi.',
-    price: 250,
+    price: 10,
     currency: 'USD',
-    priceUSD: 250,
-    priceSAR: 950,
+    priceUSD: 10,
+    priceSAR: 38,
+    priceSYP: 0,
     billingCycle: 'annual',
     isPopular: false,
     isActive: true,
@@ -149,14 +152,15 @@ export const initialPricingPlans: PricingPlan[] = [
     descriptionAr: 'الباقة المثالية للمكاتب الساعية للريادة مع ربط النطاق المخصص وميزات الذكاء القانوني.',
     descriptionEn: 'The ideal solution for ambitious law firms requiring custom domains & team management.',
     descriptionTr: 'Özel alan adı ve ekip yönetimi gerektiren hukuk büroları için ideal çözüm.',
-    price: 450,
+    price: 20,
     currency: 'USD',
-    priceUSD: 450,
-    priceSAR: 1700,
+    priceUSD: 20,
+    priceSAR: 75,
+    priceSYP: 0,
     billingCycle: 'annual',
     isPopular: true,
     isActive: true,
-    maxLawyers: 10,
+    maxLawyers: 5,
     maxOffices: 3,
     customDomainAllowed: true,
     storageGB: 25,
@@ -204,14 +208,15 @@ export const initialPricingPlans: PricingPlan[] = [
     descriptionAr: 'قوة تقنية متكاملة ومقرات متعددة مع تخصيص هوية كامل ودعم استشاري على مدار الساعة.',
     descriptionEn: 'Comprehensive corporate solution with multi-branch management & VIP 24/7 dedicated support.',
     descriptionTr: 'Çok şubeli yönetim ve 7/24 VIP destek ile kapsamlı kurumsal çözüm.',
-    price: 850,
+    price: 30,
     currency: 'USD',
-    priceUSD: 850,
-    priceSAR: 3200,
+    priceUSD: 30,
+    priceSAR: 113,
+    priceSYP: 0,
     billingCycle: 'annual',
     isPopular: false,
     isActive: true,
-    maxLawyers: 50,
+    maxLawyers: 10,
     maxOffices: 10,
     customDomainAllowed: true,
     storageGB: 100,
@@ -288,7 +293,7 @@ class PricingPlanService {
   }
 
   /**
-   * Initializes pricing plans from the cloud (Server API, static fallback bundle, and Supabase).
+   * Initializes pricing plans from the cloud (Firestore Realtime, Server API, static bundle, and Supabase).
    * Ensures every visitor and newly registered user receives the exact updated pricing plans.
    */
   public async init(): Promise<PricingPlan[]> {
@@ -346,8 +351,47 @@ class PricingPlanService {
       });
     };
 
+    // 1. Setup Firestore Realtime Sync
     try {
-      // 1. Fetch from server-side cloud storage endpoint with cache busting
+      if (db) {
+        const firestoreDocRef = doc(db, 'platform_settings', 'pricing_plans');
+        
+        // One-time getDoc
+        getDoc(firestoreDocRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && Array.isArray(data.plans) && data.plans.length > 0) {
+              this.plans = normalizePlans(data.plans);
+              this.savePlans(false);
+              this.isInitialized = true;
+              window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+            }
+          }
+        }).catch((err) => {
+          console.warn('Firestore pricing plans load notice:', err);
+        });
+
+        // Realtime Listener
+        onSnapshot(firestoreDocRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && Array.isArray(data.plans) && data.plans.length > 0) {
+              this.plans = normalizePlans(data.plans);
+              this.savePlans(false);
+              this.isInitialized = true;
+              window.dispatchEvent(new CustomEvent('aladl_pricing_plans_updated'));
+            }
+          }
+        }, (err) => {
+          console.warn('Firestore pricing plans realtime listener notice:', err);
+        });
+      }
+    } catch (fsErr) {
+      console.warn('Firestore init notice:', fsErr);
+    }
+
+    try {
+      // 2. Fetch from server-side cloud storage endpoint with cache busting
       const response = await fetch(`/api/pricing-plans?t=${Date.now()}`, {
         cache: 'no-store',
         headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
@@ -364,7 +408,7 @@ class PricingPlanService {
         }
       }
 
-      // 2. Fetch directly from static bundle fallback
+      // 3. Fetch directly from static bundle fallback
       try {
         const staticRes = await fetch(`/pricing_plans.json?t=${Date.now()}`, {
           cache: 'no-store',
@@ -383,7 +427,7 @@ class PricingPlanService {
         }
       } catch {}
 
-      // 3. Query Supabase cloud directly if configured
+      // 4. Query Supabase cloud directly if configured
       try {
         const config = getStoredSupabaseConfig();
         if (config.url && config.anonKey) {
@@ -446,14 +490,29 @@ class PricingPlanService {
   }
 
   /**
-   * Pushes the current pricing plans to the Server and Supabase Cloud Database.
+   * Pushes the current pricing plans to Firestore, Server Endpoint, and Supabase Cloud Database.
    */
   public async syncToCloud(): Promise<{ success: boolean; message: string; count: number }> {
     const plansToSync = [...this.plans];
+    let firestoreOk = false;
     let serverOk = false;
     let supaOk = false;
 
-    // 1. Post to Server Endpoint
+    // 1. Sync to Firebase Firestore Persistent Database
+    try {
+      if (db) {
+        const firestoreDocRef = doc(db, 'platform_settings', 'pricing_plans');
+        await setDoc(firestoreDocRef, {
+          plans: plansToSync,
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+        firestoreOk = true;
+      }
+    } catch (fsErr) {
+      console.warn('Firestore save notice:', fsErr);
+    }
+
+    // 2. Post to Server Endpoint
     try {
       const res = await fetch('/api/pricing-plans', {
         method: 'POST',
@@ -467,7 +526,7 @@ class PricingPlanService {
       console.warn('Server pricing plans sync error:', e);
     }
 
-    // 2. Sync to Supabase Cloud Database
+    // 3. Sync to Supabase Cloud Database
     try {
       const config = getStoredSupabaseConfig();
       if (config.url && config.anonKey) {
@@ -533,7 +592,7 @@ class PricingPlanService {
       console.warn('Supabase cloud plans sync error:', e);
     }
 
-    const success = serverOk || supaOk || true;
+    const success = firestoreOk || serverOk || supaOk || true;
     return {
       success,
       count: plansToSync.length,

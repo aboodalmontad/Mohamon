@@ -33,6 +33,19 @@
         "title": { "type": "string" }
       },
       "required": ["id", "name"]
+    },
+    "PlatformPricingPlan": {
+      "title": "Platform Pricing Plan",
+      "description": "Subscription pricing plan for platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tier": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "price": { "type": "number" },
+        "currency": { "type": "string" }
+      },
+      "required": ["id", "tier", "nameAr"]
     }
   },
   "firestore": {
@@ -47,6 +60,14 @@
     "/firms/{firmSlug}/partners/{partnerId}": {
       "schema": "Partner",
       "description": "Partners of the firm"
+    },
+    "/platform_settings/{settingId}": {
+      "schema": "FirmSettings",
+      "description": "Platform settings including pricing plans"
+    },
+    "/platform_pricing_plans/{planId}": {
+      "schema": "PlatformPricingPlan",
+      "description": "Pricing plans for the platform"
     }
   }
 }

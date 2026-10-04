@@ -22,6 +22,17 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Platform settings & pricing plans (Publicly readable for all visitors)
+    match /platform_settings/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /platform_pricing_plans/{planId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     match /firms/{firmSlug} {
       allow read: if isSignedIn();
       allow create: if isAdmin() && isValidId(firmSlug);
