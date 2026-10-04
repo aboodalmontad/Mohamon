@@ -10,7 +10,8 @@ import { motion } from 'motion/react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { firmService } from '../services/firmService';
-import { LawFirm } from '../types';
+import { storageService } from '../services/storageService';
+import { LawFirm, PlatformSettings } from '../types';
 import { SupabaseFirmsTab } from './SupabaseFirmsTab';
 import { FirmSubscriptionsTab } from './FirmSubscriptionsTab';
 import { PlatformSettingsTab } from './PlatformSettingsTab';
@@ -55,6 +56,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
   const [deletingFirmTarget, setDeletingFirmTarget] = useState<LawFirm | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Platform settings for branding & logo
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(() => storageService.getPlatformSettings());
+
   // Theme Mode (Dark / Light)
   const [themeMode, setThemeMode] = useState<'dark' | 'light'>(() => {
     if (typeof window !== 'undefined') {
@@ -86,9 +90,20 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       setIsAuthenticated(false);
       setPasswordInput('');
       setAuthError(false);
+      setPlatformSettings(storageService.getPlatformSettings());
       refreshFirms();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    const handleStorageSync = () => {
+      setPlatformSettings(storageService.getPlatformSettings());
+    };
+    window.addEventListener('aladl_storage_sync', handleStorageSync);
+    return () => {
+      window.removeEventListener('aladl_storage_sync', handleStorageSync);
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -113,10 +128,22 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
           </button>
           
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-amber-500 via-[#c5a869] to-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
-              <ShieldCheck className="w-8 h-8 text-slate-950" />
-            </div>
-            <h2 className="text-2xl font-serif text-white mb-2">{isAr ? 'إدارة المنصة' : 'Platform Administration'}</h2>
+            {platformSettings.platformLogoUrl ? (
+              <div className="h-16 flex items-center justify-center mx-auto mb-4">
+                <img
+                  src={platformSettings.platformLogoUrl}
+                  alt={isAr ? platformSettings.platformNameAr : platformSettings.platformNameEn}
+                  className="max-h-16 max-w-[200px] object-contain drop-shadow-lg rounded"
+                />
+              </div>
+            ) : (
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-500 via-[#c5a869] to-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-500/20">
+                <ShieldCheck className="w-8 h-8 text-slate-950" />
+              </div>
+            )}
+            <h2 className="text-2xl font-serif text-white mb-2">
+              {isAr ? (platformSettings.platformNameAr || 'إدارة المنصة') : (platformSettings.platformNameEn || 'Platform Administration')}
+            </h2>
             <p className="text-slate-400 text-sm">
               {isAr ? 'يرجى إدخال كلمة مرور مدير المنصة للمتابعة' : 'Please enter the platform manager password to continue'}
             </p>
@@ -335,13 +362,21 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             : 'bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border-slate-800 text-white'
         }`}>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 via-[#c5a869] to-amber-700 flex items-center justify-center text-slate-950 font-black shadow-lg">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
+            {platformSettings.platformLogoUrl ? (
+              <img
+                src={platformSettings.platformLogoUrl}
+                alt="Platform Logo"
+                className="h-11 w-auto max-w-[130px] object-contain drop-shadow-md rounded-lg"
+              />
+            ) : (
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 via-[#c5a869] to-amber-700 flex items-center justify-center text-slate-950 font-black shadow-lg">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2">
                 <h1 className={`text-xl font-bold font-serif-title ${themeMode === 'light' ? 'text-slate-900' : 'text-white'}`}>
-                  {isAr ? 'إدارة المنصة الرئيسية' : 'Platform Owner Master Console'}
+                  {isAr ? (platformSettings.platformNameAr ? `إدارة ${platformSettings.platformNameAr}` : 'إدارة المنصة الرئيسية') : (platformSettings.platformNameEn || 'Platform Owner Master Console')}
                 </h1>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                   PLATFORM MANAGER

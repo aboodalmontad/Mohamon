@@ -73,6 +73,7 @@ export const initialPlatformSettings: PlatformSettings = {
   heroSubheadingAr: 'منصة "محامون" تتيح لك إطلاق موقع احترافي لمكتبك، استقبال الاستشارات، وإدارة العملاء بكل سهولة وسرية تامة.',
   heroSubheadingEn: 'Lawyers Platform allows you to launch a professional website, receive consultations, and manage clients with absolute ease and confidentiality.',
   heroBannerUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=2000&q=80',
+  platformLogoUrl: '',
   ctaPrimaryAr: 'افتح مكتبك الآن',
   ctaPrimaryEn: 'Start Your Firm',
   ctaSecondaryAr: 'تصفح المكاتب',

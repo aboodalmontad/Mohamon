@@ -1,5 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, MapPin, Scale, Building, RefreshCw, QrCode, Sparkles, Check } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Shield, Briefcase, Globe, ArrowLeft, ArrowRight, UserPlus, Server, 
+  MapPin, Scale, Building, RefreshCw, QrCode, Sparkles, Check, 
+  Search, X, Filter, RotateCcw 
+} from 'lucide-react';
 import { FirmRegistrationModal } from './FirmRegistrationModal';
 import { FirmQRCodeModal } from './FirmQRCodeModal';
 import { Language, LawFirm, PricingPlan } from '../types';
@@ -24,6 +28,10 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
   const [settings, setSettings] = useState<PlatformSettings>(storageService.getPlatformSettings());
   const [qrModalFirm, setQrModalFirm] = useState<LawFirm | null>(null);
   const [plans, setPlans] = useState<PricingPlan[]>(() => pricingPlanService.getPlans());
+
+  // Search & Filter state for office names & cities
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCity, setSelectedCity] = useState<string>('all');
 
   useEffect(() => {
     const handlePlansUpdated = () => {
@@ -57,6 +65,51 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
     }
     setIsLoading(false);
   };
+
+  // Extract unique cities for instant filtering
+  const uniqueCities = useMemo(() => {
+    const set = new Set<string>();
+    activeFirms.forEach((f) => {
+      const firstOffice = (f.data as any)?.offices?.[0];
+      const city = isRtl
+        ? (f.cityAr || firstOffice?.cityAr)
+        : (f.cityEn || firstOffice?.cityEn || f.cityAr);
+      if (city && city.trim()) set.add(city.trim());
+    });
+    return Array.from(set);
+  }, [activeFirms, isRtl]);
+
+  // Real-time search by office name, lawyer, city, and specialties
+  const filteredFirms = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return activeFirms.filter((firm) => {
+      const firmSettings = firm.data?.settings;
+      const rawNameAr = (firm.nameAr || firmSettings?.firmNameAr || '').toLowerCase();
+      const rawNameEn = (firm.nameEn || firmSettings?.firmNameEn || '').toLowerCase();
+      const slug = (firm.slug || '').toLowerCase();
+      const firstOffice = (firm.data as any)?.offices?.[0];
+      const cityAr = (firm.cityAr || firstOffice?.cityAr || '').toLowerCase();
+      const cityEn = (firm.cityEn || firstOffice?.cityEn || '').toLowerCase();
+      const taglineAr = (firm.taglineAr || firmSettings?.sloganAr || '').toLowerCase();
+      const taglineEn = (firm.taglineEn || firmSettings?.sloganEn || '').toLowerCase();
+      const partners = (firm.data?.partners || []).map(p => `${p.name} ${p.nameEn || ''} ${p.title || ''}`).join(' ').toLowerCase();
+
+      const matchesQuery = !q ||
+        rawNameAr.includes(q) ||
+        rawNameEn.includes(q) ||
+        slug.includes(q) ||
+        cityAr.includes(q) ||
+        cityEn.includes(q) ||
+        taglineAr.includes(q) ||
+        taglineEn.includes(q) ||
+        partners.includes(q);
+
+      const matchesCity = selectedCity === 'all' ||
+        (firm.cityAr === selectedCity || firm.cityEn === selectedCity || firstOffice?.cityAr === selectedCity || firstOffice?.cityEn === selectedCity);
+
+      return matchesQuery && matchesCity;
+    });
+  }, [activeFirms, searchQuery, selectedCity]);
 
   useEffect(() => {
     loadFirms();
@@ -99,13 +152,29 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#c5a869] to-[#ebd397] flex items-center justify-center shadow-lg shadow-[#c5a869]/20">
-                <Shield className="w-6 h-6 text-[#181512]" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif text-[#c5a869] tracking-wider leading-none">{isRtl ? settings.platformNameAr : settings.platformNameEn}</h1>
-                <p className="text-xs text-white/40 tracking-[0.2em] mt-1 uppercase">{settings.platformNameEn}</p>
-              </div>
+              {settings.platformLogoUrl ? (
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <img
+                    src={settings.platformLogoUrl}
+                    alt={isRtl ? settings.platformNameAr : settings.platformNameEn}
+                    className="h-10 sm:h-12 w-auto max-w-[150px] sm:max-w-[220px] object-contain drop-shadow-md rounded-lg"
+                  />
+                  <div className="hidden sm:block">
+                    <h1 className="text-xl sm:text-2xl font-serif text-[#c5a869] tracking-wider leading-none">{isRtl ? settings.platformNameAr : settings.platformNameEn}</h1>
+                    <p className="text-[10px] text-white/40 tracking-[0.2em] mt-1 uppercase">{settings.platformNameEn}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#c5a869] to-[#ebd397] flex items-center justify-center shadow-lg shadow-[#c5a869]/20">
+                    <Shield className="w-6 h-6 text-[#181512]" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-serif text-[#c5a869] tracking-wider leading-none">{isRtl ? settings.platformNameAr : settings.platformNameEn}</h1>
+                    <p className="text-xs text-white/40 tracking-[0.2em] mt-1 uppercase">{settings.platformNameEn}</p>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="flex items-center gap-3 sm:gap-4">
@@ -219,15 +288,109 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
       {/* Directory Section */}
       <section id="directory" className="py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
             <div>
-              <h3 className="text-3xl font-serif text-white mb-4">{isRtl ? "دليل المكاتب المعتمدة" : lang === 'tr' ? "Kayıtlı Hukuk Büroları Rehberi" : "Registered Firms Directory"}</h3>
-              <p className="text-white/50 max-w-2xl">{isRtl ? "تصفح قائمة بمكاتب المحاماة الموثوقة والمسجلة في منصتنا، وتواصل معهم مباشرة." : lang === 'tr' ? "Platformumuzda kayıtlı güvenilir hukuk bürolarının listesine göz atın ve doğrudan iletişime geçin." : "Browse the list of trusted law firms registered on our platform and connect with them directly."}</p>
+              <h3 className="text-3xl font-serif text-white mb-3">{isRtl ? "دليل المكاتب المعتمدة" : lang === 'tr' ? "Kayıtlı Hukuk Büroları Rehberi" : "Registered Firms Directory"}</h3>
+              <p className="text-white/50 max-w-2xl text-sm sm:text-base">{isRtl ? "تصفح قائمة بمكاتب المحاماة الموثوقة والمسجلة في منصتنا، وابحث عن اسم المكتب أو تواصل معهم مباشرة." : lang === 'tr' ? "Platformumuzda kayıtlı güvenilir hukuk bürolarının listesine göz atın ve doğrudan iletişime geçin." : "Browse the list of trusted law firms registered on our platform and connect with them directly."}</p>
             </div>
-            <div className="text-[#c5a869] bg-[#c5a869]/10 px-4 py-2 rounded-lg font-medium border border-[#c5a869]/20 inline-flex items-center gap-2">
+            <div className="text-[#c5a869] bg-[#c5a869]/10 px-4 py-2 rounded-xl font-medium border border-[#c5a869]/20 inline-flex items-center gap-2 self-start md:self-auto">
               <Scale className="w-5 h-5" />
-              <span>{activeFirms.length} {isRtl ? "مكتب مسجل" : lang === 'tr' ? "Kayıtlı Büro" : "Registered Firms"}</span>
+              <span>{activeFirms.length} {isRtl ? "مكتب معتمد" : lang === 'tr' ? "Kayıtlı Büro" : "Registered Firms"}</span>
             </div>
+          </div>
+
+          {/* Real-time Office Search & Filtering Controls */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 mb-8 backdrop-blur-md space-y-4 shadow-xl">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              {/* Main Office Search Input */}
+              <div className="relative flex-1">
+                <Search className="absolute right-3.5 rtl:right-3.5 rtl:left-auto ltr:left-3.5 ltr:right-auto top-1/2 -translate-y-1/2 w-5 h-5 text-[#c5a869] pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={
+                    isRtl
+                      ? "ابحث عن اسم المكتب القانوني، اسم المحامي، أو المدينة..."
+                      : lang === 'tr'
+                      ? "Büro adı, avukat veya şehir ara..."
+                      : "Search by law office name, attorney, or city..."
+                  }
+                  className="w-full bg-slate-950/80 border border-white/15 focus:border-[#c5a869] focus:ring-2 focus:ring-[#c5a869]/30 rounded-xl py-3 px-11 text-white placeholder-white/40 text-sm sm:text-base transition-all outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute left-3.5 rtl:left-3.5 rtl:right-auto ltr:right-3.5 ltr:left-auto top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title={isRtl ? "مسح البحث" : "Clear search"}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Match Count Badge & Reset */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="text-xs text-white/70 bg-white/5 border border-white/10 px-3.5 py-3 rounded-xl flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-[#c5a869]" />
+                  <span>
+                    {isRtl
+                      ? `تم العثور على ${filteredFirms.length} من أصل ${activeFirms.length} مكتب`
+                      : `Found ${filteredFirms.length} of ${activeFirms.length} firms`}
+                  </span>
+                </div>
+                {(searchQuery || selectedCity !== 'all') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCity('all');
+                    }}
+                    className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                    title={isRtl ? 'إعادة ضبط كل الفلاتر' : 'Reset all filters'}
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">{isRtl ? 'إعادة ضبط' : 'Reset'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* City Filter Pills */}
+            {uniqueCities.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-3 border-t border-white/5 text-xs">
+                <span className="text-white/40 flex items-center gap-1 ml-1 rtl:ml-1 ltr:mr-1">
+                  <MapPin className="w-3.5 h-3.5 text-[#c5a869]" />
+                  <span>{isRtl ? 'المدينة:' : 'City:'}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCity('all')}
+                  className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+                    selectedCity === 'all'
+                      ? 'bg-[#c5a869] text-slate-950 font-bold shadow-sm'
+                      : 'bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/5'
+                  }`}
+                >
+                  {isRtl ? 'جميع المدن' : 'All Cities'}
+                </button>
+                {uniqueCities.map((city) => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => setSelectedCity(selectedCity === city ? 'all' : city)}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${
+                      selectedCity === city
+                        ? 'bg-[#c5a869] text-slate-950 font-bold shadow-sm'
+                        : 'bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/5'
+                    }`}
+                  >
+                    {city}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {isLoading && activeFirms.length === 0 ? (
@@ -236,9 +399,9 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               <h4 className="text-xl text-white mb-2">{isRtl ? "جاري تحميل المكاتب..." : lang === 'tr' ? "Bürolar Yükleniyor..." : "Loading Firms..."}</h4>
               <p className="text-white/50">{isRtl ? "يرجى الانتظار بينما نقوم بجلب قائمة المكاتب المعتمدة." : lang === 'tr' ? "Kayıtlı hukuk bürolarını getirirken lütfen bekleyin." : "Please wait while we fetch the registered law firms."}</p>
             </div>
-          ) : activeFirms.length > 0 ? (
+          ) : filteredFirms.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeFirms.map((firm) => {
+              {filteredFirms.map((firm) => {
                 const logo = firm.logoUrl || (firm.data?.settings as any)?.customLogoUrl || (firm.data?.settings as any)?.logoUrl;
                 const firmSettings = firm.data?.settings;
                 const rawNameAr = firm.nameAr || firmSettings?.firmNameAr || 'مكتب محاماة معتمد';
@@ -337,6 +500,32 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
                   </a>
                 );
               })}
+            </div>
+          ) : activeFirms.length > 0 ? (
+            /* Search yielded no results */
+            <div className="text-center py-16 bg-white/5 border border-white/10 rounded-2xl p-6">
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-[#c5a869]">
+                <Search className="w-8 h-8" />
+              </div>
+              <h4 className="text-xl font-bold text-white mb-2">
+                {isRtl ? 'لم يتم العثور على مكاتب تطابق بحثك' : 'No law firms match your search'}
+              </h4>
+              <p className="text-white/50 text-sm max-w-md mx-auto mb-6">
+                {isRtl
+                  ? `لا توجد نتائج تطابق "${searchQuery}". تأكد من صحة كتابة اسم المكتب أو جرب البحث بكلمة أخرى أو تصفح جميع المدن.`
+                  : `No results matching "${searchQuery}". Try a different keyword or reset filters.`}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedCity('all');
+                }}
+                className="px-6 py-2.5 rounded-xl bg-[#c5a869] hover:bg-[#ebd397] text-[#181512] font-bold text-sm transition cursor-pointer inline-flex items-center gap-2 shadow-lg shadow-[#c5a869]/20"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>{isRtl ? 'عرض جميع المكاتب' : 'Show All Firms'}</span>
+              </button>
             </div>
           ) : (
             <div className="text-center py-20 bg-white/5 border border-white/10 rounded-2xl">
@@ -514,6 +703,66 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
           </div>
         </div>
       </section>
+
+      {/* Platform Executive Footer */}
+      <footer className="bg-slate-950 border-t border-white/10 py-12 px-4 sm:px-6 lg:px-8 relative z-10 text-white/70">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            {settings.platformLogoUrl ? (
+              <img
+                src={settings.platformLogoUrl}
+                alt={isRtl ? settings.platformNameAr : settings.platformNameEn}
+                className="h-10 w-auto max-w-[150px] object-contain drop-shadow-md rounded"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#c5a869] to-[#ebd397] flex items-center justify-center text-slate-950 font-bold shadow-md">
+                <Shield className="w-6 h-6 text-[#181512]" />
+              </div>
+            )}
+            <div>
+              <div className="text-base font-serif text-[#c5a869] font-bold">
+                {isRtl ? settings.platformNameAr : settings.platformNameEn}
+              </div>
+              <div className="text-xs text-white/50">
+                {isRtl ? settings.heroBadgeAr : settings.heroBadgeEn}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-white/60">
+            <button
+              onClick={() => {
+                document.getElementById('directory')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:text-[#c5a869] transition-colors cursor-pointer"
+            >
+              {isRtl ? 'دليل وبحث المكاتب' : 'Directory & Search'}
+            </button>
+            <button
+              onClick={() => setIsRegistrationOpen(true)}
+              className="hover:text-[#c5a869] transition-colors cursor-pointer"
+            >
+              {isRtl ? 'تسجيل مكتب محاماة' : 'Register Law Firm'}
+            </button>
+            <button
+              onClick={onAdminClick}
+              className="hover:text-[#c5a869] transition-colors cursor-pointer"
+            >
+              {isRtl ? 'إدارة المنصة' : 'Platform Administration'}
+            </button>
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="hover:text-[#c5a869] transition-colors cursor-pointer"
+            >
+              {isRtl ? 'العودة للأعلى ↑' : 'Back to top ↑'}
+            </button>
+          </div>
+
+          <div className="text-xs text-white/40 text-center md:text-start">
+            © {new Date().getFullYear()} {isRtl ? settings.platformNameAr : settings.platformNameEn}. {isRtl ? 'كافة الحقوق محفوظة.' : 'All rights reserved.'}
+          </div>
+        </div>
+      </footer>
 
       {isRegistrationOpen && (
         <FirmRegistrationModal 

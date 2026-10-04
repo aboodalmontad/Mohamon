@@ -165,6 +165,7 @@ export interface PlatformSettings {
   heroSubheadingEn: string;
   heroSubheadingTr?: string;
   heroBannerUrl?: string;
+  platformLogoUrl?: string;
   ctaPrimaryAr: string;
   ctaPrimaryEn: string;
   ctaPrimaryTr?: string;
