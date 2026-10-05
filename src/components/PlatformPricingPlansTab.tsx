@@ -296,12 +296,9 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
           featuresAr: formData.featuresAr,
           featuresEn: formData.featuresEn,
         });
-        await pricingPlanService.syncToCloud();
 
-        // 1. Show immediate success in modal
+        // 1. Show immediate success in modal & tab banner
         setModalSuccessMsg(isAr ? '✓ تم حفظ التعديل بنجاح!' : '✓ Modification saved successfully!');
-
-        // 2. Set prominent banner at top of tab
         setSaveSuccessNotification({
           type: 'edit',
           planName: planDisplayName,
@@ -309,8 +306,10 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
           timestamp: Date.now(),
         });
         setHighlightedPlanId(savedId);
+        showToast(isAr ? `✓ تم حفظ تعديل باقة (${planDisplayName}) بنجاح!` : `Plan (${planDisplayName}) modification saved successfully!`);
 
-        showToast(isAr ? `✓ تم حفظ تعديل باقة (${planDisplayName}) بنجاح ومزامنتها سحابياً!` : `Plan (${planDisplayName}) modification saved successfully!`);
+        // Trigger background cloud sync
+        pricingPlanService.syncToCloud().catch((e) => console.warn('Background sync:', e));
       } else {
         const newPlan = pricingPlanService.addPlan({
           tier: formData.tier.trim().toLowerCase() || `custom_${Date.now().toString().slice(-4)}`,
@@ -339,12 +338,9 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
           sortOrder: plans.length + 1,
         });
         savedId = newPlan.id;
-        await pricingPlanService.syncToCloud();
 
-        // 1. Show immediate success in modal
+        // 1. Show immediate success in modal & tab banner
         setModalSuccessMsg(isAr ? '✓ تمت إضافة الباقة الجديدة وحفظها بنجاح!' : '✓ New plan created & saved successfully!');
-
-        // 2. Set prominent banner at top of tab
         setSaveSuccessNotification({
           type: 'add',
           planName: planDisplayName,
@@ -352,18 +348,20 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
           timestamp: Date.now(),
         });
         setHighlightedPlanId(savedId);
+        showToast(isAr ? `✓ تمت إضافة باقة (${planDisplayName}) بنجاح!` : `New plan (${planDisplayName}) created & saved successfully!`);
 
-        showToast(isAr ? `✓ تمت إضافة باقة (${planDisplayName}) بنجاح ومزامنتها سحابياً!` : `New plan (${planDisplayName}) created & saved successfully!`);
+        // Trigger background cloud sync
+        pricingPlanService.syncToCloud().catch((e) => console.warn('Background sync:', e));
       }
 
       refreshPlans();
 
-      // Smoothly close modal after user perceives success
+      // Smoothly close modal immediately without lag
       setTimeout(() => {
         setIsAddModalOpen(false);
         setIsSaving(false);
         setModalSuccessMsg('');
-      }, 700);
+      }, 250);
 
       // Clear row highlight after 8 seconds
       setTimeout(() => {
@@ -377,27 +375,27 @@ export const PlatformPricingPlansTab: React.FC<PlatformPricingPlansTabProps> = (
     }
   };
 
-  const handleDeletePlan = async (id: string) => {
+  const handleDeletePlan = (id: string) => {
     pricingPlanService.deletePlan(id);
-    await pricingPlanService.syncToCloud();
+    pricingPlanService.syncToCloud().catch(() => {});
     setDeletePlanId(null);
-    showToast(isAr ? '⚡️ تم حذف الباقة وتحديث السحابة بنجاح!' : 'Pricing plan deleted & synced to cloud!');
+    showToast(isAr ? '⚡️ تم حذف الباقة بنجاح!' : 'Pricing plan deleted successfully!');
     refreshPlans();
   };
 
-  const handleToggleActive = async (id: string) => {
+  const handleToggleActive = (id: string) => {
     pricingPlanService.togglePlanActive(id);
-    await pricingPlanService.syncToCloud();
+    pricingPlanService.syncToCloud().catch(() => {});
     refreshPlans();
-    showToast(isAr ? '⚡️ تم تغيير حالة التفعيل وحفظها في السحابة!' : 'Plan status updated & saved to cloud!');
+    showToast(isAr ? '⚡️ تم تغيير حالة التفعيل بنجاح!' : 'Plan status updated successfully!');
   };
 
-  const handleResetDefaults = async () => {
+  const handleResetDefaults = () => {
     if (window.confirm(isAr ? 'هل أنت متأكد من استعادة باقات التسعير الافتراضية وحفظها في السحابة للمنصة؟' : 'Reset to default pricing plans and sync to cloud?')) {
       pricingPlanService.resetToDefaults();
-      await pricingPlanService.syncToCloud();
+      pricingPlanService.syncToCloud().catch(() => {});
       refreshPlans();
-      showToast(isAr ? '⚡️ تمت استعادة الباقات وحفظها في السحابة بنجاح!' : 'Pricing plans reset & saved to cloud!');
+      showToast(isAr ? '⚡️ تمت استعادة الباقات بنجاح!' : 'Pricing plans reset successfully!');
     }
   };
 
