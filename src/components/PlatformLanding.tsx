@@ -338,11 +338,11 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
               </button>
               <button 
                 onClick={() => storageService.clearCacheAndRefreshApp()}
-                className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition-colors bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 rounded-lg cursor-pointer"
-                title={isRtl ? 'مسح الكاش وتحديث الصفحة' : lang === 'tr' ? 'Önbelleği Temizle ve Yenile' : 'Clear Cache & Refresh'}
+                className="flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-all bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#c5a869]/40 px-3 py-2 rounded-lg cursor-pointer active:scale-95 group"
+                title={isRtl ? 'تحديث الصفحة ومسح الذاكرة المؤقتة بالكامل' : lang === 'tr' ? 'Önbelleği Temizle ve Yenile' : 'Refresh Page & Clear Cache'}
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">{isRtl ? 'تحديث الكاش' : lang === 'tr' ? 'Önbelleği Temizle' : 'Clear Cache'}</span>
+                <RefreshCw className="w-3.5 h-3.5 text-[#c5a869] group-hover:rotate-180 transition-transform duration-500" />
+                <span className="font-medium">{isRtl ? 'تحديث' : lang === 'tr' ? 'Yenile' : 'Refresh'}</span>
               </button>
               <button 
                 onClick={onAdminClick}

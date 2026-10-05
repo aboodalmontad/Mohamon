@@ -1378,88 +1378,71 @@ export const initialContactMessages: ContactMessage[] = ${JSON.stringify(message
   },
 
   // Safe Cache Clearing & Application Update:
-  // Preserves 100% of user data, backs it up to IndexedDB, clears runtime browser caches, and refreshes the application.
+  // Completely purges device browser cache, CacheStorage, Service Workers, SessionStorage,
+  // syncs latest cloud state, and performs a hard refresh to load a fresh copy of the application.
   clearCacheAndRefreshApp: async (onStatus?: (msg: string) => void) => {
     try {
-      if (onStatus) onStatus('جاري تأمين وحفظ البيانات في التخزين الدائم...');
-      
-      // Step 1: Snapshot and preserve all data
-      const currentSnapshot = {
-        partners: storageService.getPartners(),
-        practiceAreas: storageService.getPracticeAreas(),
-        caseStudies: storageService.getCaseStudies(),
-        testimonials: storageService.getTestimonials(),
-        blogPosts: storageService.getBlogPosts(),
-        messages: storageService.getMessages(),
-        settings: storageService.getSettings(),
-        offices: storageService.getOffices(),
-        auditLogs: storageService.getAuditLogs(),
-        platformSettings: storageService.getPlatformSettings(),
-        savedAt: new Date().toISOString()
-      };
+      if (onStatus) onStatus('جاري تنظيف الذاكرة المؤقتة (Cache Storage)...');
 
-      // Save to IndexedDB and ensure localStorage keys are fresh
-      await saveSnapshotToIDB(currentSnapshot);
-
-      try {
-        safeLocalStorageSet(STORAGE_KEYS.PARTNERS, JSON.stringify(currentSnapshot.partners));
-        safeLocalStorageSet(STORAGE_KEYS.PRACTICE_AREAS, JSON.stringify(currentSnapshot.practiceAreas));
-        safeLocalStorageSet(STORAGE_KEYS.CASE_STUDIES, JSON.stringify(currentSnapshot.caseStudies));
-        safeLocalStorageSet(STORAGE_KEYS.TESTIMONIALS, JSON.stringify(currentSnapshot.testimonials));
-        safeLocalStorageSet(STORAGE_KEYS.BLOG_POSTS, JSON.stringify(currentSnapshot.blogPosts));
-        safeLocalStorageSet(STORAGE_KEYS.MESSAGES, JSON.stringify(currentSnapshot.messages));
-        safeLocalStorageSet(STORAGE_KEYS.SETTINGS, JSON.stringify(currentSnapshot.settings));
-        safeLocalStorageSet(STORAGE_KEYS.OFFICES, JSON.stringify(currentSnapshot.offices));
-        safeLocalStorageSet(STORAGE_KEYS.PLATFORM_SETTINGS, JSON.stringify(currentSnapshot.platformSettings));
-      } catch (e) {
-        console.warn('Cache refresh data restoration partially failed due to quota', e);
-      }
-
-      if (onStatus) onStatus('جاري مسح ملفات الذاكرة المؤقتة (Cache Storage)...');
-
-      // Step 2: Clear Service Worker caches if available
+      // Step 1: Wipe all CacheStorage API caches (PWA, assets, runtime caches)
       if (typeof window !== 'undefined' && 'caches' in window) {
         try {
           const cacheKeys = await window.caches.keys();
           await Promise.all(cacheKeys.map(key => window.caches.delete(key)));
         } catch (e) {
-          console.warn('Cache storage cleanup non-critical error:', e);
+          console.warn('Cache storage cleanup error:', e);
         }
       }
 
-      // Step 3: Unregister obsolete service workers if any
+      // Step 2: Unregister all active & obsolete Service Workers
       if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
         try {
           const registrations = await navigator.serviceWorker.getRegistrations();
-          for (const registration of registrations) {
-            await registration.unregister();
-          }
+          await Promise.all(registrations.map(reg => reg.unregister()));
         } catch (e) {
           console.warn('Service worker unregister error:', e);
         }
       }
 
-      // Step 4: Clear session-level ephemeral data
+      // Step 3: Clear session-level ephemeral data & memory runtime state
       if (typeof sessionStorage !== 'undefined') {
-        sessionStorage.clear();
+        try {
+          sessionStorage.clear();
+        } catch {}
+      }
+
+      if (onStatus) onStatus('جاري تحميل أحدث البيانات والنسخة السحابية...');
+
+      // Step 4: Sync fresh platform settings from Firestore / Server
+      try {
+        await storageService.initPlatformSettings();
+      } catch (e) {
+        console.warn('Platform settings fresh sync during cache refresh:', e);
       }
 
       // Step 5: Log audit entry
-      storageService.logAction('STATUS_CHANGE', 'تحديث النظام والكاش', 'system-cache', 'تم مسح ذاكرة التخزين المؤقت وتحديث التطبيق مع الحفاظ الكامل على كافة البيانات');
+      try {
+        storageService.logAction('STATUS_CHANGE', 'تحديث النظام ومسح الذاكرة', 'system-cache', 'تم مسح ذاكرة التخزين المؤقت وتحميل أحدث نسخة من التطبيق بنجاح');
+      } catch {}
 
-      if (onStatus) onStatus('تم تأمين البيانات بنجاح! جاري تحديث التطبيق الآن...');
+      if (onStatus) onStatus('تم مسح الذاكرة بنجاح! جاري تحميل النسخة الجديدة...');
 
-      // Step 6: Hard reload the page
+      // Step 6: Hard reload with cache buster to force browser network fetch
       setTimeout(() => {
         if (typeof window !== 'undefined') {
-          window.location.reload();
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set('_v', Date.now().toString());
+            window.location.replace(url.toString());
+          } catch {
+            window.location.reload();
+          }
         }
-      }, 600);
+      }, 300);
 
       return true;
     } catch (err) {
       console.error('Error during safe cache refresh:', err);
-      // Fallback reload
       if (typeof window !== 'undefined') {
         window.location.reload();
       }

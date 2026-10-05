@@ -17,8 +17,8 @@ export const UI_TRANSLATIONS = {
     topHotline: 'خط الطوارئ والاستجابة الفورية:',
     bookConsultation: 'احجز استشارة',
     adminPanel: 'لوحة التحكم',
-    refreshApp: 'تحديث التطبيق',
-    refreshConfirm: '🔄 هل تريد مسح الكاش وتحميل أحدث نسخة من التطبيق؟',
+    refreshApp: 'تحديث',
+    refreshConfirm: '🔄 هل تريد مسح الذاكرة المؤقتة (الكاش) وتحديث الصفحة وتحميل أحدث نسخة من التطبيق؟',
 
     // Hero
     heroTag: 'تحالف قانوني معتمد دولياً',
@@ -148,8 +148,8 @@ export const UI_TRANSLATIONS = {
     topHotline: '24/7 Emergency Hotline:',
     bookConsultation: 'Book Consultation',
     adminPanel: 'Admin Panel',
-    refreshApp: 'Reload App',
-    refreshConfirm: '🔄 Clear cache and load the latest version of the application?',
+    refreshApp: 'Refresh',
+    refreshConfirm: '🔄 Clear cache and reload the latest version of the application?',
 
     // Hero
     heroTag: 'Internationally Accredited Legal Alliance',
@@ -279,7 +279,7 @@ export const UI_TRANSLATIONS = {
     topHotline: '7/24 Acil Hukuki Destek Hattı:',
     bookConsultation: 'Danışmanlık Alın',
     adminPanel: 'Yönetim Paneli',
-    refreshApp: 'Uygulamayı Yenile',
+    refreshApp: 'Yenile',
     refreshConfirm: '🔄 Önbelleği temizleyip en güncel sürümü yüklemek istiyor musunuz?',
 
     // Hero

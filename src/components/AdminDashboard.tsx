@@ -2013,12 +2013,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ isOpen, onClose,
                 type="button"
                 onClick={handleClearCacheAndRefresh}
                 disabled={isTranslating || !!bulkTranslateProgress || !!cacheRefreshProgress}
-                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50"
-                title={isAr ? 'مسح ذاكرة التخزين المؤقت (Cache) وتحديث التطبيق مع الحفاظ الكامل على كافة البيانات والإعدادات' : 'Clear cache and refresh app while preserving all data'}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:opacity-50 group"
+                title={isAr ? 'تحديث التطبيق ومسح ذاكرة التخزين المؤقت (Cache) وتحميل أحدث نسخة' : 'Refresh application & clear cache'}
               >
-                <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden sm:inline">{isAr ? 'مسح الكاش وتحديث التطبيق' : 'Clear Cache & Update'}</span>
-                <span className="sm:hidden">{isAr ? 'تحديث' : 'Refresh'}</span>
+                <RefreshCw className="w-3.5 h-3.5 text-cyan-400 group-hover:rotate-180 transition-transform duration-500" />
+                <span>{isAr ? 'تحديث' : 'Refresh'}</span>
               </button>
             )}
 
