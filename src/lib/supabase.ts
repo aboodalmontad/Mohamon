@@ -520,7 +520,55 @@ CREATE TABLE IF NOT EXISTS public.domain_mappings (
 CREATE INDEX IF NOT EXISTS idx_domain_mappings_domain ON public.domain_mappings(custom_domain);
 
 -- -------------------------------------------------------------------------
--- 11. إعدادات الأمان وسياسات الوصول (Row Level Security - RLS)
+-- 11. جدول باقات وأسعار المنصة (Platform Pricing Plans)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.platform_pricing_plans (
+  id TEXT PRIMARY KEY,
+  tier TEXT NOT NULL,
+  name_ar TEXT NOT NULL,
+  name_en TEXT DEFAULT '',
+  name_tr TEXT DEFAULT '',
+  badge_ar TEXT DEFAULT '',
+  badge_en TEXT DEFAULT '',
+  badge_tr TEXT DEFAULT '',
+  description_ar TEXT DEFAULT '',
+  description_en TEXT DEFAULT '',
+  description_tr TEXT DEFAULT '',
+  price NUMERIC DEFAULT 0,
+  currency TEXT DEFAULT 'USD',
+  price_usd NUMERIC DEFAULT 0,
+  price_sar NUMERIC DEFAULT 0,
+  price_aed NUMERIC DEFAULT 0,
+  price_try NUMERIC DEFAULT 0,
+  price_syp NUMERIC DEFAULT 0,
+  billing_cycle TEXT DEFAULT 'annual',
+  is_popular BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  max_lawyers INTEGER DEFAULT 1,
+  max_offices INTEGER DEFAULT 1,
+  custom_domain_allowed BOOLEAN DEFAULT false,
+  storage_gb INTEGER DEFAULT 5,
+  ai_assistant_enabled BOOLEAN DEFAULT false,
+  support_level_ar TEXT DEFAULT '',
+  sort_order INTEGER DEFAULT 1,
+  features_ar JSONB DEFAULT '[]'::jsonb,
+  features_en JSONB DEFAULT '[]'::jsonb,
+  features_tr JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- -------------------------------------------------------------------------
+-- 12. جدول إعدادات المنصة الموحد (Platform Settings Key-Value)
+-- -------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.platform_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- -------------------------------------------------------------------------
+-- 13. إعدادات الأمان وسياسات الوصول (Row Level Security - RLS)
 -- -------------------------------------------------------------------------
 ALTER TABLE public.law_firms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_inquiries ENABLE ROW LEVEL SECURITY;
@@ -532,6 +580,8 @@ ALTER TABLE public.testimonials ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blog_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.office_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.domain_mappings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.platform_pricing_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.platform_settings ENABLE ROW LEVEL SECURITY;
 
 -- سياسات القراءة العامة (Public Select): تمكين أي زائر من تصفح مواقع المكاتب
 DROP POLICY IF EXISTS "Public select on law_firms" ON public.law_firms;
@@ -557,6 +607,12 @@ CREATE POLICY "Public select on office_locations" ON public.office_locations FOR
 
 DROP POLICY IF EXISTS "Public select on domain_mappings" ON public.domain_mappings;
 CREATE POLICY "Public select on domain_mappings" ON public.domain_mappings FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Public select on platform_pricing_plans" ON public.platform_pricing_plans;
+CREATE POLICY "Public select on platform_pricing_plans" ON public.platform_pricing_plans FOR SELECT TO anon, authenticated USING (true);
+
+DROP POLICY IF EXISTS "Public select on platform_settings" ON public.platform_settings;
+CREATE POLICY "Public select on platform_settings" ON public.platform_settings FOR SELECT TO anon, authenticated USING (true);
 
 -- سياسات الإدخال والتعديل لمدراء المكاتب والتطبيق (Full Access for Anon / Auth)
 DROP POLICY IF EXISTS "Allow all for law_firms" ON public.law_firms;
@@ -588,6 +644,12 @@ CREATE POLICY "Allow all for office_locations" ON public.office_locations FOR AL
 
 DROP POLICY IF EXISTS "Allow all for domain_mappings" ON public.domain_mappings;
 CREATE POLICY "Allow all for domain_mappings" ON public.domain_mappings FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all for platform_pricing_plans" ON public.platform_pricing_plans;
+CREATE POLICY "Allow all for platform_pricing_plans" ON public.platform_pricing_plans FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all for platform_settings" ON public.platform_settings;
+CREATE POLICY "Allow all for platform_settings" ON public.platform_settings FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- -------------------------------------------------------------------------
 -- 12. تفعيل المزامنة المباشرة (Supabase Realtime)

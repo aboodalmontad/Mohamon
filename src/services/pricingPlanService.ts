@@ -1,7 +1,7 @@
 import { PricingPlan, Language } from '../types';
 import { getSupabase, getStoredSupabaseConfig } from '../lib/supabase';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 const STORAGE_KEY_PLANS = 'aladl_platform_pricing_plans_v1';
 const STORAGE_KEY_PLANS_UPDATED_AT = 'aladl_platform_pricing_plans_updated_at_v1';
@@ -508,6 +508,17 @@ class PricingPlanService {
           plans: plansToSync,
           updatedAt: new Date().toISOString(),
         }, { merge: true });
+
+        // Save each plan to collection platform_pricing_plans
+        for (const p of plansToSync) {
+          try {
+            await setDoc(doc(db, 'platform_pricing_plans', p.id), {
+              ...p,
+              updatedAt: new Date().toISOString(),
+            }, { merge: true });
+          } catch {}
+        }
+
         firestoreOk = true;
       }
     } catch (fsErr) {
@@ -660,6 +671,9 @@ class PricingPlanService {
     const prevLen = this.plans.length;
     this.plans = this.plans.filter(p => p.id !== id);
     if (this.plans.length !== prevLen) {
+      if (db) {
+        deleteDoc(doc(db, 'platform_pricing_plans', id)).catch(() => {});
+      }
       this.savePlans(true);
       return true;
     }
