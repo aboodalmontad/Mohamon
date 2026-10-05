@@ -10,6 +10,7 @@ import {
   initialCaseStudies, 
   initialContactMessages, 
   initialSiteSettings, 
+  initialPlatformSettings,
   initialOffices 
 } from './data/initialData';
 import { initialPricingPlans } from './services/pricingPlanService';
@@ -17,6 +18,7 @@ import { initialPricingPlans } from './services/pricingPlanService';
 const PUBLIC_DATA_PATH = path.join(process.cwd(), 'public', 'site_data.json');
 const FIRMS_DATA_PATH = path.join(process.cwd(), 'public', 'firms_data.json');
 const PLANS_DATA_PATH = path.join(process.cwd(), 'public', 'pricing_plans.json');
+const PLATFORM_SETTINGS_DATA_PATH = path.join(process.cwd(), 'public', 'platform_settings.json');
 const SUPABASE_CONFIG_PATH = path.join(process.cwd(), 'public', 'supabase_config.json');
 const INITIAL_DATA_TS_PATH = path.join(process.cwd(), 'src', 'data', 'initialData.ts');
 
@@ -107,6 +109,13 @@ export function ensurePublicDataFile() {
         fs.writeFileSync(PLANS_DATA_PATH, JSON.stringify(initialPricingPlans, null, 2), 'utf-8');
       } catch (e) {
         console.warn('Could not write PLANS_DATA_PATH (read-only filesystem):', e);
+      }
+    }
+    if (!fs.existsSync(PLATFORM_SETTINGS_DATA_PATH)) {
+      try {
+        fs.writeFileSync(PLATFORM_SETTINGS_DATA_PATH, JSON.stringify(initialPlatformSettings, null, 2), 'utf-8');
+      } catch (e) {
+        console.warn('Could not write PLATFORM_SETTINGS_DATA_PATH (read-only filesystem):', e);
       }
     }
   } catch (err) {
@@ -423,6 +432,61 @@ app.post('/api/pricing-plans', (req, res) => {
     }
     setServerPricingPlans(plans);
     return res.json({ success: true, count: plans.length, updatedAt: new Date().toISOString() });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+let serverPlatformSettingsMemoryCache: any = null;
+
+function getServerPlatformSettings(): any {
+  try {
+    if (fs.existsSync(PLATFORM_SETTINGS_DATA_PATH)) {
+      const fileData = JSON.parse(fs.readFileSync(PLATFORM_SETTINGS_DATA_PATH, 'utf-8'));
+      if (fileData && typeof fileData === 'object') {
+        serverPlatformSettingsMemoryCache = fileData;
+        return fileData;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading PLATFORM_SETTINGS_DATA_PATH into cache:', e);
+  }
+  return serverPlatformSettingsMemoryCache || initialPlatformSettings;
+}
+
+function setServerPlatformSettings(settings: any) {
+  serverPlatformSettingsMemoryCache = settings;
+  try {
+    fs.writeFileSync(PLATFORM_SETTINGS_DATA_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+    const distSettingsPath = path.join(process.cwd(), 'dist', 'platform_settings.json');
+    if (fs.existsSync(path.join(process.cwd(), 'dist'))) {
+      fs.writeFileSync(distSettingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+    }
+  } catch (e) {
+    console.warn('Could not write PLATFORM_SETTINGS_DATA_PATH:', e);
+  }
+}
+
+app.get('/api/platform-settings', (_req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    return res.json({ success: true, data: getServerPlatformSettings() });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, data: initialPlatformSettings, error: err.message });
+  }
+});
+
+app.post('/api/platform-settings', (req, res) => {
+  try {
+    const { settings } = req.body;
+    if (!settings || typeof settings !== 'object') {
+      return res.status(400).json({ success: false, error: 'Settings object required' });
+    }
+    const merged = { ...getServerPlatformSettings(), ...settings };
+    setServerPlatformSettings(merged);
+    return res.json({ success: true, data: merged, updatedAt: new Date().toISOString() });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

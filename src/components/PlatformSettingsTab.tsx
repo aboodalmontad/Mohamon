@@ -89,16 +89,56 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert(isAr ? 'حجم اللوغو كبير جداً (الحد الأقصى 5 ميجابايت)' : 'Logo file is too large (Max 5MB)');
+    if (file.size > 8 * 1024 * 1024) {
+      alert(isAr ? 'حجم اللوغو كبير جداً (الحد الأقصى 8 ميجابايت)' : 'Logo file is too large (Max 8MB)');
       return;
     }
 
+    // Handle SVG images directly
+    if (file.type === 'image/svg+xml') {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setSettings(prev => ({ ...prev, platformLogoUrl: reader.result as string }));
+        }
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // For raster images (PNG, JPG, WebP), optimize & resize smoothly to ensure crisp display with fast cloud sync
     const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === 'string') {
-        setSettings(prev => ({ ...prev, platformLogoUrl: reader.result as string }));
-      }
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_DIM = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const format = file.type === 'image/png' ? 'image/png' : 'image/webp';
+          const optimizedDataUrl = canvas.toDataURL(format, 0.92);
+          setSettings(prev => ({ ...prev, platformLogoUrl: optimizedDataUrl }));
+        }
+      };
+      img.src = readerEvent.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -126,13 +166,11 @@ export const PlatformSettingsTab: React.FC<PlatformSettingsTabProps> = ({ lang }
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaveStatus('saving');
-    storageService.savePlatformSettings(settings);
-    setTimeout(() => {
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 2000);
-    }, 600);
+    await storageService.savePlatformSettings(settings);
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus('idle'), 2500);
   };
 
   return (

@@ -179,8 +179,21 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
   useEffect(() => {
     loadFirms();
     
+    // Initial fetch of platform branding, logo, and texts from Firestore / Server
+    storageService.initPlatformSettings().then(latestSettings => {
+      if (latestSettings) setSettings(latestSettings);
+    }).catch(() => {});
+
     const handleStorageSync = () => {
       setSettings(storageService.getPlatformSettings());
+    };
+
+    const handlePlatformSettingsUpdated = (e: any) => {
+      if (e && e.detail) {
+        setSettings(e.detail);
+      } else {
+        setSettings(storageService.getPlatformSettings());
+      }
     };
     
     const handleFirmsUpdated = (e?: any) => {
@@ -198,12 +211,14 @@ export const PlatformLanding: React.FC<PlatformLandingProps> = ({ onAdminClick, 
     };
 
     window.addEventListener('aladl_storage_sync', handleStorageSync);
+    window.addEventListener('aladl_platform_settings_updated', handlePlatformSettingsUpdated);
     window.addEventListener('aladl_firms_updated', handleFirmsUpdated);
     window.addEventListener('aladl_default_firm_changed', handleFirmsUpdated);
     window.addEventListener('aladl_active_firm_changed', handleFirmsUpdated);
 
     return () => {
       window.removeEventListener('aladl_storage_sync', handleStorageSync);
+      window.removeEventListener('aladl_platform_settings_updated', handlePlatformSettingsUpdated);
       window.removeEventListener('aladl_firms_updated', handleFirmsUpdated);
       window.removeEventListener('aladl_default_firm_changed', handleFirmsUpdated);
       window.removeEventListener('aladl_active_firm_changed', handleFirmsUpdated);

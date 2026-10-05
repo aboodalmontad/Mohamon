@@ -91,6 +91,9 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
       setPasswordInput('');
       setAuthError(false);
       setPlatformSettings(storageService.getPlatformSettings());
+      storageService.initPlatformSettings().then(s => {
+        if (s) setPlatformSettings(s);
+      }).catch(() => {});
       refreshFirms();
     }
   }, [isOpen]);
@@ -99,9 +102,19 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
     const handleStorageSync = () => {
       setPlatformSettings(storageService.getPlatformSettings());
     };
+    const handlePlatformSettingsUpdated = (e: any) => {
+      if (e && e.detail) {
+        setPlatformSettings(e.detail);
+      } else {
+        setPlatformSettings(storageService.getPlatformSettings());
+      }
+    };
+
     window.addEventListener('aladl_storage_sync', handleStorageSync);
+    window.addEventListener('aladl_platform_settings_updated', handlePlatformSettingsUpdated);
     return () => {
       window.removeEventListener('aladl_storage_sync', handleStorageSync);
+      window.removeEventListener('aladl_platform_settings_updated', handlePlatformSettingsUpdated);
     };
   }, []);
 

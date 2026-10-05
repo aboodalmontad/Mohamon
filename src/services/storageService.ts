@@ -2,6 +2,8 @@ import { Partner, PracticeArea, Testimonial, BlogPost, CaseStudy, ContactMessage
 import { initialPlatformSettings, initialPartners, initialPracticeAreas, initialTestimonials, initialBlogPosts, initialCaseStudies, initialContactMessages, initialSiteSettings, initialOffices, DEFAULT_WHY_PILLARS } from '../data/initialData';
 import { firmService } from './firmService';
 import { getSupabase, getStoredSupabaseConfig, isValidUUID, toValidUUID } from '../lib/supabase';
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   PARTNERS: 'aladl_partners_v1',
@@ -806,22 +808,194 @@ export const storageService = {
     return list;
   },
 
-  // Site Settings
+  // Platform Settings (Global for platform branding, logo, and hero banner)
+
+  initPlatformSettings: async (): Promise<PlatformSettings> => {
+    if (typeof window === 'undefined') return { ...initialPlatformSettings };
+
+    const mergeAndApply = (incoming: Partial<PlatformSettings>) => {
+      if (!incoming || typeof incoming !== 'object') return;
+      const current = storageService.getPlatformSettings();
+      const merged: PlatformSettings = {
+        ...initialPlatformSettings,
+        ...current,
+        ...incoming,
+      };
+      safeLocalStorageSet(STORAGE_KEYS.PLATFORM_SETTINGS, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('aladl_platform_settings_updated', { detail: merged }));
+      notifyChange();
+      return merged;
+    };
+
+    // 1. Firebase Firestore Realtime Sync & Immediate Fetch
+    try {
+      if (db) {
+        const firestoreDocRef = doc(db, 'platform_settings', 'general');
+
+        // Realtime Listener to broadcast changes instantly to all active visitor tabs
+        onSnapshot(firestoreDocRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && typeof data === 'object') {
+              mergeAndApply(data as Partial<PlatformSettings>);
+            }
+          }
+        }, (err) => {
+          console.warn('Firestore platform settings realtime listener notice:', err);
+        });
+
+        // Direct fetch
+        try {
+          const snapshot = await getDoc(firestoreDocRef);
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data && typeof data === 'object') {
+              const res = mergeAndApply(data as Partial<PlatformSettings>);
+              if (res) return res;
+            }
+          }
+        } catch (err) {
+          console.warn('Firestore platform settings load notice:', err);
+        }
+      }
+    } catch (fsErr) {
+      console.warn('Firestore platform settings init notice:', fsErr);
+    }
+
+    // 2. Server API Endpoint Fetch with Cache Buster
+    try {
+      const response = await fetch(`/api/platform-settings?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' },
+      }).catch(() => null);
+
+      if (response && response.ok) {
+        const json = await response.json();
+        if (json && json.success && json.data) {
+          const res = mergeAndApply(json.data);
+          if (res) return res;
+        }
+      }
+    } catch (e) {
+      console.warn('Server platform settings load notice:', e);
+    }
+
+    // 3. Supabase Cloud Fallback Fetch
+    try {
+      const config = getStoredSupabaseConfig();
+      if (config.url && config.anonKey) {
+        const client = getSupabase();
+        const { data: row } = await client
+          .from('platform_settings')
+          .select('value')
+          .eq('key', 'general')
+          .maybeSingle();
+
+        if (row && row.value && typeof row.value === 'object') {
+          const res = mergeAndApply(row.value);
+          if (res) return res;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase platform settings load notice:', e);
+    }
+
+    return storageService.getPlatformSettings();
+  },
 
   getPlatformSettings: (): PlatformSettings => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.PLATFORM_SETTINGS);
-      if (data) return JSON.parse(data);
+      if (data) {
+        const parsed = JSON.parse(data);
+        return { ...initialPlatformSettings, ...parsed };
+      }
     } catch {}
     return { ...initialPlatformSettings };
   },
 
-  savePlatformSettings: (settings: PlatformSettings) => {
+  savePlatformSettings: async (settings: PlatformSettings): Promise<boolean> => {
     try {
-      safeLocalStorageSet(STORAGE_KEYS.PLATFORM_SETTINGS, JSON.stringify(settings));
+      const nowIso = new Date().toISOString();
+      const merged: PlatformSettings = {
+        ...initialPlatformSettings,
+        ...settings,
+      };
+
+      // 1. Instant local persistence & UI broadcast
+      safeLocalStorageSet(STORAGE_KEYS.PLATFORM_SETTINGS, JSON.stringify(merged));
+      window.dispatchEvent(new CustomEvent('aladl_platform_settings_updated', { detail: merged }));
       notifyChange();
+
+      // 2. Background multi-cloud parallel synchronization
+      const withTimeout = <T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> => {
+        let timeoutHandle: any;
+        const timeoutPromise = new Promise<T>((resolve) => {
+          timeoutHandle = setTimeout(() => resolve(fallback), ms);
+        });
+        return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutHandle));
+      };
+
+      // Task A: Firebase Firestore Persistent Sync
+      const firestoreTask = async (): Promise<boolean> => {
+        if (!db) return false;
+        try {
+          const docRef = doc(db, 'platform_settings', 'general');
+          await setDoc(docRef, { ...merged, updatedAt: nowIso }, { merge: true });
+          return true;
+        } catch (e) {
+          console.warn('Firestore platform settings save notice:', e);
+          return false;
+        }
+      };
+
+      // Task B: Express Server API Endpoint
+      const serverTask = async (): Promise<boolean> => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 2000);
+          const res = await fetch('/api/platform-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ settings: merged }),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
+          return res.ok;
+        } catch (e) {
+          return false;
+        }
+      };
+
+      // Task C: Supabase Cloud Database Sync
+      const supabaseTask = async (): Promise<boolean> => {
+        try {
+          const config = getStoredSupabaseConfig();
+          if (!config.url || !config.anonKey) return false;
+          const client = getSupabase();
+          const upsertPromise = Promise.resolve(
+            client
+              .from('platform_settings')
+              .upsert({ key: 'general', value: merged, updated_at: nowIso }, { onConflict: 'key' })
+          );
+          await withTimeout(upsertPromise, 2000, null);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      };
+
+      // Run parallel cloud save tasks without blocking UI
+      Promise.allSettled([
+        withTimeout(firestoreTask(), 3000, false),
+        withTimeout(serverTask(), 2500, false),
+        withTimeout(supabaseTask(), 2500, false),
+      ]).catch(() => {});
+
+      return true;
     } catch (e) {
       console.warn('Failed to save platform settings', e);
+      return false;
     }
   },
 
