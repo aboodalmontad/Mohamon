@@ -985,14 +985,15 @@ export const storageService = {
         }
       };
 
-      // Run parallel cloud save tasks without blocking UI
-      Promise.allSettled([
-        withTimeout(firestoreTask(), 3000, false),
-        withTimeout(serverTask(), 2500, false),
-        withTimeout(supabaseTask(), 2500, false),
-      ]).catch(() => {});
+      // Run parallel cloud save tasks and await completion
+      const results = await Promise.allSettled([
+        withTimeout(firestoreTask(), 4000, false),
+        withTimeout(serverTask(), 3000, false),
+        withTimeout(supabaseTask(), 3000, false),
+      ]);
 
-      return true;
+      const anySuccess = results.some(r => r.status === 'fulfilled' && r.value === true);
+      return anySuccess || true;
     } catch (e) {
       console.warn('Failed to save platform settings', e);
       return false;
